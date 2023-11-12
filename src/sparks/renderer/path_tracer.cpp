@@ -1,12 +1,31 @@
 #include "sparks/renderer/path_tracer.h"
 
 #include "sparks/util/util.h"
+#include <glm/ext/scalar_constants.hpp>
+
+// TODO: implement a path tracing algorithm that could handle diffusive material and specular material correctly with a proper acceleration structure
 
 namespace sparks {
 PathTracer::PathTracer(const RendererSettings *render_settings,
                        const Scene *scene) {
   render_settings_ = render_settings;
   scene_ = scene;
+  // initialize your acceleration structure here.
+  // getMesh() function has not been implemented yet.
+  // for (const auto& entity : scene_->GetEntities()) {
+  //     if (entity.GetMesh().GetVertices().empty()) {
+	//   continue;
+	// }
+	// accelerated_meshes_.emplace_back(entity.GetMesh());
+	// accelerated_meshes_.back().BuildAccelerationStructure();
+  // }
+}
+
+glm::vec3 PathTracer::RandomUnitVector(std::mt19937& rd) {
+  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+  float theta = dist(rd) * 2.0f * glm::pi<float>();
+  float phi = dist(rd) * glm::pi<float>();
+  return glm::vec3{std::cos(theta) * std::sin(phi), std::sin(theta) * std::sin(phi), std::cos(phi)};
 }
 
 glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
@@ -19,7 +38,8 @@ glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
   HitRecord hit_record;
   const int max_bounce = render_settings_->num_bounces;
   std::mt19937 rd(sample ^ x ^ y);
-  for (int i = 0; i < max_bounce; i++) {
+
+  for (int bounce = 0; bounce < max_bounce; bounce++) {
     auto t = scene_->TraceRay(origin, direction, 1e-3f, 1e4f, &hit_record);
     if (t > 0.0f) {
       auto &material =
@@ -27,6 +47,32 @@ glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
       if (material.material_type == MATERIAL_TYPE_EMISSION) {
         radiance += throughput * material.emission * material.emission_strength;
         break;
+      } else if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
+        glm::vec3 albedo = material.albedo_color;
+        if (material.albedo_texture_id >= 0) {
+          albedo *= glm::vec3{
+              scene_->GetTextures()[material.albedo_texture_id].Sample(
+                  hit_record.tex_coord)};
+        }
+        glm::vec3 new_direction = glm::normalize( hit_record.normal + glm::vec3{ RandomUnitVector(rd) });
+        throughput *= albedo;
+        origin = hit_record.position;
+        direction = new_direction;
+        radiance += throughput * scene_->GetEnvmapMinorColor();
+        throughput *= std::abs(glm::dot(direction, hit_record.normal)); 
+      } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
+        glm::vec3 albedo = material.albedo_color;
+        if (material.albedo_texture_id >= 0) {
+          albedo *= glm::vec3{
+              scene_->GetTextures()[material.albedo_texture_id].Sample(
+                  hit_record.tex_coord)};
+        }
+        glm::vec3 new_direction = glm::reflect(direction, hit_record.normal);
+        throughput *= albedo;
+        origin = hit_record.position;
+        direction = new_direction;
+        radiance += throughput * scene_->GetEnvmapMinorColor();
+        throughput *= std::abs(glm::dot(direction, hit_record.normal));
       } else {
         throughput *=
             material.albedo_color *
