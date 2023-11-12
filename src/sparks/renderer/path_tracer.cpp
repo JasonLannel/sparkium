@@ -27,7 +27,16 @@ glm::vec3 PathTracer::RandomUnitVector(std::mt19937& rd) {
   float phi = dist(rd) * glm::pi<float>();
   return glm::vec3{std::cos(theta) * std::sin(phi), std::sin(theta) * std::sin(phi), std::cos(phi)};
 }
-
+inline const glm::vec3 CosineWeightedSampleOnHemisphere(
+    std::mt19937 &rd) noexcept {
+  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+  float u1 = dist(rd);
+  float u2 = dist(rd);
+  const double cos_theta = sqrt(1.0 - u1);
+  const double sin_theta = sqrt(u1);
+  const double phi = 2.0 * PI * u2;
+  return {std::cos(phi) * sin_theta, std::sin(phi) * sin_theta, cos_theta};
+}
 glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
                                 glm::vec3 direction,
                                 int x,
@@ -47,46 +56,29 @@ glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
       if (material.material_type == MATERIAL_TYPE_EMISSION) {
         radiance += throughput * material.emission * material.emission_strength;
         break;
-      } else if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
-        glm::vec3 albedo = material.albedo_color;
-        if (material.albedo_texture_id >= 0) {
-          albedo *= glm::vec3{
-              scene_->GetTextures()[material.albedo_texture_id].Sample(
-                  hit_record.tex_coord)};
-        }
-        glm::vec3 new_direction = glm::normalize( hit_record.normal + glm::vec3{ RandomUnitVector(rd) });
-        throughput *= albedo;
-        origin = hit_record.position;
-        direction = new_direction;
-        radiance += throughput * scene_->GetEnvmapMinorColor();
-        throughput *= std::abs(glm::dot(direction, hit_record.normal)); 
-      } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
-        glm::vec3 albedo = material.albedo_color;
-        if (material.albedo_texture_id >= 0) {
-          albedo *= glm::vec3{
-              scene_->GetTextures()[material.albedo_texture_id].Sample(
-                  hit_record.tex_coord)};
-        }
-        glm::vec3 new_direction = glm::reflect(direction, hit_record.normal);
-        throughput *= albedo;
-        origin = hit_record.position;
-        direction = new_direction;
-        radiance += throughput * scene_->GetEnvmapMinorColor();
-        throughput *= std::abs(glm::dot(direction, hit_record.normal));
       } else {
-        throughput *=
-            material.albedo_color *
-            glm::vec3{scene_->GetTextures()[material.albedo_texture_id].Sample(
-                hit_record.tex_coord)};
-        origin = hit_record.position;
-        direction = scene_->GetEnvmapLightDirection();
-        radiance += throughput * scene_->GetEnvmapMinorColor();
-        throughput *=
-            std::max(glm::dot(direction, hit_record.normal), 0.0f) * 2.0f;
-        if (scene_->TraceRay(origin, direction, 1e-3f, 1e4f, nullptr) < 0.0f) {
-          radiance += throughput * scene_->GetEnvmapMajorColor();
+        glm::vec3 albedo = material.albedo_color;
+        if (material.albedo_texture_id >= 0) {
+          albedo *= glm::vec3{
+              scene_->GetTextures()[material.albedo_texture_id].Sample(
+                  hit_record.tex_coord)};
         }
-        break;
+        throughput *= albedo;
+        origin = hit_record.position;
+        if (material.material_type == MATERIAL_TYPE_LAMBERTIAN){
+          glm::vec3 n = hit_record.normal;
+          glm::vec3 w = (glm::dot(n, direction) < 0) ? n : -n;
+          glm::vec3 u =
+              glm::normalize(glm::cross(w, 
+                  (std::abs(w.x) > 0.1 ? glm::vec3(0.0, 1.0, 0.0): glm::vec3(1.0, 0.0, 0.0))));
+          glm::vec3 v = glm::cross(u, w);
+          glm::vec3 sample_d =
+              CosineWeightedSampleOnHemisphere(rd);
+          direction =
+              glm::normalize(sample_d.x * u + sample_d.y * v + sample_d.z * w);
+        } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
+          direction = glm::reflect(direction, hit_record.normal);
+        }
       }
     } else {
       radiance += throughput * glm::vec3{scene_->SampleEnvmap(direction)};
