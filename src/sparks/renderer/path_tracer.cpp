@@ -48,6 +48,7 @@ glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
         radiance += throughput * material.emission * material.emission_strength;
         break;
       } else if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
+          // diffusive material
         glm::vec3 albedo = material.albedo_color;
         if (material.albedo_texture_id >= 0) {
           albedo *= glm::vec3{
@@ -61,6 +62,7 @@ glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
         radiance += throughput * scene_->GetEnvmapMinorColor();
         throughput *= std::abs(glm::dot(direction, hit_record.normal)); 
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
+          // specular material
         glm::vec3 albedo = material.albedo_color;
         if (material.albedo_texture_id >= 0) {
           albedo *= glm::vec3{
@@ -86,7 +88,16 @@ glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
         if (scene_->TraceRay(origin, direction, 1e-3f, 1e4f, nullptr) < 0.0f) {
           radiance += throughput * scene_->GetEnvmapMajorColor();
         }
-        break;
+      }
+
+      // Russian roulette termination
+      float rr_probability = 0.5f;
+      assert (rr_probability >= 0.0f && rr_probability <= 1.0f);
+      if (bounce > 5) {
+        float rr_random = std::uniform_real_distribution<float>(0.0f, 1.0f)(rd);
+        if (rr_random > rr_probability) {
+          break;
+        }
       }
     } else {
       radiance += throughput * glm::vec3{scene_->SampleEnvmap(direction)};
