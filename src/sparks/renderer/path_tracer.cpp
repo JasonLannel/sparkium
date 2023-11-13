@@ -68,6 +68,7 @@ glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
 
           float pdf = 0.5f / PI;
           float scatter_pdf = glm::dot(n, direction) / PI;
+          throughput *= scatter_pdf / pdf;
         } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
           direction = glm::reflect(direction, hit_record.normal);
         }
