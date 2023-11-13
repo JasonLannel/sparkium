@@ -3,22 +3,11 @@
 #include "sparks/util/util.h"
 #include <glm/ext/scalar_constants.hpp>
 
-// TODO: implement a path tracing algorithm that could handle diffusive material and specular material correctly with a proper acceleration structure
-
 namespace sparks {
 PathTracer::PathTracer(const RendererSettings *render_settings,
                        const Scene *scene) {
   render_settings_ = render_settings;
   scene_ = scene;
-  // initialize your acceleration structure here.
-  // getMesh() function has not been implemented yet.
-  // for (const auto& entity : scene_->GetEntities()) {
-  //     if (entity.GetMesh().GetVertices().empty()) {
-	//   continue;
-	// }
-	// accelerated_meshes_.emplace_back(entity.GetMesh());
-	// accelerated_meshes_.back().BuildAccelerationStructure();
-  // }
 }
 
 glm::vec3 PathTracer::RandomUnitVector(std::mt19937& rd) {
@@ -76,6 +65,9 @@ glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
               CosineWeightedSampleOnHemisphere(rd);
           direction =
               glm::normalize(sample_d.x * u + sample_d.y * v + sample_d.z * w);
+
+          float pdf = 0.5f / PI;
+          float scatter_pdf = glm::dot(n, direction) / PI;
         } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
           direction = glm::reflect(direction, hit_record.normal);
         }

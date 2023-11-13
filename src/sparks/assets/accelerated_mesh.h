@@ -7,11 +7,7 @@ namespace sparks {
 namespace {
 struct TreeNode {
   AxisAlignedBoundingBox aabb{};
-  int left_child_index{-1};
-  int right_child_index{-1};
-  bool is_leaf{false};
-  int start_index{-1};
-  int end_index{-1}; 
+  int child[2]{-1, -1};
 };
 }  // namespace
 
@@ -31,8 +27,24 @@ class AcceleratedMesh : public Mesh {
   /*
    * You can add your acceleration structure contents here.
    * */
-  void BuildTree(std::vector<int>& entity_indices, int start_index, int end_index, int node_index);
+  int BuildTree(std::vector<int> &aabb_indices,
+                 int start_index,
+                 int aabb_cnt,
+                 int &index_cnt);
+  void AcceleratedTraceRay(const glm::vec3 &origin,
+                            const glm::vec3 &direction,
+                            int index,
+                            float t_min,
+                            float &result,
+                            HitRecord *hit_record) const;
+  void IntersectSlice(const glm::vec3 &origin,
+                      const glm::vec3 &direction,
+                      int index,
+                      float t_min,
+                      float &result,
+                      HitRecord *hit_record) const;
 
+ private:
   std::vector<TreeNode> bvh_nodes_{};
 };
 }  // namespace sparks
