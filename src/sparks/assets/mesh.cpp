@@ -155,11 +155,21 @@ void Mesh::WriteObjFile(const std::string &file_path) const {
     file.close();
   }
 }
+
 std::vector<Vertex> Mesh::GetVertices() const {
   return vertices_;
 }
+
 std::vector<uint32_t> Mesh::GetIndices() const {
   return indices_;
+}
+
+Vertex Mesh::GetVertexByIndex(int n) const {
+  return vertices_[indices_[n]];
+}
+
+uint32_t Mesh::GetIndicesSize() const {
+  return indices_.size();
 }
 
 bool Mesh::LoadObjFile(const std::string &obj_file_path, Mesh &mesh) {

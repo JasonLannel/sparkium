@@ -1,6 +1,7 @@
 #pragma once
 #include "sparks/assets/aabb.h"
 #include "sparks/assets/mesh.h"
+#include "sparks/assets/pdf.h"
 
 namespace sparks {
 
@@ -22,11 +23,11 @@ class AcceleratedMesh : public Mesh {
                  float t_min,
                  HitRecord *hit_record) const override;
   void BuildAccelerationStructure();
+  glm::vec3 SamplePoint(glm::vec3 origin, std::mt19937 rd) const override;
+  float SamplePdfValue(glm::vec3 origin, glm::vec3 direction) const override;
+  float GetArea() const override;
 
  private:
-  /*
-   * You can add your acceleration structure contents here.
-   * */
   int BuildTree(std::vector<int> &aabb_indices,
                  int start_index,
                  int aabb_cnt,
@@ -43,8 +44,11 @@ class AcceleratedMesh : public Mesh {
                       float t_min,
                       float &result,
                       HitRecord *hit_record) const;
+  void CreatePdf();
 
- private:
   std::vector<TreeNode> bvh_nodes_{};
+  float area_;
+  std::vector<float> probList_;
 };
+
 }  // namespace sparks

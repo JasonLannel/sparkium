@@ -381,4 +381,18 @@ Scene::Scene(const std::string &filename) : Scene() {
   UpdateEnvmapConfiguration();
 }
 
+Pdf* Scene::GetLightPdf() const{
+  std::vector<Pdf *> emissiveList_;
+  std::vector<float> weight;
+  for (int i = 0; i < entities_.size(); ++i) {
+    if (entities_[i].GetMaterial().material_type == MATERIAL_TYPE_EMISSION) {
+      emissiveList_.push_back(new ModelPdf(entities_[i].GetModel()));
+      weight.push_back( entities_[i].GetModel()->GetArea());
+    }
+  }
+  if (emissiveList_.size() > 0)
+    return new MixturePdf(emissiveList_, weight);
+  return nullptr;
+}
+
 }  // namespace sparks

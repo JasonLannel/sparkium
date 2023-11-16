@@ -22,6 +22,8 @@ class Mesh : public Model {
       const glm::mat4 &transform) const override;
   [[nodiscard]] std::vector<Vertex> GetVertices() const override;
   [[nodiscard]] std::vector<uint32_t> GetIndices() const override;
+  [[nodiscard]] Vertex GetVertexByIndex(int n) const;
+  [[nodiscard]] uint32_t GetIndicesSize() const;
   static Mesh Cube(const glm::vec3 &center, const glm::vec3 &size);
   static Mesh Sphere(const glm::vec3 &center = glm::vec3{0.0f},
                      float radius = 1.0f);

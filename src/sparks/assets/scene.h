@@ -6,6 +6,7 @@
 #include "sparks/assets/mesh.h"
 #include "sparks/assets/texture.h"
 #include "sparks/assets/util.h"
+#include "sparks/assets/pdf.h"
 #include "vector"
 
 namespace sparks {
@@ -70,6 +71,8 @@ class Scene {
   bool EntityCombo(const char *label, int *current_item) const;
   int LoadTexture(const std::string &file_path);
   int LoadObjMesh(const std::string &file_path);
+
+  Pdf* GetLightPdf() const;
 
  private:
   std::vector<Texture> textures_;

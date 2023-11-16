@@ -5,12 +5,14 @@
 namespace sparks {
 AcceleratedMesh::AcceleratedMesh(const Mesh &mesh) : Mesh(mesh) {
   BuildAccelerationStructure();
+  CreatePdf();
 }
 
 AcceleratedMesh::AcceleratedMesh(const std::vector<Vertex> &vertices,
                                  const std::vector<uint32_t> &indices)
     : Mesh(vertices, indices) {
   BuildAccelerationStructure();
+  CreatePdf();
 }
 
 void AcceleratedMesh::IntersectSlice(const glm::vec3 &origin,
@@ -159,5 +161,65 @@ int AcceleratedMesh::BuildTree(std::vector<int> &aabb_indices,
     bvh_nodes_[index_cnt].child[1] = childRight;
     ++index_cnt;
     return index_cnt - 1;
+}
+
+
+void AcceleratedMesh::CreatePdf(){
+    area_ = 0;
+    probList_.resize(indices_.size() / 3);
+    for (int i = 0, j = 0; i < probList_.size(); ++i, j += 3) {
+        Vertex a = vertices_[indices_[j]];
+        Vertex b = vertices_[indices_[j + 1]];
+        Vertex c = vertices_[indices_[j + 2]];
+        probList_[i] =
+            glm::cross(a.position - b.position, a.position - c.position)
+                .length();
+        area_ += probList_[i];
+    }
+    for (int i = 0; i < probList_.size(); ++i) {
+        probList_[i] = probList_[i] / area_;
+    }
+    for (int i = 1; i < probList_.size(); ++i) {
+        probList_[i] += probList_[i - 1];
+    }
+    probList_[probList_.size() - 1] = 1.0f;
+}
+
+glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, std::mt19937 rd) const {
+    if (!probList_.size())
+        return glm::vec3(0);
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+    float samp = dist(rd);
+    int pdfNo = std::lower_bound(probList_.begin(), probList_.end(), samp) -
+                probList_.begin();
+    pdfNo *= 3;
+    glm::vec3 v0 = vertices_[indices_[pdfNo]].position;
+    glm::vec3 v1 = vertices_[indices_[pdfNo + 1]].position;
+    glm::vec3 v2 = vertices_[indices_[pdfNo + 2]].position;
+    float u1 = dist(rd);
+    float u2 = dist(rd);
+    if (u1 + u2 > 1.0f) {
+        u1 = 1.0f - u1;
+        u2 = 1.0f - u2;
+    }
+    return glm::normalize(
+        (v0 * u1 + v1 * u2 + v2 * (1.0f - u1 - u2)) - origin);
+}
+float AcceleratedMesh::SamplePdfValue(glm::vec3 origin,
+                                 const glm::vec3 direction) const {
+    HitRecord rec;
+    float res = 0;
+    glm::vec3 start = origin;
+    while (this->TraceRay(start, direction, 1e-3f, &rec) > 0.0f) {
+        float dis_squared =
+            (rec.position - origin).length() * (rec.position - origin).length();
+        float cosine = std::fabs(dot(direction, rec.normal));
+        res += dis_squared / (cosine * area_);
+        start = rec.position;
+    }
+    return res;
+}
+float AcceleratedMesh::GetArea() const {
+    return area_;
 }
 }  // namespace sparks
