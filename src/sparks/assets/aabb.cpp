@@ -100,4 +100,9 @@ AxisAlignedBoundingBox &AxisAlignedBoundingBox::operator|=(
   return *this;
 }
 
+float AxisAlignedBoundingBox::GetSurface() {
+  return (x_high - x_low) * (y_high - y_low + z_high - z_low) * 2 +
+         (y_high - y_low) * (z_high - z_low) * 2;
+}
+
 }  // namespace sparks

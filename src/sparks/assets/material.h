@@ -26,5 +26,18 @@ struct Material {
   Material() = default;
   explicit Material(const glm::vec3 &albedo);
   Material(Scene *scene, const tinyxml2::XMLElement *material_element);
+
+  //Principle BRDF
+  float roughness{0.0f};
+  glm::vec3 reflect{0.0f};
+  glm::vec3 FresnelSchlick(float cosTheta) const;
+  float D_GGX_TR(glm::vec3 normal, glm::vec3 bisector) const;
+  float GeometryShadow(glm::vec3 normal,
+                       glm::vec3 dir_in,
+                       glm::vec3 dir_out,
+                       glm::vec3 bisector) const;
+  glm::vec3 CookTorrance(glm::vec3 normal,
+                         glm::vec3 dir_view,
+                         glm::vec3 dir_out) const;
 };
 }  // namespace sparks
