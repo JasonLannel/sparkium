@@ -523,6 +523,11 @@ void App::UpdateImGui() {
                              0.0f, 1e5f, "%.3f", ImGuiSliderFlags_Logarithmic);
       reset_accumulation_ |=
           ImGui::SliderFloat("Alpha", &material.alpha, 0.0f, 1.0f, "%.3f");
+      reset_accumulation_ |= ImGui::SliderFloat(
+          "Roughness(Principled)", &material.roughness, 0.0f, 1.0f, "%.3f");
+      reset_accumulation_ |= ImGui::ColorEdit3(
+          "Reflect(Principled)", &material.reflect[0],
+          ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
     }
 
 #if !defined(NDEBUG)
