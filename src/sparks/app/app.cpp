@@ -401,7 +401,7 @@ void App::UpdateImGui() {
               "Save Captured Image", "", file_types.size(), file_types.data(),
               "Image Files (*.bmp, *.jpg, *.png, *hdr)");
           if (result) {
-            Capture(result);
+            Capture(result, false);
           }
         }
         ImGui::EndMenu();
@@ -450,11 +450,16 @@ void App::UpdateImGui() {
       std::tm *now = std::localtime(&tt);
 #endif
       std::string time_string;
-      Capture("screenshot_" + std::to_string(now->tm_year + 1900) + "_" +
+      Capture("wo_FXAA_" + std::to_string(now->tm_year + 1900) + "_" +
               std::to_string(now->tm_mon) + "_" + std::to_string(now->tm_mday) +
               "_" + std::to_string(now->tm_hour) + "_" +
               std::to_string(now->tm_min) + "_" + std::to_string(now->tm_sec) +
-              "_" + std::to_string(current_sample) + "spp.png");
+              "_" + std::to_string(current_sample) + "spp.png", false);
+      Capture("FXAA_" + std::to_string(now->tm_year + 1900) + "_" +
+              std::to_string(now->tm_mon) + "_" + std::to_string(now->tm_mday) +
+              "_" + std::to_string(now->tm_hour) + "_" +
+              std::to_string(now->tm_min) + "_" + std::to_string(now->tm_sec) +
+              "_" + std::to_string(current_sample) + "spp.png", true);
     }
 
     if (app_settings_.hardware_renderer) {
@@ -1135,7 +1140,7 @@ void App::BuildRayTracingPipeline() {
   ray_tracing_render_node_->BuildRenderNode();
 }
 
-void App::Capture(const std::string &file_path) {
+void App::Capture(const std::string &file_path, bool useFXAA) { 
   LAND_INFO("Capture Saving... Path: [{}]", file_path);
   auto write_buffer = [&file_path, this](glm::vec4 *buffer, int width,
                                          int height, float scale) {
@@ -1186,6 +1191,10 @@ void App::Capture(const std::string &file_path) {
                  scale);
   } else {
     auto captured_buffer = renderer_->CaptureRenderedImage();
+    if (useFXAA == true) {
+      FXAA fxaa = FXAA(renderer_->GetWidth(), renderer_->GetHeight());
+      captured_buffer = fxaa.Apply(captured_buffer);
+    }
     write_buffer(captured_buffer.data(), renderer_->GetWidth(),
                  renderer_->GetHeight(), 1.0f);
   }

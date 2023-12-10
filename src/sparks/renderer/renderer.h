@@ -32,7 +32,7 @@ class Renderer {
                      int sample,
                      glm::vec3 &color_result,
                      PathTracer &path_tracer) const;
-
+                      
   void RetrieveAccumulationResult(glm::vec4 *accumulation_color_buffer_dst,
                                   float *accumulation_number_buffer_dst);
 

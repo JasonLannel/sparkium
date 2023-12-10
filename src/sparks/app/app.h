@@ -6,6 +6,7 @@
 #include "sparks/app/global_uniform_object.h"
 #include "sparks/app/object_info.h"
 #include "sparks/renderer/renderer.h"
+#include "sparks/assets/fxaa.h"
 
 namespace sparks {
 using namespace grassland;
@@ -22,7 +23,7 @@ class App {
   void OnClose();
 
   void OpenFile(const std::string &file_path);
-  void Capture(const std::string &file_path);
+  void Capture(const std::string &file_path, bool use_fxaa);
   void UpdateImGui();
   void UpdateDynamicBuffer();
   void UpdateHostStencilBuffer();
@@ -108,6 +109,7 @@ class App {
   int cursor_x_{-1};
   int cursor_y_{-1};
 
+//   bool useFXAA_{true};
   bool output_render_result_{false};
   bool reset_accumulation_{true};
   bool rebuild_ray_tracing_pipeline_{false};
