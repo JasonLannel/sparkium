@@ -109,7 +109,7 @@ class App {
   int cursor_x_{-1};
   int cursor_y_{-1};
 
-//   bool useFXAA_{true};
+  bool useFXAA_{false};
   bool output_render_result_{false};
   bool reset_accumulation_{true};
   bool rebuild_ray_tracing_pipeline_{false};

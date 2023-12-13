@@ -13,13 +13,15 @@ PathTracer::PathTracer(const RendererSettings *render_settings,
   scene_ = scene;
 }
 
-glm::vec3 PathTracer::SampleRay(glm::vec3 origin,
-                                glm::vec3 direction,
+glm::vec3 PathTracer::SampleRay(Ray ray,
                                 int x,
                                 int y,
                                 int sample) const {
   glm::vec3 throughput{1.0f};
   glm::vec3 radiance{0.0f};
+  glm::vec3 origin = ray.origin();
+  glm::vec3 direction = ray.direction();
+  double time = ray.time();
   HitRecord hit_record;
   const int max_bounce = render_settings_->num_bounces;
   const float RR = 0.9, INV_RR = 1.0 / RR;

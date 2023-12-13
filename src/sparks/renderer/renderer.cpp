@@ -204,18 +204,22 @@ void Renderer::RayGeneration(int x,
   glm::vec2 range_low{float(x) / float(width_), float(y) / float(height_)};
   glm::vec2 range_high{(float(x) + 1.0f) / float(width_),
                        (float(y) + 1.0f) / float(height_)};
-  glm::vec3 origin, direction;
+  Ray ray = Ray(glm::vec3{0.0f}, glm::vec3{0.0f}, 0.0);
 
   scene_.GetCamera().GenerateRay(
-      float(width_) / float(height_), range_low, range_high, origin, direction,
+      float(width_) / float(height_), range_low, range_high, ray,
       std::uniform_real_distribution<float>(0.0f, 1.0f)(rd),
       std::uniform_real_distribution<float>(0.0f, 1.0f)(rd),
       std::uniform_real_distribution<float>(0.0f, 1.0f)(rd),
       std::uniform_real_distribution<float>(0.0f, 1.0f)(rd));
   auto camera_to_world = scene_.GetCameraToWorld();
+  glm::vec3 origin = ray.origin();
+  glm::vec3 direction = ray.direction();
+  double time = ray.time();
   origin = camera_to_world * glm::vec4(origin, 1.0f);
   direction = camera_to_world * glm::vec4(direction, 0.0f);
-  color_result = path_tracer.SampleRay(origin, direction, x, y, sample);
+  ray = Ray(origin, direction, time);
+  color_result = path_tracer.SampleRay(ray, x, y, sample);
 }
 
 void Renderer::RetrieveAccumulationResult(

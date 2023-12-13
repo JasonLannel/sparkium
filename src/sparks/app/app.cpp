@@ -450,16 +450,21 @@ void App::UpdateImGui() {
       std::tm *now = std::localtime(&tt);
 #endif
       std::string time_string;
-      Capture("wo_FXAA_" + std::to_string(now->tm_year + 1900) + "_" +
+      Capture("FXAA_wo_" + std::to_string(now->tm_year + 1900) + "_" +
               std::to_string(now->tm_mon) + "_" + std::to_string(now->tm_mday) +
               "_" + std::to_string(now->tm_hour) + "_" +
               std::to_string(now->tm_min) + "_" + std::to_string(now->tm_sec) +
               "_" + std::to_string(current_sample) + "spp.png", false);
-      Capture("FXAA_" + std::to_string(now->tm_year + 1900) + "_" +
-              std::to_string(now->tm_mon) + "_" + std::to_string(now->tm_mday) +
-              "_" + std::to_string(now->tm_hour) + "_" +
-              std::to_string(now->tm_min) + "_" + std::to_string(now->tm_sec) +
-              "_" + std::to_string(current_sample) + "spp.png", true);
+      if (useFXAA_) {
+        Capture("FXAA_w" + std::to_string(now->tm_year + 1900) + "_" +
+                    std::to_string(now->tm_mon) + "_" +
+                    std::to_string(now->tm_mday) + "_" +
+                    std::to_string(now->tm_hour) + "_" +
+                    std::to_string(now->tm_min) + "_" +
+                    std::to_string(now->tm_sec) + "_" +
+                    std::to_string(current_sample) + "spp.png",
+                true);
+      }
     }
 
     if (app_settings_.hardware_renderer) {

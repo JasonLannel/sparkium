@@ -15,7 +15,7 @@ class FXAA {
     uint32_t height_;
     std::vector<float> luminance_;
     void calcLuma(std::vector<glm::vec4> & image);
-    uint32_t FXAA::idx(uint32_t i, uint32_t j);
+    uint32_t idx(uint32_t i, uint32_t j);
     // image to texture
     Texture texture_;
     void image_to_texture(std::vector<glm::vec4> & image);

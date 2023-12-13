@@ -35,8 +35,7 @@ void Camera::UpdateFov(float delta) {
 void Camera::GenerateRay(float aspect,
                          glm::vec2 range_low,
                          glm::vec2 range_high,
-                         glm::vec3 &origin,
-                         glm::vec3 &direction,
+                         Ray &ray, 
                          float rand_u,
                          float rand_v,
                          float rand_w,
@@ -44,20 +43,22 @@ void Camera::GenerateRay(float aspect,
   auto pos = (range_high - range_low) * glm::vec2{rand_u, rand_v} + range_low;
   pos = pos * 2.0f - 1.0f;
   pos.y *= -1.0f;
-  origin = glm::vec3{0.0f};
+  glm::vec3 origin = glm::vec3{0.0f};
   auto tan_fov = std::tan(glm::radians(fov_ * 0.5f));
   float theta = 2.0f * PI * rand_w;
   float sin_theta = std::sin(theta);
   float cos_theta = std::cos(theta);
   origin =
       glm::vec3{glm::vec2{sin_theta, cos_theta} * rand_r * aperture_, 0.0f};
-  direction = glm::normalize(
+  glm::vec3 direction = glm::normalize(
       glm::vec3{tan_fov * aspect * pos.x, tan_fov * pos.y, -1.0f} *
           focal_length_ -
       origin);
+  double time = time_0_ + rand_u * (time_1_ - time_0_);
+  ray = Ray{origin, direction, time};
 }
 
-Camera::Camera(float fov, float aperture, float focal_length)
-    : fov_(fov), aperture_(aperture), focal_length_(focal_length) {
+Camera::Camera(float fov, float aperture, float focal_length, double time_0, double time_1)
+    : fov_(fov), aperture_(aperture), focal_length_(focal_length), time_0_(time_0), time_1_(time_1) {
 }
 }  // namespace sparks

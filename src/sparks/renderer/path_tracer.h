@@ -1,6 +1,7 @@
 #pragma once
 #include "random"
 #include "sparks/assets/scene.h"
+#include "sparks/assets/ray.h"
 #include "sparks/renderer/renderer_settings.h"
 #include "sparks/assets/accelerated_mesh.h"
 
@@ -8,8 +9,7 @@ namespace sparks {
 class PathTracer {
  public:
   PathTracer(const RendererSettings *render_settings, const Scene *scene);
-  [[nodiscard]] glm::vec3 SampleRay(glm::vec3 origin,
-                                    glm::vec3 direction,
+  [[nodiscard]] glm::vec3 SampleRay(Ray ray,
                                     int x,
                                     int y,
                                     int sample) const;

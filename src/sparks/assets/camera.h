@@ -1,18 +1,18 @@
 #pragma once
 #include "glm/glm.hpp"
+#include "sparks/assets/ray.h"
 
 namespace sparks {
 class Camera {
  public:
-  Camera(float fov = 60.0f, float aperture = 0.0f, float focal_length = 3.0f);
+  Camera(float fov = 60.0f, float aperture = 0.0f, float focal_length = 3.0f, double time_0 = 0.0, double time_1 = 0.0);
   [[nodiscard]] glm::mat4 GetProjectionMatrix(float aspect,
                                               float t_min,
                                               float t_max) const;
   void GenerateRay(float aspect,
                    glm::vec2 range_low,
                    glm::vec2 range_high,
-                   glm::vec3 &origin,
-                   glm::vec3 &direction,
+                   Ray &ray, 
                    float rand_u = 0.0f,
                    float rand_v = 0.0f,
                    float rand_w = 0.0f,
@@ -41,5 +41,8 @@ class Camera {
   float focal_length_{3.0f};
   float clamp_{100.0f};
   float gamma_{2.2f};
+  // motion blur parameters
+  double time_0_{0.0};
+  double time_1_{0.0};
 };
 }  // namespace sparks

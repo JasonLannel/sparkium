@@ -3,6 +3,7 @@
 #include "mutex"
 #include "queue"
 #include "sparks/assets/assets.h"
+#include "sparks/assets/ray.h"
 #include "sparks/renderer/path_tracer.h"
 #include "sparks/renderer/renderer_settings.h"
 #include "sparks/renderer/util.h"
@@ -68,7 +69,7 @@ class Renderer {
   void WorkerThread();
 
   RendererSettings renderer_settings_;
-  Scene scene_{"../../scenes/base.xml"};
+  Scene scene_{"../../scenes/cornell.xml"};
 
   /* CPU Renderer Assets */
   std::vector<glm::vec4> accumulation_color_;
