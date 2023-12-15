@@ -63,72 +63,105 @@ Material::Material(const glm::vec3 &albedo) : Material() {
   albedo_color = albedo;
 }
 
-float Material::Mix(float f1, float f2, float t) const {
-  return f1 * t + f2 * (1 - t);
-}
-
 glm::vec3 Material::FresnelSchlick(glm::vec3 f0, float cosTheta) const {
   float m = 1 - cosTheta;
   float m2 = m * m;
   return f0 + (glm::vec3(1.0) - f0) * m2 * m2 * m;
 }
 
-float Material::FresnelSchlick(float f0, float cosTheta) const {
-  float m = 1 - cosTheta;
-  float m2 = m * m;
-  return f0 + (1.0 - f0) * m2 * m2 * m;
-}
+glm::vec3 Material::DisneyPrincipled(glm::vec3 N,
+                                     glm::vec3 L,
+                                     glm::vec3 V,
+                                     glm::vec3 X,
+                                     glm::vec3 Y, glm::vec3 C) const {
+  auto sqr = [](float x) { return x * x; };
+  auto Mix = [](float f1, float f2, float t) { return f1 * t + f2 * (1 - t); };
+  auto GlmMix = [](glm::vec3 f1, glm::vec3 f2, float t) {
+    return f1 * t + f2 * (1.f - t);
+  };
+  auto FresnelSchlick = [sqr](float u){
+    float m = 1.f - u;
+    return m*sqr(sqr(m));
+  };
+  auto smithG_GGX = [sqr](float NdotV, float alphaG) {
+    float a = sqr(alphaG);
+    float b = sqr(NdotV);
+    return 1 / (NdotV + sqrt(a + b - a * b));
+  };
+  auto smithG_GGX_aniso = [sqr](float NdotV, float VdotX, float VdotY, float ax, float ay) {
+    return 1 / (NdotV + sqrt(sqr(VdotX * ax) + sqr(VdotY * ay) +
+                             sqr(NdotV)));
+  };
+  auto GTR1 = [sqr](float NdotH, float a) {
+    if (a >= 1)
+      return 1 / PI;
+    float a2 = sqr(a);
+    float t = 1 + (a2 - 1) * NdotH * NdotH;
+    return (a2 - 1) / (PI * log(a2) * t);
+  };
+  auto GTR2 = [sqr](float NdotH, float a) { 
+      float a2 = sqr(a);
+      float t = 1 + (a2 - 1) * NdotH * NdotH;
+      return a2 / (PI * sqr(t));
+  };
+  auto GTR2_aniso = [sqr](float NdotH, float HdotX, float HdotY, float ax,
+                          float ay) {
+    return 1 / (PI * ax * ay *
+                sqr(sqr(HdotX / ax) + sqr(HdotY / ay) + sqr(NdotH)));
+  };
 
-float Material::D_GGX_TR(glm::vec3 normal, glm::vec3 bisector) const {
-    //Trowbridge-Reitz GGX
-  float a2 = roughness * roughness;
-  float NH = glm::dot(normal, bisector);
-  float denom = NH * NH * (a2 - 1.0f) + 1.0f;
-  return a2 / (denom * denom) * INV_PI;
-}
+  float NdotL = glm::dot(N, L);
+  float NdotV = glm::dot(N, V);
+  if (NdotL < 0 || NdotV < 0)
+    return glm::vec3(0);
 
-float Material::GeometryShadow(glm::vec3 normal,
-                               glm::vec3 dir_in,
-                               glm::vec3 dir_out,
-                               glm::vec3 bisector) const {
-  float G1 = 2 * glm::dot(normal, bisector) * glm::dot(dir_in, normal) /
-             glm::dot(bisector, dir_in);
-  float G2 = 2 * glm::dot(normal, bisector) * glm::dot(dir_out, normal) /
-             glm::dot(bisector, dir_out);
-  return std::min(1.0f, std::min(G1, G2));
-}
+  glm::vec3 H = glm::normalize(L + V);
+  float NdotH = glm::dot(N, H);
+  float LdotH = glm::dot(L, H);
 
-glm::vec3 Material::CookTorrance(glm::vec3 normal,
-                                 glm::vec3 dir_view,
-                                 glm::vec3 dir_out) const {
-  glm::vec3 bisector = (dir_view + dir_out) * 0.5f;
   // Disney Principled.
-  // (1-metal)(albedo_color * INV_PI * mix(diffuse, microfacet) + sheen)
+  // (1-metal)(C * INV_PI * mix(diffuse, microfacet) + sheen)
   // Specular: D_s*F_s*G_s/ 4(N*L)(N*V)
   // Clearcoat: clearcoat/4 * F_c*G_c*D_c/4(N*L)(N*V)
-  // Diffuse Term
-
   // Microfacet
-
+  float Fss90 = sqr(LdotH) * roughness;
+  glm::vec3 Fss = 1.25f * C * INV_PI * (Mix(1, FresnelSchlick(NdotL), Fss90) *
+                          Mix(1, FresnelSchlick(NdotV), Fss90) *
+                          (1.0f / (NdotL + NdotV) - 0.5f) +
+                      0.5f);
+  // Diffuse
+  float Fd90 = 0.5f + 2 * Fss90;
+  glm::vec3 Fd = C * INV_PI *
+      Mix(1, FresnelSchlick(NdotL), Fd90) * Mix(1, FresnelSchlick(NdotV), Fd90);
   // Sheen
-
+  float respLum = 0.2126f * C.x + 0.7152f * C.y +
+                  0.0722f * C.z;
+  glm::vec3 Ctint = C / respLum;
+  glm::vec3 Fsh =
+      GlmMix(glm::vec3(1), Ctint, sheenTint) * sheen *
+                  FresnelSchlick(LdotH);
   // Specular
-
+  glm::vec3 Cs =
+      GlmMix(0.08f * specular * GlmMix(glm::vec3(1), Ctint, specularTint),
+             C, metallic);
+  glm::vec3 Fs = Cs + (glm::vec3(1) - Cs) * FresnelSchlick(LdotH);
+  float aspect = sqrt(1 - 0.9 * anisotropic);
+  float ax = sqr(roughness) / aspect;
+  float ay = sqr(roughness) * aspect;
+  float Gs = smithG_GGX_aniso(NdotL, glm::dot(L, X), glm::dot(L, Y), ax, ay) *
+             smithG_GGX_aniso(NdotV, glm::dot(V, X), glm::dot(V, Y), ax, ay);
+  float Ds = GTR2_aniso(NdotH, glm::dot(H, X), glm::dot(H, Y), ax, ay);
+  
   // Clearcoat
+  float Fc = Mix(1, FresnelSchlick(LdotH), 0.04);
+  float Gc = smithG_GGX(NdotL, 0.25) * smithG_GGX(NdotV, 0.25);
+  float Dc = GTR1(NdotH, Mix(0.1, 0.001, clearcoatGloss));
 
   // Mixture: (1-metal)(C/PI * mix(diffuse, microfacet) + sheen) + specular + clearcoat
-  glm::vec3 Ks = FresnelSchlick(albedo_color, glm::dot(dir_view, bisector));
-  glm::vec3 Kd = glm::vec3(1.0f) - Ks;
-  float F_D90 = 0.5 + 2 * roughness * glm::dot(dir_view, bisector);
-  float Cd = INV_PI * FresnelSchlick(F_D90, glm::dot(normal, dir_view)) *
-             FresnelSchlick(F_D90, glm::dot(normal, dir_out));
-  // Specular Term
-  // D * F * G / (N * L, N * V);
-  // D: D_GGX_TR; F: Fresnel
-  // G: CookTorrance;
-  glm::vec3 Cs = D_GGX_TR(normal, bisector) * Ks *
-                 GeometryShadow(normal, dir_view, dir_out, bisector) * 0.25f /
-                 (glm::dot(normal, dir_view) * glm::dot(normal, dir_out));
-  return albedo_color * (Kd * Cd + Ks * Cs);
+  glm::vec3 Dialectric = INV_PI * GlmMix(Fd, Fss, 1.0f - subsurface) * C;
+  glm::vec3 Metallic = Fs * Gs * Ds;
+  glm::vec3 Sheen = Fsh;
+  glm::vec3 Clearcoat = 0.25f * clearcoat * Fc * Gc * Dc;
+  return GlmMix(Metallic, Dialectric + Sheen, metallic) + Clearcoat;
 }
 }  // namespace sparks

@@ -36,19 +36,15 @@ struct Material {
   float anisotropic{0.0f};
   float sheen{0.0f};
   float sheenTint{0.0f};
-  float clearcoat{0.0f};
+  glm::vec3 clearcoat{0.0f};
   float clearcoatGloss{0.0f};
 
-  float FresnelSchlick(float f0, float cosTheta) const;
   glm::vec3 FresnelSchlick(glm::vec3 f0, float cosTheta) const;
-  float Mix(float f1, float f2, float t) const;
-  float D_GGX_TR(glm::vec3 normal, glm::vec3 bisector) const;
-  float GeometryShadow(glm::vec3 normal,
-                       glm::vec3 dir_in,
-                       glm::vec3 dir_out,
-                       glm::vec3 bisector) const;
-  glm::vec3 CookTorrance(glm::vec3 normal,
-                         glm::vec3 dir_view,
-                         glm::vec3 dir_out) const;
+  glm::vec3 DisneyPrincipled(glm::vec3 N,
+                             glm::vec3 L,
+                             glm::vec3 V,
+                             glm::vec3 X,
+                             glm::vec3 Y,
+                             glm::vec3 C) const;
 };
 }  // namespace sparks

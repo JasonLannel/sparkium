@@ -467,8 +467,13 @@ void App::UpdateImGui() {
       reset_accumulation_ |= ImGui::SliderInt(
           "Samples", &renderer_->GetRendererSettings().num_samples, 1, 64);
     }
-    reset_accumulation_ |= ImGui::SliderInt(
-        "Bounces", &renderer_->GetRendererSettings().num_bounces, 1, 128);
+    if (app_settings_.hardware_renderer) {
+      reset_accumulation_ |= ImGui::SliderInt(
+          "Bounces", &renderer_->GetRendererSettings().num_bounces, 1, 128);
+    } else {
+      reset_accumulation_ |= ImGui::SliderInt(
+          "Bounces", &renderer_->GetRendererSettings().num_bounces, 1, 24);
+    }
 
     scene.EntityCombo("Selected Entity", &selected_entity_id_);
     ImGui::Checkbox("Use FXAA", &useFXAA_);
@@ -539,8 +544,9 @@ void App::UpdateImGui() {
               ImGui::SliderFloat("Sheen", &material.sheen, 0.0f, 1.0f, "%.3f");
         reset_accumulation_ |= ImGui::SliderFloat(
             "SheenTint", &material.sheenTint, 0.0f, 1.0f, "%.3f");
-          reset_accumulation_ |= ImGui::SliderFloat(
-              "Clearcoat", &material.clearcoat, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::ColorEdit3(
+              "Clearcoat", &material.clearcoat[0],
+              ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
         reset_accumulation_ |= ImGui::SliderFloat(
             "ClearcoatGloss", &material.clearcoatGloss, 0.0f, 1.0f, "%.3f");
       }
