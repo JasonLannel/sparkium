@@ -401,7 +401,7 @@ void App::UpdateImGui() {
               "Save Captured Image", "", file_types.size(), file_types.data(),
               "Image Files (*.bmp, *.jpg, *.png, *hdr)");
           if (result) {
-            Capture(result, false);
+            Capture(result, useFXAA_);
           }
         }
         ImGui::EndMenu();
@@ -465,7 +465,7 @@ void App::UpdateImGui() {
           "Samples", &renderer_->GetRendererSettings().num_samples, 1, 128);
     } else {
       reset_accumulation_ |= ImGui::SliderInt(
-          "Samples", &renderer_->GetRendererSettings().num_samples, 1, 16);
+          "Samples", &renderer_->GetRendererSettings().num_samples, 1, 64);
     }
     reset_accumulation_ |= ImGui::SliderInt(
         "Bounces", &renderer_->GetRendererSettings().num_bounces, 1, 128);
