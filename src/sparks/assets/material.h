@@ -28,9 +28,19 @@ struct Material {
   Material(Scene *scene, const tinyxml2::XMLElement *material_element);
 
   //Principle BRDF
+  float subsurface{0.0f};
+  float metallic{0.0f};
+  float specular{0.0f};
+  float specularTint{0.0f};
   float roughness{0.0f};
-  glm::vec3 reflect{0.0f};
-  glm::vec3 FresnelSchlick(float cosTheta) const;
+  float anisotropic{0.0f};
+  float sheen{0.0f};
+  float sheenTint{0.0f};
+  float clearcoat{0.0f};
+  float clearcoatGloss{0.0f};
+
+  float Material::FresnelSchlick(float f0, float cosTheta) const;
+  glm::vec3 FresnelSchlick(glm::vec3 f0, float cosTheta) const;
   float D_GGX_TR(glm::vec3 normal, glm::vec3 bisector) const;
   float GeometryShadow(glm::vec3 normal,
                        glm::vec3 dir_in,

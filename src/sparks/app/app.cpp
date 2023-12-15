@@ -450,21 +450,14 @@ void App::UpdateImGui() {
       std::tm *now = std::localtime(&tt);
 #endif
       std::string time_string;
-      Capture("FXAA_wo_" + std::to_string(now->tm_year + 1900) + "_" +
-              std::to_string(now->tm_mon) + "_" + std::to_string(now->tm_mday) +
-              "_" + std::to_string(now->tm_hour) + "_" +
-              std::to_string(now->tm_min) + "_" + std::to_string(now->tm_sec) +
-              "_" + std::to_string(current_sample) + "spp.png", false);
-      if (useFXAA_) {
-        Capture("FXAA_w" + std::to_string(now->tm_year + 1900) + "_" +
-                    std::to_string(now->tm_mon) + "_" +
-                    std::to_string(now->tm_mday) + "_" +
-                    std::to_string(now->tm_hour) + "_" +
-                    std::to_string(now->tm_min) + "_" +
-                    std::to_string(now->tm_sec) + "_" +
-                    std::to_string(current_sample) + "spp.png",
-                true);
-      }
+      Capture((useFXAA_ ? "FXAA_" : "") + std::to_string(now->tm_year + 1900) +
+                  "_" + std::to_string(now->tm_mon) + "_" +
+                  std::to_string(now->tm_mday) + "_" +
+                  std::to_string(now->tm_hour) + "_" +
+                  std::to_string(now->tm_min) + "_" +
+                  std::to_string(now->tm_sec) + "_" +
+                  std::to_string(current_sample) + "spp.png",
+              useFXAA_);
     }
 
     if (app_settings_.hardware_renderer) {
@@ -478,6 +471,7 @@ void App::UpdateImGui() {
         "Bounces", &renderer_->GetRendererSettings().num_bounces, 1, 128);
 
     scene.EntityCombo("Selected Entity", &selected_entity_id_);
+    ImGui::Checkbox("Use FXAA", &useFXAA_);
 
     ImGui::NewLine();
     ImGui::Text("Camera");
@@ -528,11 +522,28 @@ void App::UpdateImGui() {
                              0.0f, 1e5f, "%.3f", ImGuiSliderFlags_Logarithmic);
       reset_accumulation_ |=
           ImGui::SliderFloat("Alpha", &material.alpha, 0.0f, 1.0f, "%.3f");
-      reset_accumulation_ |= ImGui::SliderFloat(
-          "Roughness(Principled)", &material.roughness, 0.0f, 1.0f, "%.3f");
-      reset_accumulation_ |= ImGui::ColorEdit3(
-          "Reflect(Principled)", &material.reflect[0],
-          ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
+      if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
+        reset_accumulation_ |= ImGui::SliderFloat(
+            "Subsurface", &material.subsurface, 0.0f, 1.0f, "%.3f");
+        reset_accumulation_ |= ImGui::SliderFloat(
+            "Metallic", &material.metallic, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Specular", &material.specular, 0.0f, 1.0f, "%.3f");
+        reset_accumulation_ |= ImGui::SliderFloat(
+            "SpecularTint", &material.specularTint, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Roughness", &material.roughness, 0.0f, 1.0f, "%.3f");
+        reset_accumulation_ |= ImGui::SliderFloat(
+            "Anisotropic", &material.anisotropic, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |=
+              ImGui::SliderFloat("Sheen", &material.sheen, 0.0f, 1.0f, "%.3f");
+        reset_accumulation_ |= ImGui::SliderFloat(
+            "SheenTint", &material.sheenTint, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Clearcoat", &material.clearcoat, 0.0f, 1.0f, "%.3f");
+        reset_accumulation_ |= ImGui::SliderFloat(
+            "ClearcoatGloss", &material.clearcoatGloss, 0.0f, 1.0f, "%.3f");
+      }
     }
 
 #if !defined(NDEBUG)
