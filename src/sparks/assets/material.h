@@ -39,8 +39,9 @@ struct Material {
   float clearcoat{0.0f};
   float clearcoatGloss{0.0f};
 
-  float Material::FresnelSchlick(float f0, float cosTheta) const;
+  float FresnelSchlick(float f0, float cosTheta) const;
   glm::vec3 FresnelSchlick(glm::vec3 f0, float cosTheta) const;
+  float Mix(float f1, float f2, float t) const;
   float D_GGX_TR(glm::vec3 normal, glm::vec3 bisector) const;
   float GeometryShadow(glm::vec3 normal,
                        glm::vec3 dir_in,

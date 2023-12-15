@@ -63,12 +63,20 @@ Material::Material(const glm::vec3 &albedo) : Material() {
   albedo_color = albedo;
 }
 
+float Material::Mix(float f1, float f2, float t) const {
+  return f1 * t + f2 * (1 - t);
+}
+
 glm::vec3 Material::FresnelSchlick(glm::vec3 f0, float cosTheta) const {
-  return f0 + (glm::vec3(1.0) - f0) * float(pow(1.0 - cosTheta, 5.0));
+  float m = 1 - cosTheta;
+  float m2 = m * m;
+  return f0 + (glm::vec3(1.0) - f0) * m2 * m2 * m;
 }
 
 float Material::FresnelSchlick(float f0, float cosTheta) const {
-  return f0 + (1.0 - f0) * float(pow(1.0 - cosTheta, 5.0));
+  float m = 1 - cosTheta;
+  float m2 = m * m;
+  return f0 + (1.0 - f0) * m2 * m2 * m;
 }
 
 float Material::D_GGX_TR(glm::vec3 normal, glm::vec3 bisector) const {
