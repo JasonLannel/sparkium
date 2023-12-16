@@ -17,13 +17,30 @@ Mesh::Mesh(const std::vector<Vertex> &vertices,
            const std::vector<uint32_t> &indices) {
   vertices_ = vertices;
   indices_ = indices;
+  isMoving_ = false;
+  movingDirection_ = glm::vec3{0.0f};
+  time0_ = 0.0;
+  time1_ = 0.0;
+}
+
+Mesh::Mesh(const std::vector<Vertex>& vertices,
+    const std::vector<uint32_t>& indices,
+    bool isMoving, const glm::vec3& movingDirection,
+    double time0, double time1) {
+  vertices_ = vertices;
+  indices_ = indices;
+  isMoving_ = isMoving;
+  movingDirection_ = movingDirection;
+  time0_ = time0;
+  time1_ = time1;
 }
 
 Mesh Mesh::Cube(const glm::vec3 &center, const glm::vec3 &size) {
   return {{}, {}};
 }
 
-Mesh Mesh::Sphere(const glm::vec3 &center, float radius) {
+Mesh Mesh::Sphere(const glm::vec3 &center, float radius, bool isMoving, 
+    const glm::vec3 &movingDirection, double time0, double time1) {
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
   auto pi = glm::radians(180.0f);
@@ -59,7 +76,7 @@ Mesh Mesh::Sphere(const glm::vec3 &center, float radius) {
       }
     }
   }
-  return {vertices, indices};
+  return {vertices, indices, isMoving, movingDirection, time0, time1};
 }
 
 AxisAlignedBoundingBox Mesh::GetAABB(const glm::mat4 &transform) const {
@@ -307,6 +324,10 @@ Mesh::Mesh(const tinyxml2::XMLElement *element) {
   if (mesh_type == "sphere") {
     glm::vec3 center{0.0f};
     float radius{1.0f};
+    bool isMoving = false;
+    glm::vec3 movingDirection{0.0f};
+    double time0 = 0.0;
+    double time1 = 0.0;
 
     auto child_element = element->FirstChildElement("center");
     if (child_element) {
@@ -318,7 +339,28 @@ Mesh::Mesh(const tinyxml2::XMLElement *element) {
       radius = std::stof(child_element->FindAttribute("value")->Value());
     }
 
-    *this = Mesh::Sphere(center, radius);
+    child_element = element->FirstChildElement("isMoving");
+    if (child_element) {
+      // convert a string "true" to bool true
+      isMoving = std::string(child_element->FindAttribute("value")->Value()) == "true";
+    }
+
+    child_element = element->FirstChildElement("movingDirection");
+    if (child_element) {
+      movingDirection = StringToVec3(child_element->FindAttribute("value")->Value());
+    }
+
+    child_element = element->FirstChildElement("time0");
+    if (child_element) {
+      time0 = std::stod(child_element->FindAttribute("value")->Value());
+    }
+
+    child_element = element->FirstChildElement("time1");
+    if (child_element) {
+      time1 = std::stod(child_element->FindAttribute("value")->Value());
+    }
+
+    *this = Mesh::Sphere(center, radius, isMoving, movingDirection, time0, time1);
   } else if (mesh_type == "obj") {
     Mesh::LoadObjFile(
         element->FirstChildElement("filename")->FindAttribute("value")->Value(),

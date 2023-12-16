@@ -11,6 +11,10 @@ class Mesh : public Model {
   Mesh(const Mesh &mesh);
   Mesh(const std::vector<Vertex> &vertices,
        const std::vector<uint32_t> &indices);
+  Mesh(const std::vector<Vertex> &vertices,
+       const std::vector<uint32_t> &indices,
+      bool isMoving, const glm::vec3 &movingDirection,
+      double time0, double time1);
   explicit Mesh(const tinyxml2::XMLElement *element);
   ~Mesh() override = default;
   [[nodiscard]] float TraceRay(const glm::vec3 &origin,
@@ -26,7 +30,8 @@ class Mesh : public Model {
   [[nodiscard]] uint32_t GetIndicesSize() const;
   static Mesh Cube(const glm::vec3 &center, const glm::vec3 &size);
   static Mesh Sphere(const glm::vec3 &center = glm::vec3{0.0f},
-                     float radius = 1.0f);
+                     float radius = 1.0f, bool isMoving = false, const glm::vec3 &movingDirection = glm::vec3{0.0f},
+                     double time0 = 0.0, double time1 = 0.0);
   static bool LoadObjFile(const std::string &obj_file_path, Mesh &mesh);
   void WriteObjFile(const std::string &file_path) const;
   void MergeVertices();
@@ -34,5 +39,10 @@ class Mesh : public Model {
  protected:
   std::vector<Vertex> vertices_;
   std::vector<uint32_t> indices_;
+  bool isMoving_{false};
+  // some variables related to moving sphere
+  glm::vec3 movingDirection_{0.0f};
+  double time0_{0.0};
+  double time1_{0.0};
 };
 }  // namespace sparks
