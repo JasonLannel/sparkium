@@ -7,6 +7,7 @@
 #include "sparks/assets/texture.h"
 #include "sparks/assets/util.h"
 #include "sparks/assets/pdf.h"
+#include "sparks/assets/ray.h"
 #include "vector"
 
 namespace sparks {
@@ -61,8 +62,7 @@ class Scene {
   ;
   [[nodiscard]] glm::vec4 SampleEnvmap(const glm::vec3 &direction) const;
 
-  float TraceRay(const glm::vec3 &origin,
-                 const glm::vec3 &direction,
+  float TraceRay(const Ray &ray,
                  float t_min,
                  float t_max,
                  HitRecord *hit_record) const;

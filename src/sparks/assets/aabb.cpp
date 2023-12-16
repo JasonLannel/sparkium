@@ -28,18 +28,21 @@ AxisAlignedBoundingBox::AxisAlignedBoundingBox(const glm::vec3 &position) {
   z_high = position.z;
 }
 
-bool AxisAlignedBoundingBox::IsIntersect(const glm::vec3 &origin,
-                                         const glm::vec3 &direction,
+bool AxisAlignedBoundingBox::IsIntersect(const Ray &ray,
                                          float t_min,
                                          float t_max) const {
-  if (x_low <= origin.x && origin.x <= x_high && y_low <= origin.y &&
-      origin.y <= y_high && z_low <= origin.z && origin.z <= z_high) {
+  if (x_low <= ray.origin().x && ray.origin().x <= x_high &&
+      y_low <= ray.origin().y && ray.origin().y <= y_high &&
+      z_low <= ray.origin().z && ray.origin().z <= z_high) {
     return true;
   }
   float intersection_range_low = t_max * (1.0f + t_min);
   float intersection_range_high = 0.0f;
   float t;
   glm::vec3 intersection;
+  glm::vec3 origin = ray.origin();
+  glm::vec3 direction = ray.direction();
+
 #define TestIntersection(x, y, z)                                     \
   if (std::abs(direction.x) > 1e-5) {                                 \
     float inv_d = 1.0f / direction.x;                                 \

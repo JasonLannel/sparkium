@@ -94,11 +94,23 @@ AxisAlignedBoundingBox Mesh::GetAABB(const glm::mat4 &transform) const {
   return result;
 }
 
-float Mesh::TraceRay(const glm::vec3 &origin,
-                     const glm::vec3 &direction,
+float Mesh::TraceRay(const Ray &ray,
                      float t_min,
                      HitRecord *hit_record) const {
   float result = -1.0f;
+
+  // add motion blur method
+  Ray movedRay = ray;
+  if (this->IsMoving()) {
+    glm::vec3 origin = ray.origin();
+    glm::vec3 direction = ray.direction();
+    double time = ray.time();
+    origin -= this->GetMovingDirection() *
+              glm::vec3((time - this->GetTime0()) /
+                        (this->GetTime1() - this->GetTime0()));
+    Ray movedRay(origin, direction, time);
+  }
+
   for (int i = 0; i < indices_.size(); i += 3) {
     int j = i + 1, k = i + 2;
     const auto &v0 = vertices_[indices_[i]];
@@ -106,12 +118,12 @@ float Mesh::TraceRay(const glm::vec3 &origin,
     const auto &v2 = vertices_[indices_[k]];
 
     glm::mat3 A = glm::mat3(v1.position - v0.position,
-                            v2.position - v0.position, -direction);
+                            v2.position - v0.position, -ray.direction());
     if (std::abs(glm::determinant(A)) < 1e-9f) {
       continue;
     }
     A = glm::inverse(A);
-    auto uvt = A * (origin - v0.position);
+    auto uvt = A * (ray.origin() - v0.position);
     auto &t = uvt.z;
     if (t < t_min || (result > 0.0f && t > result)) {
       continue;
@@ -119,13 +131,13 @@ float Mesh::TraceRay(const glm::vec3 &origin,
     auto &u = uvt.x;
     auto &v = uvt.y;
     auto w = 1.0f - u - v;
-    auto position = origin + t * direction;
+    auto position = ray.origin() + t * ray.direction();
     if (u >= 0.0f && v >= 0.0f && u + v <= 1.0f) {
       result = t;
       if (hit_record) {
         auto geometry_normal = glm::normalize(
             glm::cross(v2.position - v0.position, v1.position - v0.position));
-        if (glm::dot(geometry_normal, direction) < 0.0f) {
+        if (glm::dot(geometry_normal, ray.direction()) < 0.0f) {
           hit_record->position = position;
           hit_record->geometry_normal = geometry_normal;
           hit_record->normal = v0.normal * w + v1.normal * u + v2.normal * v;
@@ -147,6 +159,12 @@ float Mesh::TraceRay(const glm::vec3 &origin,
       }
     }
   }
+
+  // after motion blur, move the hit point back
+  hit_record->position += this->GetMovingDirection() *
+                          glm::vec3((ray.time() - this->GetTime0()) /
+                                    (this->GetTime1() - this->GetTime0()));
+
   return result;
 }
 

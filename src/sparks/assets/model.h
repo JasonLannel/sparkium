@@ -6,14 +6,14 @@
 #include "sparks/assets/vertex.h"
 #include "sparks/assets/pdf.h"
 #include "sparks/util/util.h"
+#include "sparks/assets/ray.h"
 #include "vector"
 
 namespace sparks {
 class Model {
  public:
   virtual ~Model() = default;
-  [[nodiscard]] virtual float TraceRay(const glm::vec3 &origin,
-                                       const glm::vec3 &direction,
+  [[nodiscard]] virtual float TraceRay(const Ray &ray,
                                        float t_min,
                                        HitRecord *hit_record) const = 0;
   [[nodiscard]] virtual AxisAlignedBoundingBox GetAABB(

@@ -33,7 +33,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
   for (register int i = 0, max_depth = render_settings_->num_bounces; i < max_depth;
        ++i) {
     const float RR = 0.9, INV_RR = 1.0 / RR;
-    if (scene_->TraceRay(ray.origin(), ray.direction(), 1e-3f, 1e4f,
+    if (scene_->TraceRay(ray, 1e-3f, 1e4f,
                          &hit_record) > 0.0f) {
       auto &material =
           scene_->GetEntity(hit_record.hit_entity_id).GetMaterial();

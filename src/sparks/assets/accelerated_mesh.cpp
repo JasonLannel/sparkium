@@ -16,8 +16,7 @@ AcceleratedMesh::AcceleratedMesh(const std::vector<Vertex> &vertices,
   CreatePdf();
 }
 
-void AcceleratedMesh::IntersectSlice(const glm::vec3 &origin,
-                    const glm::vec3 &direction,
+void AcceleratedMesh::IntersectSlice(const Ray &ray,
                     int index,
                     float t_min,
                     float &result,
@@ -26,6 +25,8 @@ void AcceleratedMesh::IntersectSlice(const glm::vec3 &origin,
   const auto &v0 = vertices_[indices_[i]];
   const auto &v1 = vertices_[indices_[i + 1]];
   const auto &v2 = vertices_[indices_[i + 2]];
+  glm::vec3 origin = ray.origin();
+  glm::vec3 direction = ray.direction();
 
   glm::mat3 A = glm::mat3(v1.position - v0.position, v2.position - v0.position,
                           -direction);
@@ -69,25 +70,41 @@ void AcceleratedMesh::IntersectSlice(const glm::vec3 &origin,
   }
 }
 
-float AcceleratedMesh::TraceRay(const glm::vec3 &origin,
-                                const glm::vec3 &direction,
+float AcceleratedMesh::TraceRay(const Ray &ray,
                                 float t_min,
                                 HitRecord *hit_record) const {
   float result = -1.0f;
   std::vector<int> q;
   q.push_back(bvh_nodes_.size() - 1);
   int head = 0;
+
+  // add motion blur method
+  Ray movedRay = ray;
+  if (this->IsMoving()) {
+	glm::vec3 origin = ray.origin();
+	glm::vec3 direction = ray.direction();
+	double time = ray.time();
+        origin -= this->GetMovingDirection() *
+                  glm::vec3((time - this->GetTime0()) / (this->GetTime1() - this->GetTime0()));                                                                       
+	Ray movedRay(origin, direction, time);
+  }
+
   while (head < q.size()) {
     int cur = q[head++];
-    if (bvh_nodes_[cur].aabb.IsIntersect(origin, direction, t_min, result)) {
+    if (bvh_nodes_[cur].aabb.IsIntersect(movedRay, t_min, result)) {
       if (bvh_nodes_[cur].child[0] == -1) {
-        IntersectSlice(origin, direction, cur, t_min, result, hit_record);
+        IntersectSlice(movedRay, cur, t_min, result, hit_record);
       } else {
         q.push_back(bvh_nodes_[cur].child[0]);
         q.push_back(bvh_nodes_[cur].child[1]);
       }
     }
   }
+
+  // after motion blur, move the hit point back
+  hit_record->position += this->GetMovingDirection() *
+						  glm::vec3((ray.time() - this->GetTime0()) / (this->GetTime1() - this->GetTime0()));
+
   return result;
 }
 
@@ -237,7 +254,8 @@ float AcceleratedMesh::SamplePdfValue(glm::vec3 origin,
     HitRecord rec;
     float res = 0;
     glm::vec3 start = origin;
-    while (this->TraceRay(start, direction, 1e-3f, &rec) > 0.0f) {
+    Ray ray = Ray(origin, direction);
+    while (this->TraceRay(ray, 1e-3f, &rec) > 0.0f) {
         float dis_squared =
             (rec.position - origin).length() * (rec.position - origin).length();
         float cosine = std::fabs(dot(direction, rec.normal));

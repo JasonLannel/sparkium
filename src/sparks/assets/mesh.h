@@ -17,8 +17,7 @@ class Mesh : public Model {
       double time0, double time1);
   explicit Mesh(const tinyxml2::XMLElement *element);
   ~Mesh() override = default;
-  [[nodiscard]] float TraceRay(const glm::vec3 &origin,
-                               const glm::vec3 &direction,
+  [[nodiscard]] float TraceRay(const Ray &ray,
                                float t_min,
                                HitRecord *hit_record) const override;
   const char *GetDefaultEntityName() override;
@@ -35,6 +34,18 @@ class Mesh : public Model {
   static bool LoadObjFile(const std::string &obj_file_path, Mesh &mesh);
   void WriteObjFile(const std::string &file_path) const;
   void MergeVertices();
+  bool IsMoving() const {
+    return isMoving_;
+  };
+  double GetTime0() const {
+    return time0_;
+  };
+  double GetTime1() const {
+	return time1_;
+  };
+  glm::vec3 GetMovingDirection() const {
+        return movingDirection_;
+  };
 
  protected:
   std::vector<Vertex> vertices_;

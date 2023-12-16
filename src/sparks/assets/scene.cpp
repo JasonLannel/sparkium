@@ -190,8 +190,7 @@ const std::vector<float> &Scene::GetEnvmapCdf() const {
   return envmap_cdf_;
 }
 
-float Scene::TraceRay(const glm::vec3 &origin,
-                      const glm::vec3 &direction,
+float Scene::TraceRay(const Ray &ray,
                       float t_min,
                       float t_max,
                       HitRecord *hit_record) const {
@@ -203,15 +202,14 @@ float Scene::TraceRay(const glm::vec3 &origin,
     auto &transform = entity.GetTransformMatrix();
     auto inv_transform = glm::inverse(transform);
     auto transformed_direction =
-        glm::vec3{inv_transform * glm::vec4{direction, 0.0f}};
+        glm::vec3{inv_transform * glm::vec4{ray.direction(), 0.0f}};
     auto transformed_direction_length = glm::length(transformed_direction);
     if (transformed_direction_length < 1e-6) {
       continue;
     }
-    local_result = entity.GetModel()->TraceRay(
-        inv_transform * glm::vec4{origin, 1.0f},
-        transformed_direction / transformed_direction_length, t_min,
-        hit_record ? &local_hit_record : nullptr);
+    Ray local_ray = Ray(inv_transform * glm::vec4{ray.origin(), 1.0f},
+                  transformed_direction / transformed_direction_length);
+    local_result = entity.GetModel()->TraceRay(local_ray, t_min, hit_record ? &local_hit_record : nullptr);
     local_result /= transformed_direction_length;
     if (local_result > t_min && local_result < t_max &&
         (result < 0.0f || local_result < result)) {
@@ -353,7 +351,7 @@ Scene::Scene(const std::string &filename) : Scene() {
         focal_length =
             std::stof(grandchild_element->FindAttribute("value")->Value());
       }
-      camera_ = Camera(fov, aperture, focal_length);
+      camera_ = Camera(fov, aperture, focal_length, 0.0, 1.0);
     } else if (element_type == "model") {
       Mesh mesh = Mesh(child_element);
       Material material{};

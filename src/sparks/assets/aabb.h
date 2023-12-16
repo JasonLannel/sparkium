@@ -1,5 +1,6 @@
 #pragma once
 #include "glm/glm.hpp"
+#include "sparks/assets/ray.h"
 
 namespace sparks {
 struct AxisAlignedBoundingBox {
@@ -16,8 +17,7 @@ struct AxisAlignedBoundingBox {
                          float z_low,
                          float z_high);
   AxisAlignedBoundingBox(const glm::vec3 &position = glm::vec3{0.0f});
-  [[nodiscard]] bool IsIntersect(const glm::vec3 &origin,
-                                 const glm::vec3 &direction,
+  [[nodiscard]] bool IsIntersect(const Ray &ray,
                                  float t_min,
                                  float t_max) const;
   AxisAlignedBoundingBox operator&(const AxisAlignedBoundingBox &aabb) const;
