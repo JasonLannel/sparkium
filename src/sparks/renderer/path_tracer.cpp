@@ -5,7 +5,6 @@
 #include <glm/ext/scalar_constants.hpp>
 
 #include <time.h>
-#include <vector>
 
 namespace sparks {
 PathTracer::PathTracer(const RendererSettings *render_settings,
@@ -25,26 +24,14 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
     int depth;
   };
   std::mt19937 rd(sample ^ x ^ y ^ std::time(0));
-  std::uniform_real_distribution<float> RR_Validate(0.0f, 1.0f);
+  std::uniform_real_distribution<float> RandomProb(0.0f, 1.0f);
   Pdf *Light = scene_->GetLightPdf();
-  std::vector<Note> q;
-  q.push_back(Note{ray, glm::vec3(1), -1, render_settings_->num_bounces});
-  glm::vec3 throughput;
+  glm::vec3 throughput(1.0f);
   glm::vec3 radiance(0.0f);
   glm::vec3 origin, direction, normal, albedo;
-  int skip_id;
-  int depth;
   HitRecord hit_record;
-  int idx = 0;
-  while (idx < q.size()) {
-    Note thead = q[idx];
-    ++idx;
-    ray = thead.ray;
-    throughput = thead.throughput;
-    skip_id = thead.skip_id;
-    depth = thead.depth;
-    if (depth < 0)
-      continue;
+  for (register int i = 0, max_depth = render_settings_->num_bounces; i < max_depth;
+       ++i) {
     const float RR = 0.9, INV_RR = 1.0 / RR;
     if (scene_->TraceRay(ray.origin(), ray.direction(), 1e-3f, 1e4f,
                          &hit_record) > 0.0f) {
@@ -52,13 +39,15 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           scene_->GetEntity(hit_record.hit_entity_id).GetMaterial();
       radiance += throughput * material.emission * material.emission_strength;
       if (material.material_type == MATERIAL_TYPE_EMISSION)
-        continue;
-      if (RR_Validate(rd) > RR) 
-        continue;
+        break;
+      if (RandomProb(rd) > RR)
+        break;
       origin = hit_record.position;
-      q.push_back(Note{Ray(origin, ray.direction(), ray.time()),
-                  throughput * INV_RR * (1 - material.alpha),
-                  hit_record.hit_entity_id, depth - 1});
+      if (RandomProb(rd) > material.alpha) {
+        //Alpha Shadow
+        ray = Ray(hit_record.position, ray.direction(), ray.time());
+        continue;
+      }
       albedo = material.albedo_color;
       if (material.albedo_texture_id >= 0) {
         albedo *=
@@ -82,19 +71,21 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           throughput *= albedo * scatter / pdf;
           if (Light != nullptr)
             delete Gen;
-        } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
+      } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
           if (glm::dot(normal, ray.direction()) > 0)
             normal = -normal;
           throughput *= albedo;
           direction = glm::reflect(ray.direction(), normal);
-        } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
-            // 别忘记补上折射, 还没实现，这里是有问题的，只是用在 BRDF 时对
+      } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
+          // 折射材料处理
+      } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
+          // 别忘记补上折射, 还没实现，这里是有问题的，只是用在 BRDF 时对
           if (glm::dot(normal, ray.direction()) > 0)
           normal = -normal;
           CosineHemispherePdf Dialectric(normal);
           Pdf *Gen;
           if (Light != nullptr) {
-          Gen = new MixturePdf(&Dialectric, Light, 0.5f);
+            Gen = new MixturePdf(&Dialectric, Light, 0.5f);
           } else {
             Gen = &Dialectric;
           }
@@ -104,10 +95,12 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
               normal, -ray.direction(), direction, onb.u(), onb.v(), albedo);
           if (Light != nullptr)
           delete Gen;
-        }
-        q.push_back(Note{Ray(origin, direction, ray.time()), material.alpha * INV_RR * throughput, -1, depth - 1});
+      }
+      ray = Ray(origin, direction, ray.time());
+      throughput *= INV_RR;
     } else {
       radiance += throughput * glm::vec3{scene_->SampleEnvmap(ray.direction())};
+      break;
     }
   }
   if (Light != nullptr)

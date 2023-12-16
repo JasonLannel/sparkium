@@ -75,6 +75,7 @@ glm::vec3 Material::DisneyPrincipled(glm::vec3 N,
                                      glm::vec3 X,
                                      glm::vec3 Y, glm::vec3 C) const {
   auto sqr = [](float x) { return x * x; };
+  auto max = [](float x, float y) { return x > y ? x : y; };
   auto Mix = [](float f1, float f2, float t) { return f1 * t + f2 * (1 - t); };
   auto GlmMix = [](glm::vec3 f1, glm::vec3 f2, float t) {
     return f1 * t + f2 * (1.f - t);
@@ -97,7 +98,7 @@ glm::vec3 Material::DisneyPrincipled(glm::vec3 N,
       return 1 / PI;
     float a2 = sqr(a);
     float t = 1 + (a2 - 1) * NdotH * NdotH;
-    return (a2 - 1) / (PI * log(a2) * t);
+    return (a2 - 1) / float(PI * log(a2) * t);
   };
   auto GTR2 = [sqr](float NdotH, float a) { 
       float a2 = sqr(a);
@@ -146,8 +147,8 @@ glm::vec3 Material::DisneyPrincipled(glm::vec3 N,
              C, metallic);
   glm::vec3 Fs = Cs + (glm::vec3(1) - Cs) * FresnelSchlick(LdotH);
   float aspect = sqrt(1 - 0.9 * anisotropic);
-  float ax = sqr(roughness) / aspect;
-  float ay = sqr(roughness) * aspect;
+  float ax = max(0.001f, sqr(roughness) / aspect);
+  float ay = max(0.001f, sqr(roughness) * aspect);
   float Gs = smithG_GGX_aniso(NdotL, glm::dot(L, X), glm::dot(L, Y), ax, ay) *
              smithG_GGX_aniso(NdotV, glm::dot(V, X), glm::dot(V, Y), ax, ay);
   float Ds = GTR2_aniso(NdotH, glm::dot(H, X), glm::dot(H, Y), ax, ay);
