@@ -8,7 +8,7 @@ namespace sparks {
 class Ray {
  public:
 
-  Ray(glm::vec3 &origin, glm::vec3 &direction, double time)
+  Ray(const glm::vec3 &origin, const glm::vec3 &direction, double time)
       : orig_(origin), dir_(direction), time_(time) {}
 
   glm::vec3 origin() const {
