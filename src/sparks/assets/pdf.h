@@ -8,6 +8,7 @@ class Onb {
  public:
   Onb();
   Onb(glm::vec3 z_dir);
+  Onb(glm::vec3 z_dir, glm::vec3 tan_dir);
   glm::vec3 u() const;
   glm::vec3 v() const;
   glm::vec3 w() const;
@@ -31,6 +32,7 @@ class Pdf {
 class UniformSpherePdf : public Pdf {
  public:
   UniformSpherePdf(glm::vec3 normal);
+  UniformSpherePdf(glm::vec3 normal, glm::vec3 tangent);
   glm::vec3 Generate(glm::vec3 origin, std::mt19937 &rd) const override;
   float Value(glm::vec3 origin, const glm::vec3 direction) const override;
 
@@ -41,6 +43,7 @@ class UniformSpherePdf : public Pdf {
 class UniformHemispherePdf : public Pdf {
  public:
   UniformHemispherePdf(glm::vec3 normal);
+  UniformHemispherePdf(glm::vec3 normal, glm::vec3 tangent);
   glm::vec3 Generate(glm::vec3 origin, std::mt19937 &rd) const override;
   float Value(glm::vec3 origin, const glm::vec3 direction) const override;
 
@@ -51,6 +54,7 @@ class UniformHemispherePdf : public Pdf {
 class CosineHemispherePdf : public Pdf {
  public:
   CosineHemispherePdf(glm::vec3 normal);
+  CosineHemispherePdf(glm::vec3 normal, glm::vec3 tangent);
   glm::vec3 Generate(glm::vec3 origin, std::mt19937 &rd) const override;
   float Value(glm::vec3 origin, glm::vec3 direction) const override;
 

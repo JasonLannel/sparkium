@@ -28,7 +28,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
   Pdf *Light = scene_->GetLightPdf();
   glm::vec3 throughput(1.0f);
   glm::vec3 radiance(0.0f);
-  glm::vec3 origin, direction, normal, albedo;
+  glm::vec3 origin, direction, normal, tangent, albedo;
   HitRecord hit_record;
   for (register int i = 0, max_depth = render_settings_->num_bounces; i < max_depth;
        ++i) {
@@ -55,10 +55,23 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
                 hit_record.tex_coord)};
       }
       normal = hit_record.normal;
+      tangent = hit_record.tangent;
+      if (material.use_normal_texture) {
+        Onb onb(normal, tangent);
+        glm::vec3 normalFromTex =
+            glm::vec3{scene_->GetTextures()[material.normal_texture_id].Sample(
+                hit_record.tex_coord)};
+        normalFromTex = normalFromTex * 2.0f - glm::vec3(1.0f);
+        normalFromTex[0] *= material.bumpScale;
+        normalFromTex[1] *= material.bumpScale;
+        normalFromTex[2] = 0;
+        normalFromTex[2] = sqrt(1.f - glm::dot(normalFromTex, normalFromTex));
+        normal = onb.local(normalFromTex);
+      }
       if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
         if (glm::dot(normal, ray.direction()) > 0)
           normal = -normal;
-          CosineHemispherePdf Dialectric(normal);
+          CosineHemispherePdf Dialectric(normal, tangent);
           Pdf *Gen;
           if (Light != nullptr) {
             Gen = new MixturePdf(&Dialectric, Light, 0.5f);
@@ -82,7 +95,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           // 别忘记补上折射, 还没实现，这里是有问题的，只是用在 BRDF 时对
           if (glm::dot(normal, ray.direction()) > 0)
           normal = -normal;
-          CosineHemispherePdf Dialectric(normal);
+          CosineHemispherePdf Dialectric(normal, tangent);
           Pdf *Gen;
           if (Light != nullptr) {
             Gen = new MixturePdf(&Dialectric, Light, 0.5f);

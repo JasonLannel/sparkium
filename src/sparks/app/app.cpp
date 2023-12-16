@@ -519,6 +519,10 @@ void App::UpdateImGui() {
           ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
       reset_accumulation_ |=
           scene.TextureCombo("Albedo Texture", &material.albedo_texture_id);
+      reset_accumulation_ |=
+          ImGui::Checkbox("Use Normal Texture", &material.use_normal_texture);
+      reset_accumulation_ |=
+          scene.TextureCombo("Normal Texture", &material.normal_texture_id);
       reset_accumulation_ |= ImGui::ColorEdit3(
           "Emission", &material.emission[0],
           ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
@@ -527,6 +531,8 @@ void App::UpdateImGui() {
                              0.0f, 1e5f, "%.3f", ImGuiSliderFlags_Logarithmic);
       reset_accumulation_ |=
           ImGui::SliderFloat("Alpha", &material.alpha, 0.0f, 1.0f, "%.3f");
+      reset_accumulation_ |=
+          ImGui::SliderFloat("Bump Scale", &material.bumpScale, -1.0f, 1.0f, "%.3f");
       if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
         reset_accumulation_ |= ImGui::SliderFloat(
             "Subsurface", &material.subsurface, 0.0f, 1.0f, "%.3f");

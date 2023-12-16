@@ -15,6 +15,18 @@ Onb::Onb(glm::vec3 z_dir) {
                                            : glm::vec3(1.0, 0.0, 0.0))));
   _v = glm::normalize(glm::cross(_w, _u));
 }
+Onb::Onb(glm::vec3 z_dir, glm::vec3 tan_dir) {
+  _w = glm::normalize(z_dir);
+  tan_dir = glm::normalize(tan_dir);
+  if (abs(glm::dot(tan_dir, z_dir)) < 0.4) {
+    _u = glm::normalize(tan_dir - z_dir * glm::dot(tan_dir, z_dir));
+  } else {
+    _u = glm::normalize(
+        glm::cross(_w, (std::abs(_w.x) > 0.1 ? glm::vec3(0.0, 1.0, 0.0)
+                                             : glm::vec3(1.0, 0.0, 0.0))));
+  }
+  _v = glm::normalize(glm::cross(_w, _u));
+}
 glm::vec3 Onb::u() const {
   return _u;
 }
@@ -34,6 +46,9 @@ glm::vec3 Onb::local(glm::vec3 t) const {
 UniformSpherePdf::UniformSpherePdf(glm::vec3 normal){
   uvw = Onb(normal);
 }
+UniformSpherePdf::UniformSpherePdf(glm::vec3 normal, glm::vec3 tangent) {
+  uvw = Onb(normal, tangent);
+}
 glm::vec3 UniformSpherePdf::Generate(glm::vec3 origin, std::mt19937 &rd) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float theta = dist(rd) * 2.0f * PI;
@@ -48,6 +63,9 @@ float UniformSpherePdf::Value(glm::vec3 origin, glm::vec3 direction) const {
 
 UniformHemispherePdf::UniformHemispherePdf(glm::vec3 normal) {
   uvw = Onb(normal);
+}
+UniformHemispherePdf::UniformHemispherePdf(glm::vec3 normal, glm::vec3 tangent) {
+  uvw = Onb(normal, tangent);
 }
 glm::vec3 UniformHemispherePdf::Generate(glm::vec3 origin,
                                          std::mt19937 &rd) const {
@@ -66,6 +84,9 @@ float UniformHemispherePdf::Value(glm::vec3 origin, glm::vec3 direction) const {
 
 CosineHemispherePdf::CosineHemispherePdf(glm::vec3 normal) {
   uvw = Onb(normal);
+}
+CosineHemispherePdf::CosineHemispherePdf(glm::vec3 normal, glm::vec3 tangent) {
+  uvw = Onb(normal, tangent);
 }
 glm::vec3 CosineHemispherePdf::Generate(glm::vec3 origin,
                                         std::mt19937 &rd) const {

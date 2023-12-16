@@ -137,7 +137,7 @@ glm::vec3 Material::DisneyPrincipled(glm::vec3 N,
   // Sheen
   float respLum = 0.2126f * C.x + 0.7152f * C.y +
                   0.0722f * C.z;
-  glm::vec3 Ctint = C / respLum;
+  glm::vec3 Ctint = respLum > 0 ? C / respLum : glm::vec3(1);
   glm::vec3 Fsh =
       GlmMix(glm::vec3(1), Ctint, sheenTint) * sheen *
                   FresnelSchlick(LdotH);
@@ -163,6 +163,6 @@ glm::vec3 Material::DisneyPrincipled(glm::vec3 N,
   glm::vec3 Metallic = Fs * Gs * Ds;
   glm::vec3 Sheen = Fsh;
   glm::vec3 Clearcoat = 0.25f * clearcoat * Fc * Gc * Dc;
-  return GlmMix(Metallic, Dialectric + Sheen, metallic) + Clearcoat;
+  return (Dialectric + Sheen) * (1 - metallic) + Metallic + Clearcoat;
 }
 }  // namespace sparks
