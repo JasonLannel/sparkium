@@ -90,7 +90,12 @@ float AcceleratedMesh::TraceRay(const Ray &ray,
 	glm::vec3 origin = ray.origin();
 	glm::vec3 direction = ray.direction();	
     assert (this->GetMovingDirection() != glm::vec3(0.0f));
-    origin -= this->GetMovingDirection() * glm::vec3(time);                                                                       
+    // use quadratic interpolation to calculate the new origin
+    origin -= this->GetMovingDirection() *
+              glm::vec3((time - this->GetTime0()) /
+                        (this->GetTime1() - this->GetTime0())) *
+              glm::vec3((time - this->GetTime0()) /
+                        (this->GetTime1() - this->GetTime0()));                                                                       
 	movedRay = Ray(origin, direction, time);
   }
 
@@ -107,7 +112,11 @@ float AcceleratedMesh::TraceRay(const Ray &ray,
   }
   if (IsMoving()) {
     // after motion blur, move the hit point back
-    hit_record->position += this->GetMovingDirection() * glm::vec3(ray.time());
+    hit_record->position += this->GetMovingDirection() *
+                            glm::vec3((time - this->GetTime0()) /
+                                      (this->GetTime1() - this->GetTime0())) *
+                            glm::vec3((time - this->GetTime0()) /
+                                      (this->GetTime1() - this->GetTime0()));
   }
 
   return result;
