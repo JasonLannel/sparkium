@@ -21,9 +21,14 @@ bool Camera::ImGuiItems() {
   value_changed |=
       ImGui::SliderFloat("Focal Length", &focal_length_, 0.1f, 10000.0f, "%.2f",
                          ImGuiSliderFlags_Logarithmic);
+  value_changed |=
+      ImGui::SliderFloat("Focus Distance", &focus_distance_, focal_length_ + 0.01f, 10000.0f, "%.2f",
+                         ImGuiSliderFlags_Logarithmic);
   value_changed |= ImGui::SliderFloat("Clamp", &clamp_, 1.0f, 1000000.0f,
                                       "%.2f", ImGuiSliderFlags_Logarithmic);
   ImGui::SliderFloat("Gamma", &gamma_, 0.1f, 10.0f);
+  ImGui::SliderFloat("CoC", &CoC_, 0.001f, 1.0f);
+  ImGui::Text("Front DOF: %.3lf; Back DOF: %.3lf", GetFrontDOF(),GetBackDOF());
   return value_changed;
 }
 
@@ -51,15 +56,17 @@ void Camera::GenerateRay(float aspect,
   float cos_theta = std::cos(theta);
   origin =
       glm::vec3{glm::vec2{sin_theta, cos_theta} * rand_r * aperture_, 0.0f};
+  float image_dis = 1.0f / (1.0f / focal_length_ - 1.0f / focus_distance_);
+  auto image_origin =
+      glm::vec3{-tan_fov * aspect * pos.x, -tan_fov * pos.y, 1.0f} * image_dis;
   glm::vec3 direction = glm::normalize(
-      glm::vec3{tan_fov * aspect * pos.x, tan_fov * pos.y, -1.0f} *
-          focal_length_ -
-      origin);
+      (origin - image_origin) / image_dis * focus_distance_ - origin);
   float time = time_0_ + rand_t * (time_1_ - time_0_);
   ray = Ray{origin, direction, time};
 }
 
-Camera::Camera(float fov, float aperture, float focal_length, float time_0, float time_1)
-    : fov_(fov), aperture_(aperture), focal_length_(focal_length), time_0_(time_0), time_1_(time_1) {
+Camera::Camera(float fov, float aperture, float focal_length, float time_0, float time_1, float focus_distance)
+    : fov_(fov), aperture_(aperture), focal_length_(focal_length), time_0_(time_0), time_1_(time_1){
+    focus_distance_ = focus_distance <= focal_length + 0.01f ? focal_length + 0.01f : focus_distance;
 }
 }  // namespace sparks

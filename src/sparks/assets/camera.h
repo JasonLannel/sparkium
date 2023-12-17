@@ -5,7 +5,7 @@
 namespace sparks {
 class Camera {
  public:
-  Camera(float fov = 60.0f, float aperture = 0.0f, float focal_length = 3.0f, float time_0 = 0.0, float time_1 = 1.0);
+  Camera(float fov = 60.0f, float aperture = 0.0f, float focal_length = 3.0f, float time_0 = 0.0, float time_1 = 1.0, float focus_distance = 4.0f);
   [[nodiscard]] glm::mat4 GetProjectionMatrix(float aspect,
                                               float t_min,
                                               float t_max) const;
@@ -35,6 +35,18 @@ class Camera {
   [[nodiscard]] float GetGamma() const {
     return gamma_;
   }
+  [[nodiscard]] float GetFrontDOF() const {
+    return CoC_ * focus_distance_ * (focus_distance_-focal_length_) /
+            (aperture_ * focal_length_ + CoC_ * (focus_distance_-focal_length_));
+  }
+  [[nodiscard]] float GetBackDOF() const {
+    if (aperture_ * focal_length_ - CoC_ * (focus_distance_ - focal_length_) <
+        1e-4)
+      return CoC_ * focus_distance_ * (focus_distance_ - focal_length_) * 1e4;
+    return CoC_ * focus_distance_ * (focus_distance_ - focal_length_) /
+           (aperture_ * focal_length_ -
+            CoC_ * (focus_distance_ - focal_length_));
+  }
 
  private:
   float fov_{60.0f};
@@ -45,5 +57,8 @@ class Camera {
   // motion blur parameters
   float time_0_{0.0};
   float time_1_{1.0};
+  // field of view
+  float focus_distance_{4.0f};
+  float CoC_{0.2f};
 };
 }  // namespace sparks
