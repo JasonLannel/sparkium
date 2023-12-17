@@ -54,6 +54,6 @@ class Mesh : public Model {
   // some variables related to moving sphere
   glm::vec3 movingDirection_{0.0f};
   double time0_{0.0};
-  double time1_{0.0};
+  double time1_{1.0};
 };
 }  // namespace sparks

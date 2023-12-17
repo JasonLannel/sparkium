@@ -5,6 +5,10 @@
 
 namespace sparks {
 AcceleratedMesh::AcceleratedMesh(const Mesh &mesh) : Mesh(mesh) {
+    _isMoving = mesh.IsMoving();
+    _movingDirection = mesh.GetMovingDirection();
+    _time0 = mesh.GetTime0();
+    _time1 = mesh.GetTime1();
   BuildAccelerationStructure();
   CreatePdf();
 }
@@ -80,13 +84,14 @@ float AcceleratedMesh::TraceRay(const Ray &ray,
 
   // add motion blur method
   Ray movedRay = ray;
+  double time = ray.time();
+
   if (this->IsMoving()) {
 	glm::vec3 origin = ray.origin();
-	glm::vec3 direction = ray.direction();
-	double time = ray.time();
-        origin -= this->GetMovingDirection() *
-                  glm::vec3((time - this->GetTime0()) / (this->GetTime1() - this->GetTime0()));                                                                       
-	Ray movedRay(origin, direction, time);
+	glm::vec3 direction = ray.direction();	
+    assert (this->GetMovingDirection() != glm::vec3(0.0f));
+    origin -= this->GetMovingDirection() * glm::vec3(time);                                                                       
+	movedRay = Ray(origin, direction, time);
   }
 
   while (head < q.size()) {
@@ -100,10 +105,10 @@ float AcceleratedMesh::TraceRay(const Ray &ray,
       }
     }
   }
-
-  // after motion blur, move the hit point back
-  hit_record->position += this->GetMovingDirection() *
-						  glm::vec3((ray.time() - this->GetTime0()) / (this->GetTime1() - this->GetTime0()));
+  if (IsMoving()) {
+    // after motion blur, move the hit point back
+    hit_record->position += this->GetMovingDirection() * glm::vec3(ray.time());
+  }
 
   return result;
 }

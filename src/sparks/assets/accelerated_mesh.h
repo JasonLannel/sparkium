@@ -26,16 +26,16 @@ class AcceleratedMesh : public Mesh {
   float SamplePdfValue(glm::vec3 origin, glm::vec3 direction) const override;
   float GetArea() const override;
   bool IsMoving() const {
-	return isMoving_;
+	return _isMoving;
   };
   double GetTime0() const {
-        return time0_;
+        return _time0;
   };
   double GetTime1() const {
-        return time1_;
+        return _time1;
   };
   glm::vec3 GetMovingDirection() const {
-        return movingDirection_;
+        return _movingDirection;
   };
 
  private:
@@ -56,6 +56,11 @@ class AcceleratedMesh : public Mesh {
   std::vector<TreeNode> bvh_nodes_{};
   float area_;
   std::vector<float> probList_;
+  bool _isMoving{false};
+  // some variables related to moving sphere
+  glm::vec3 _movingDirection{0.0f};
+  double _time0{0.0};
+  double _time1{1.0};
 };
 
 }  // namespace sparks

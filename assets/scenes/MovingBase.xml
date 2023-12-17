@@ -21,7 +21,7 @@
 	<model type="sphere">
 		<center value="0.0 0.0 0.0"/>
 		<radius value="0.5"/>
-		<isMoving value="false"/>
+		<isMoving value="0"/>
 
 		<transform type="translate" value="0.0 0.5 0.0"/>
 
@@ -33,10 +33,10 @@
 
     <model type="sphere">
 		<center value="0.0 0.0 -2.0"/>
-		<radius value="0.2"/>
+		<radius value="0.3"/>
         <!-- add a boolean value indicating moving here -->
-        <isMoving value="true"/>
-		<MovingDirection value="1.0 0.0 0.0"/>
+        <isMoving value="1"/>
+		<movingDirection value="0.3 0.3 0.3"/>
 		<time0 value="0.0"/>
 		<time1 value="1.0"/>
 

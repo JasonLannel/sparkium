@@ -208,7 +208,7 @@ float Scene::TraceRay(const Ray &ray,
       continue;
     }
     Ray local_ray = Ray(inv_transform * glm::vec4{ray.origin(), 1.0f},
-                  transformed_direction / transformed_direction_length);
+                  transformed_direction / transformed_direction_length, ray.time());
     local_result = entity.GetModel()->TraceRay(local_ray, t_min, hit_record ? &local_hit_record : nullptr);
     local_result /= transformed_direction_length;
     if (local_result > t_min && local_result < t_max &&

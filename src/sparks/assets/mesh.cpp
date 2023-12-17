@@ -105,6 +105,7 @@ float Mesh::TraceRay(const Ray &ray,
     glm::vec3 origin = ray.origin();
     glm::vec3 direction = ray.direction();
     double time = ray.time();
+    // assert (time > this->GetTime0() && time < this->GetTime1());
     origin -= this->GetMovingDirection() *
               glm::vec3((time - this->GetTime0()) /
                         (this->GetTime1() - this->GetTime0()));
@@ -118,12 +119,12 @@ float Mesh::TraceRay(const Ray &ray,
     const auto &v2 = vertices_[indices_[k]];
 
     glm::mat3 A = glm::mat3(v1.position - v0.position,
-                            v2.position - v0.position, -ray.direction());
+                            v2.position - v0.position, -movedRay.direction());
     if (std::abs(glm::determinant(A)) < 1e-9f) {
       continue;
     }
     A = glm::inverse(A);
-    auto uvt = A * (ray.origin() - v0.position);
+    auto uvt = A * (movedRay.origin() - v0.position);
     auto &t = uvt.z;
     if (t < t_min || (result > 0.0f && t > result)) {
       continue;
@@ -131,13 +132,13 @@ float Mesh::TraceRay(const Ray &ray,
     auto &u = uvt.x;
     auto &v = uvt.y;
     auto w = 1.0f - u - v;
-    auto position = ray.origin() + t * ray.direction();
+    auto position = movedRay.origin() + t * movedRay.direction();
     if (u >= 0.0f && v >= 0.0f && u + v <= 1.0f) {
       result = t;
       if (hit_record) {
         auto geometry_normal = glm::normalize(
             glm::cross(v2.position - v0.position, v1.position - v0.position));
-        if (glm::dot(geometry_normal, ray.direction()) < 0.0f) {
+        if (glm::dot(geometry_normal, movedRay.direction()) < 0.0f) {
           hit_record->position = position;
           hit_record->geometry_normal = geometry_normal;
           hit_record->normal = v0.normal * w + v1.normal * u + v2.normal * v;
@@ -156,14 +157,16 @@ float Mesh::TraceRay(const Ray &ray,
               v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
           hit_record->front_face = false;
         }
+        if (this->IsMoving()) {
+		  // after motion blur, move the hit point back
+		  hit_record->position +=
+			  this->GetMovingDirection() *
+			  glm::vec3((movedRay.time() - this->GetTime0()) /
+              						(this->GetTime1() - this->GetTime0()));
+		}
       }
     }
   }
-
-  // after motion blur, move the hit point back
-  hit_record->position += this->GetMovingDirection() *
-                          glm::vec3((ray.time() - this->GetTime0()) /
-                                    (this->GetTime1() - this->GetTime0()));
 
   return result;
 }
@@ -345,7 +348,7 @@ Mesh::Mesh(const tinyxml2::XMLElement *element) {
     bool isMoving = false;
     glm::vec3 movingDirection{0.0f};
     double time0 = 0.0;
-    double time1 = 0.0;
+    double time1 = 1.0;
 
     auto child_element = element->FirstChildElement("center");
     if (child_element) {
@@ -359,24 +362,23 @@ Mesh::Mesh(const tinyxml2::XMLElement *element) {
 
     child_element = element->FirstChildElement("isMoving");
     if (child_element) {
-      // convert a string "true" to bool true
-      isMoving = std::string(child_element->FindAttribute("value")->Value()) == "true";
+      // convert a string "0" to false, "1" to true
+      isMoving = std::stoi(child_element->FindAttribute("value")->Value());
     }
 
-    child_element = element->FirstChildElement("movingDirection");
-    if (child_element) {
-      movingDirection = StringToVec3(child_element->FindAttribute("value")->Value());
-    }
+    if (isMoving) {
+	  child_element = element->FirstChildElement("movingDirection");
+      assert (child_element);
+	  movingDirection = StringToVec3(child_element->FindAttribute("value")->Value());
 
-    child_element = element->FirstChildElement("time0");
-    if (child_element) {
-      time0 = std::stod(child_element->FindAttribute("value")->Value());
-    }
+	  child_element = element->FirstChildElement("time0");
+      assert (child_element);
+	  time0 = std::stod(child_element->FindAttribute("value")->Value());
 
-    child_element = element->FirstChildElement("time1");
-    if (child_element) {
-      time1 = std::stod(child_element->FindAttribute("value")->Value());
-    }
+	  child_element = element->FirstChildElement("time1");
+      assert (child_element);
+	  time1 = std::stod(child_element->FindAttribute("value")->Value());
+	}
 
     *this = Mesh::Sphere(center, radius, isMoving, movingDirection, time0, time1);
   } else if (mesh_type == "obj") {

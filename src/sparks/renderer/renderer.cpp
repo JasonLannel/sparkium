@@ -219,6 +219,7 @@ void Renderer::RayGeneration(int x,
   origin = camera_to_world * glm::vec4(origin, 1.0f);
   direction = camera_to_world * glm::vec4(direction, 0.0f);
   ray = Ray(origin, direction, time);
+  assert(ray.time() > 0.0f);
   color_result = path_tracer.SampleRay(ray, x, y, sample);
 }
 

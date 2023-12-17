@@ -5,7 +5,7 @@
 namespace sparks {
 class Camera {
  public:
-  Camera(float fov = 60.0f, float aperture = 0.0f, float focal_length = 3.0f, double time_0 = 0.0, double time_1 = 0.0);
+  Camera(float fov = 60.0f, float aperture = 0.0f, float focal_length = 3.0f, double time_0 = 0.0, double time_1 = 1.0);
   [[nodiscard]] glm::mat4 GetProjectionMatrix(float aspect,
                                               float t_min,
                                               float t_max) const;
@@ -43,6 +43,6 @@ class Camera {
   float gamma_{2.2f};
   // motion blur parameters
   double time_0_{0.0};
-  double time_1_{0.0};
+  double time_1_{1.0};
 };
 }  // namespace sparks
