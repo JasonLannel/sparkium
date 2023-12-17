@@ -267,14 +267,13 @@ float AcceleratedMesh::SamplePdfValue(glm::vec3 origin,
                                  const glm::vec3 direction) const {
     HitRecord rec;
     float res = 0;
-    glm::vec3 start = origin;
     Ray ray = Ray(origin, direction);
     while (this->TraceRay(ray, 1e-3f, &rec) > 0.0f) {
         float dis_squared =
             (rec.position - origin).length() * (rec.position - origin).length();
         float cosine = std::fabs(dot(direction, rec.normal));
         res += dis_squared / (cosine * area_);
-        start = rec.position;
+        ray = Ray(rec.position, direction);
     }
     return res;
 }
