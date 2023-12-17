@@ -467,13 +467,8 @@ void App::UpdateImGui() {
       reset_accumulation_ |= ImGui::SliderInt(
           "Samples", &renderer_->GetRendererSettings().num_samples, 1, 64);
     }
-    if (app_settings_.hardware_renderer) {
-      reset_accumulation_ |= ImGui::SliderInt(
-          "Bounces", &renderer_->GetRendererSettings().num_bounces, 1, 128);
-    } else {
-      reset_accumulation_ |= ImGui::SliderInt(
-          "Bounces", &renderer_->GetRendererSettings().num_bounces, 1, 24);
-    }
+    reset_accumulation_ |= ImGui::SliderInt(
+        "Bounces", &renderer_->GetRendererSettings().num_bounces, 1, 128);
 
     scene.EntityCombo("Selected Entity", &selected_entity_id_);
     ImGui::Checkbox("Use FXAA", &useFXAA_);
@@ -533,7 +528,13 @@ void App::UpdateImGui() {
           ImGui::SliderFloat("Alpha", &material.alpha, 0.0f, 1.0f, "%.3f");
       reset_accumulation_ |=
           ImGui::SliderFloat("Bump Scale", &material.bumpScale, -1.0f, 1.0f, "%.3f");
-      if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
+      if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
+        reset_accumulation_ |= ImGui::SliderFloat(
+            "Reflectance", &material.reflectance, 0.0f, 1.0f, "%.3f");
+      } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
+        reset_accumulation_ |= ImGui::SliderFloat(
+            "Fuzz Radius", &material.fuzz, 0.0f, 1.0f, "%.3f");
+      } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
         reset_accumulation_ |= ImGui::SliderFloat(
             "Subsurface", &material.subsurface, 0.0f, 1.0f, "%.3f");
         reset_accumulation_ |= ImGui::SliderFloat(
