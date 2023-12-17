@@ -63,6 +63,8 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         normalFromTex[2] = sqrt(1.f - glm::dot(normalFromTex, normalFromTex));
         normal = onb.local(normalFromTex);
       }
+      glm::normalize(normal);
+      glm::normalize(tangent);
       if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
         if (glm::dot(normal, ray.direction()) > 0)
           normal = -normal;
@@ -94,7 +96,19 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           ray = Ray(origin, direction, ray.time());
           throughput *= albedo;
       } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
-          // 折射材料处理
+          // Assume all lights have same index of refraction
+          if (glm::dot(normal, ray.direction()) > 0)
+            normal = -normal;
+          float refract_ratio = hit_record.front_face ? (1.0 / material.refract_idx)
+                                                      : material.refract_idx;
+          float cos_theta = fmin(glm::dot(-ray.direction(), normal), 1.0f);
+          direction = glm::refract(ray.direction(), normal, refract_ratio);
+          if (direction.length() < 1e-4f || material.FresnelSchlick(refract_ratio, cos_theta) > RandomProb(rd)) {
+            direction = glm::reflect(ray.direction(), normal);
+          }
+          glm::normalize(direction);
+          ray = Ray(origin, direction, ray.time());
+          throughput *= albedo;
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
           // 别忘记补上折射, 还没实现，这里是有问题的，只是用在 BRDF 时对
           if (glm::dot(normal, ray.direction()) > 0)

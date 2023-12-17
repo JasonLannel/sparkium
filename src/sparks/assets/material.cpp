@@ -39,6 +39,17 @@ Material::Material(Scene *scene, const tinyxml2::XMLElement *material_element)
     }
   }
 
+  child_element = material_element->FirstChildElement("normal_texture");
+  if (child_element) {
+    use_normal_texture = true;
+    std::string path = child_element->FindAttribute("value")->Value();
+    Texture normal_texture(1, 1);
+    if (Texture::Load(path, normal_texture)) {
+      normal_texture_id =
+          scene->AddTexture(normal_texture, PathToFilename(path));
+    }
+  }
+
   child_element = material_element->FirstChildElement("emission");
   if (child_element) {
     emission = StringToVec3(child_element->FindAttribute("value")->Value());
@@ -63,10 +74,12 @@ Material::Material(const glm::vec3 &albedo) : Material() {
   albedo_color = albedo;
 }
 
-glm::vec3 Material::FresnelSchlick(glm::vec3 f0, float cosTheta) const {
+float Material::FresnelSchlick(float ref_idx, float cosTheta) const {
+  float f0 = (1 - ref_idx) / (1 + ref_idx);
+  f0 *= f0;
   float m = 1 - cosTheta;
   float m2 = m * m;
-  return f0 + (glm::vec3(1.0) - f0) * m2 * m2 * m;
+  return f0 + (1.0f - f0) * m2 * m2 * m;
 }
 
 glm::vec3 Material::DisneyPrincipled(glm::vec3 N,

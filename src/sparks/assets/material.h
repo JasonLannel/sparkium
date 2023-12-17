@@ -37,7 +37,7 @@ struct Material {
   //Specular, default ideal specular
   float fuzz{0.0f};
   //Transmissive, default glass
-  float refract{1.5f};
+  float refract_idx{1.5f};
   //Principle BRDF
   float subsurface{0.0f};
   float metallic{0.0f};
@@ -50,7 +50,7 @@ struct Material {
   glm::vec3 clearcoat{0.0f};
   float clearcoatGloss{0.0f};
 
-  glm::vec3 FresnelSchlick(glm::vec3 f0, float cosTheta) const;
+  float FresnelSchlick(float f0, float cosTheta) const;
   glm::vec3 DisneyPrincipled(glm::vec3 N,
                              glm::vec3 L,
                              glm::vec3 V,
