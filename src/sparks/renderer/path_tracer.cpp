@@ -81,7 +81,8 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           direction = Gen->Generate(origin, rd);
           float pdf = Gen->Value(origin, direction);
           float scatter = std::max(0.f, glm::dot(normal, direction) * INV_PI);
-          throughput *= albedo * scatter / pdf;
+          float reflectance = material.reflectance;
+          throughput *= albedo * reflectance * scatter / pdf;
           if (Light != nullptr)
             delete Gen;
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
@@ -89,6 +90,11 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             normal = -normal;
           throughput *= albedo;
           direction = glm::reflect(ray.direction(), normal);
+          // Fuzz
+          UniformSpherePdf Fuzz(direction);
+          direction = glm::normalize(direction + Fuzz.Generate(origin, rd) * material.fuzz);
+          if (glm::dot(normal, direction) < 0)
+            break;  // Absorb Energy.
       } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
           // ÕÛÉä²ÄÁÏ´¦Àí
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
