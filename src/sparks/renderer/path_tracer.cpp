@@ -17,13 +17,8 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
                                 int x,
                                 int y,
                                 int sample) const {
-  struct Note {
-    Ray ray;
-    glm::vec3 throughput;
-    int skip_id;
-    int depth;
-  };
-  std::mt19937 rd(sample ^ x ^ y ^ std::time(0));
+  std::random_device rd_seed;
+  std::mt19937 rd(x ^ y ^ sample ^ rd_seed());
   std::uniform_real_distribution<float> RandomProb(0.0f, 1.0f);
   Pdf *Light = scene_->GetLightPdf();
   glm::vec3 throughput(1.0f);
@@ -78,8 +73,9 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           } else {
             Gen = &Dialectric;
           }
-          direction = Gen->Generate(origin, rd);
-          float pdf = Gen->Value(origin, direction);
+          direction = Gen->Generate(origin, ray.time(), rd);
+          ray = Ray(origin, direction, ray.time());
+          float pdf = Gen->Value(ray);
           float scatter = std::max(0.f, glm::dot(normal, direction) * INV_PI);
           float reflectance = material.reflectance;
           throughput *= albedo * reflectance * scatter / pdf;
@@ -88,13 +84,15 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
           if (glm::dot(normal, ray.direction()) > 0)
             normal = -normal;
-          throughput *= albedo;
           direction = glm::reflect(ray.direction(), normal);
           // Fuzz
-          UniformSpherePdf Fuzz(direction);
-          direction = glm::normalize(direction + Fuzz.Generate(origin, rd) * material.fuzz);
+          UniformHemispherePdf Fuzz(direction);
+          glm::vec3 fuzzDirection = Fuzz.Generate(origin, ray.time(), rd);
+          direction = glm::normalize(direction + fuzzDirection * material.fuzz);
           if (glm::dot(normal, direction) < 0)
             break;  // Absorb Energy.
+          ray = Ray(origin, direction, ray.time());
+          throughput *= albedo;
       } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
           // ÕÛÉä²ÄÁÏ´¦Àí
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
@@ -108,14 +106,16 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           } else {
             Gen = &Dialectric;
           }
-          direction = Gen->Generate(origin, rd);
+          direction = Gen->Generate(origin, ray.time(), rd);
           Onb onb(normal);
           throughput *= material.DisneyPrincipled(
               normal, -ray.direction(), direction, onb.u(), onb.v(), albedo);
+          ray = Ray(origin, direction, ray.time());
+          float pdf = Gen->Value(ray);
+          throughput /= pdf;
           if (Light != nullptr)
-          delete Gen;
+            delete Gen;
       }
-      ray = Ray(origin, direction, ray.time());
       throughput *= INV_RR;
     } else {
       radiance += throughput * glm::vec3{scene_->SampleEnvmap(ray.direction())};

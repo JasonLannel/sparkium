@@ -196,9 +196,8 @@ void Renderer::RayGeneration(int x,
                              int sample,
                              glm::vec3 &color_result,
                              PathTracer &path_tracer) const {
-  std::mt19937 xrd(x);
-  std::mt19937 yrd(y + std::uniform_int_distribution<int>()(xrd));
-  std::mt19937 rd(sample + std::uniform_int_distribution<int>()(yrd));
+  std::random_device rd_seed;
+  std::mt19937 rd(x ^ y ^ sample ^ rd_seed());
   glm::vec2 pos{(float(x) + 0.5f) / float(width_),
                 (float(y) + 0.5f) / float(height_)};
   glm::vec2 range_low{float(x) / float(width_), float(y) / float(height_)};
@@ -208,6 +207,7 @@ void Renderer::RayGeneration(int x,
 
   scene_.GetCamera().GenerateRay(
       float(width_) / float(height_), range_low, range_high, ray,
+      std::uniform_real_distribution<float>(0.0f, 1.0f)(rd),
       std::uniform_real_distribution<float>(0.0f, 1.0f)(rd),
       std::uniform_real_distribution<float>(0.0f, 1.0f)(rd),
       std::uniform_real_distribution<float>(0.0f, 1.0f)(rd),

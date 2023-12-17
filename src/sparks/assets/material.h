@@ -34,8 +34,10 @@ struct Material {
   float emission_strength{1.0f};
   //Lambertian
   float reflectance{0.9f};
-  //Specular
+  //Specular, default ideal specular
   float fuzz{0.0f};
+  //Transmissive, default glass
+  float refract{1.5f};
   //Principle BRDF
   float subsurface{0.0f};
   float metallic{0.0f};

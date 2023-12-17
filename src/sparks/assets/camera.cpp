@@ -39,7 +39,8 @@ void Camera::GenerateRay(float aspect,
                          float rand_u,
                          float rand_v,
                          float rand_w,
-                         float rand_r) const {
+                         float rand_r, 
+                         float rand_t) const {
   auto pos = (range_high - range_low) * glm::vec2{rand_u, rand_v} + range_low;
   pos = pos * 2.0f - 1.0f;
   pos.y *= -1.0f;
@@ -54,11 +55,11 @@ void Camera::GenerateRay(float aspect,
       glm::vec3{tan_fov * aspect * pos.x, tan_fov * pos.y, -1.0f} *
           focal_length_ -
       origin);
-  double time = time_0_ + rand_u * (time_1_ - time_0_);
+  float time = time_0_ + rand_t * (time_1_ - time_0_);
   ray = Ray{origin, direction, time};
 }
 
-Camera::Camera(float fov, float aperture, float focal_length, double time_0, double time_1)
+Camera::Camera(float fov, float aperture, float focal_length, float time_0, float time_1)
     : fov_(fov), aperture_(aperture), focal_length_(focal_length), time_0_(time_0), time_1_(time_1) {
 }
 }  // namespace sparks

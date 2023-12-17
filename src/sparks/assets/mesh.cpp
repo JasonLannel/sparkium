@@ -10,26 +10,26 @@
 
 namespace sparks {
 
-Mesh::Mesh(const Mesh &mesh) : Mesh(mesh.vertices_, mesh.indices_) {
+Mesh::Mesh(const Mesh &mesh)
+    : Mesh(mesh.vertices_,
+           mesh.indices_,
+           mesh.movingDirection_,
+           mesh.time0_,
+           mesh.time1_) {
 }
 
 Mesh::Mesh(const std::vector<Vertex> &vertices,
            const std::vector<uint32_t> &indices) {
   vertices_ = vertices;
   indices_ = indices;
-  isMoving_ = false;
-  movingDirection_ = glm::vec3{0.0f};
-  time0_ = 0.0;
-  time1_ = 0.0;
 }
 
 Mesh::Mesh(const std::vector<Vertex>& vertices,
     const std::vector<uint32_t>& indices,
-    bool isMoving, const glm::vec3& movingDirection,
-    double time0, double time1) {
+    const glm::vec3& movingDirection,
+    float time0, float time1) {
   vertices_ = vertices;
   indices_ = indices;
-  isMoving_ = isMoving;
   movingDirection_ = movingDirection;
   time0_ = time0;
   time1_ = time1;
@@ -39,8 +39,7 @@ Mesh Mesh::Cube(const glm::vec3 &center, const glm::vec3 &size) {
   return {{}, {}};
 }
 
-Mesh Mesh::Sphere(const glm::vec3 &center, float radius, bool isMoving, 
-    const glm::vec3 &movingDirection, double time0, double time1) {
+Mesh Mesh::Sphere(const glm::vec3 &center, float radius) {
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
   auto pi = glm::radians(180.0f);
@@ -76,7 +75,7 @@ Mesh Mesh::Sphere(const glm::vec3 &center, float radius, bool isMoving,
       }
     }
   }
-  return {vertices, indices, isMoving, movingDirection, time0, time1};
+  return {vertices, indices};
 }
 
 AxisAlignedBoundingBox Mesh::GetAABB(const glm::mat4 &transform) const {
@@ -100,17 +99,8 @@ float Mesh::TraceRay(const Ray &ray,
   float result = -1.0f;
 
   // add motion blur method
-  Ray movedRay = ray;
-  if (this->IsMoving()) {
-    glm::vec3 origin = ray.origin();
-    glm::vec3 direction = ray.direction();
-    double time = ray.time();
-    // assert (time > this->GetTime0() && time < this->GetTime1());
-    origin -= this->GetMovingDirection() *
-              glm::vec3((time - this->GetTime0()) /
-                        (this->GetTime1() - this->GetTime0()));
-    Ray movedRay(origin, direction, time);
-  }
+  Ray movedRay(ray.origin() - GetDisplacement(ray.time()), ray.direction(),
+               ray.time());
 
   for (int i = 0; i < indices_.size(); i += 3) {
     int j = i + 1, k = i + 2;
@@ -139,7 +129,7 @@ float Mesh::TraceRay(const Ray &ray,
         auto geometry_normal = glm::normalize(
             glm::cross(v2.position - v0.position, v1.position - v0.position));
         if (glm::dot(geometry_normal, movedRay.direction()) < 0.0f) {
-          hit_record->position = position;
+          hit_record->position = position + GetDisplacement(ray.time());
           hit_record->geometry_normal = geometry_normal;
           hit_record->normal = v0.normal * w + v1.normal * u + v2.normal * v;
           hit_record->tangent =
@@ -148,7 +138,7 @@ float Mesh::TraceRay(const Ray &ray,
               v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
           hit_record->front_face = true;
         } else {
-          hit_record->position = position;
+          hit_record->position = position + GetDisplacement(ray.time());
           hit_record->geometry_normal = -geometry_normal;
           hit_record->normal = -(v0.normal * w + v1.normal * u + v2.normal * v);
           hit_record->tangent =
@@ -157,13 +147,6 @@ float Mesh::TraceRay(const Ray &ray,
               v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
           hit_record->front_face = false;
         }
-        if (this->IsMoving()) {
-		  // after motion blur, move the hit point back
-		  hit_record->position +=
-			  this->GetMovingDirection() *
-			  glm::vec3((movedRay.time() - this->GetTime0()) /
-              						(this->GetTime1() - this->GetTime0()));
-		}
       }
     }
   }
@@ -345,11 +328,6 @@ Mesh::Mesh(const tinyxml2::XMLElement *element) {
   if (mesh_type == "sphere") {
     glm::vec3 center{0.0f};
     float radius{1.0f};
-    bool isMoving = false;
-    glm::vec3 movingDirection{0.0f};
-    double time0 = 0.0;
-    double time1 = 1.0;
-
     auto child_element = element->FirstChildElement("center");
     if (child_element) {
       center = StringToVec3(child_element->FindAttribute("value")->Value());
@@ -359,28 +337,7 @@ Mesh::Mesh(const tinyxml2::XMLElement *element) {
     if (child_element) {
       radius = std::stof(child_element->FindAttribute("value")->Value());
     }
-
-    child_element = element->FirstChildElement("isMoving");
-    if (child_element) {
-      // convert a string "0" to false, "1" to true
-      isMoving = std::stoi(child_element->FindAttribute("value")->Value());
-    }
-
-    if (isMoving) {
-	  child_element = element->FirstChildElement("movingDirection");
-      assert (child_element);
-	  movingDirection = StringToVec3(child_element->FindAttribute("value")->Value());
-
-	  child_element = element->FirstChildElement("time0");
-      assert (child_element);
-	  time0 = std::stod(child_element->FindAttribute("value")->Value());
-
-	  child_element = element->FirstChildElement("time1");
-      assert (child_element);
-	  time1 = std::stod(child_element->FindAttribute("value")->Value());
-	}
-
-    *this = Mesh::Sphere(center, radius, isMoving, movingDirection, time0, time1);
+    *this = Mesh::Sphere(center, radius);
   } else if (mesh_type == "obj") {
     Mesh::LoadObjFile(
         element->FirstChildElement("filename")->FindAttribute("value")->Value(),
@@ -439,6 +396,33 @@ Mesh::Mesh(const tinyxml2::XMLElement *element) {
     }
     MergeVertices();
   }
+  // Get Movement Info
+  auto child_element = element->FirstChildElement("isMoving");
+  if (child_element) {
+    movingDirection_ =
+          StringToVec3(child_element->FindAttribute("movingDirection")->Value());
+    time0_ = std::stod(child_element->FindAttribute("time0")->Value());
+    time1_ = std::stod(child_element->FindAttribute("time1")->Value());
+  }
+}
+
+float Mesh::GetTime0() const {
+  return time0_;
+}
+float Mesh::GetTime1() const {
+  return time1_;
+}
+glm::vec3 Mesh::GetMovingDirection() const {
+  return movingDirection_;
+}
+
+glm::vec3 Mesh::GetDisplacement(float time) const {
+  if (time < time0_)
+    time = time0_;
+  if (time > time1_)
+    time = time1_;
+  return movingDirection_ * (time - time0_) / (time1_ - time0_) *
+         (time - time0_) / (time1_ - time0_);
 }
 
 }  // namespace sparks

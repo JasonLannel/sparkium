@@ -5,10 +5,6 @@
 
 namespace sparks {
 AcceleratedMesh::AcceleratedMesh(const Mesh &mesh) : Mesh(mesh) {
-    _isMoving = mesh.IsMoving();
-    _movingDirection = mesh.GetMovingDirection();
-    _time0 = mesh.GetTime0();
-    _time1 = mesh.GetTime1();
   BuildAccelerationStructure();
   CreatePdf();
 }
@@ -20,7 +16,7 @@ AcceleratedMesh::AcceleratedMesh(const std::vector<Vertex> &vertices,
   CreatePdf();
 }
 
-void AcceleratedMesh::IntersectSlice(const Ray &ray,
+void AcceleratedMesh::IntersectSlice(const Ray &movedRay,
                     int index,
                     float t_min,
                     float &result,
@@ -29,8 +25,8 @@ void AcceleratedMesh::IntersectSlice(const Ray &ray,
   const auto &v0 = vertices_[indices_[i]];
   const auto &v1 = vertices_[indices_[i + 1]];
   const auto &v2 = vertices_[indices_[i + 2]];
-  glm::vec3 origin = ray.origin();
-  glm::vec3 direction = ray.direction();
+  glm::vec3 origin = movedRay.origin();
+  glm::vec3 direction = movedRay.direction();
 
   glm::mat3 A = glm::mat3(v1.position - v0.position, v2.position - v0.position,
                           -direction);
@@ -53,7 +49,7 @@ void AcceleratedMesh::IntersectSlice(const Ray &ray,
       auto geometry_normal = glm::normalize(
           glm::cross(v2.position - v0.position, v1.position - v0.position));
       if (glm::dot(geometry_normal, direction) < 0.0f) {
-        hit_record->position = position;
+        hit_record->position = position + GetDisplacement(movedRay.time());
         hit_record->geometry_normal = geometry_normal;
         hit_record->normal = v0.normal * w + v1.normal * u + v2.normal * v;
         hit_record->tangent = v0.tangent * w + v1.tangent * u + v2.tangent * v;
@@ -61,7 +57,7 @@ void AcceleratedMesh::IntersectSlice(const Ray &ray,
             v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
         hit_record->front_face = true;
       } else {
-        hit_record->position = position;
+        hit_record->position = position + GetDisplacement(movedRay.time());
         hit_record->geometry_normal = -geometry_normal;
         hit_record->normal = -(v0.normal * w + v1.normal * u + v2.normal * v);
         hit_record->tangent =
@@ -83,21 +79,8 @@ float AcceleratedMesh::TraceRay(const Ray &ray,
   int head = 0;
 
   // add motion blur method
-  Ray movedRay = ray;
-  double time = ray.time();
-
-  if (this->IsMoving()) {
-	glm::vec3 origin = ray.origin();
-	glm::vec3 direction = ray.direction();	
-    assert (this->GetMovingDirection() != glm::vec3(0.0f));
-    // use quadratic interpolation to calculate the new origin
-    origin -= this->GetMovingDirection() *
-              glm::vec3((time - this->GetTime0()) /
-                        (this->GetTime1() - this->GetTime0())) *
-              glm::vec3((time - this->GetTime0()) /
-                        (this->GetTime1() - this->GetTime0()));                                                                       
-	movedRay = Ray(origin, direction, time);
-  }
+  Ray movedRay(ray.origin() - GetDisplacement(ray.time()), ray.direction(),
+               ray.time());
 
   while (head < q.size()) {
     int cur = q[head++];
@@ -109,14 +92,6 @@ float AcceleratedMesh::TraceRay(const Ray &ray,
         q.push_back(bvh_nodes_[cur].child[1]);
       }
     }
-  }
-  if (IsMoving()) {
-    // after motion blur, move the hit point back
-    hit_record->position += this->GetMovingDirection() *
-                            glm::vec3((time - this->GetTime0()) /
-                                      (this->GetTime1() - this->GetTime0())) *
-                            glm::vec3((time - this->GetTime0()) /
-                                      (this->GetTime1() - this->GetTime0()));
   }
 
   return result;
@@ -243,7 +218,7 @@ void AcceleratedMesh::CreatePdf(){
     probList_[probList_.size() - 1] = 1.0f;
 }
 
-glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, std::mt19937 rd) const {
+glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, float time, std::mt19937 rd) const {
     if (!probList_.size())
         return glm::vec3(0);
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
@@ -251,9 +226,10 @@ glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, std::mt19937 rd) const 
     int pdfNo = std::lower_bound(probList_.begin(), probList_.end(), samp) -
                 probList_.begin();
     pdfNo *= 3;
-    glm::vec3 v0 = vertices_[indices_[pdfNo]].position;
-    glm::vec3 v1 = vertices_[indices_[pdfNo + 1]].position;
-    glm::vec3 v2 = vertices_[indices_[pdfNo + 2]].position;
+    glm::vec3 displacement = GetDisplacement(time);
+    glm::vec3 v0 = vertices_[indices_[pdfNo]].position + displacement;
+    glm::vec3 v1 = vertices_[indices_[pdfNo + 1]].position + displacement;
+    glm::vec3 v2 = vertices_[indices_[pdfNo + 2]].position + displacement;
     float u1 = dist(rd);
     float u2 = dist(rd);
     if (u1 + u2 > 1.0f) {
@@ -263,17 +239,16 @@ glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, std::mt19937 rd) const 
     return glm::normalize(
         (v0 * u1 + v1 * u2 + v2 * (1.0f - u1 - u2)) - origin);
 }
-float AcceleratedMesh::SamplePdfValue(glm::vec3 origin,
-                                 const glm::vec3 direction) const {
+float AcceleratedMesh::SamplePdfValue(const Ray &ray) const {
     HitRecord rec;
     float res = 0;
-    Ray ray = Ray(origin, direction);
-    while (this->TraceRay(ray, 1e-3f, &rec) > 0.0f) {
+    Ray t_ray = ray;
+    while (this->TraceRay(t_ray, 1e-3f, &rec) > 0.0f) {
         float dis_squared =
-            (rec.position - origin).length() * (rec.position - origin).length();
-        float cosine = std::fabs(dot(direction, rec.normal));
+            (rec.position - ray.origin()).length() * (rec.position - ray.origin()).length();
+        float cosine = std::fabs(dot(ray.direction(), rec.normal));
         res += dis_squared / (cosine * area_);
-        ray = Ray(rec.position, direction);
+        t_ray = Ray(rec.position, ray.direction(), ray.time());
     }
     return res;
 }

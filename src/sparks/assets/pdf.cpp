@@ -49,7 +49,7 @@ UniformSpherePdf::UniformSpherePdf(glm::vec3 normal){
 UniformSpherePdf::UniformSpherePdf(glm::vec3 normal, glm::vec3 tangent) {
   uvw = Onb(normal, tangent);
 }
-glm::vec3 UniformSpherePdf::Generate(glm::vec3 origin, std::mt19937 &rd) const {
+glm::vec3 UniformSpherePdf::Generate(glm::vec3 origin, float time, std::mt19937 &rd) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float theta = dist(rd) * 2.0f * PI;
   float phi = dist(rd) * PI;
@@ -57,7 +57,7 @@ glm::vec3 UniformSpherePdf::Generate(glm::vec3 origin, std::mt19937 &rd) const {
                    std::sin(theta) * std::sin(phi), std::cos(phi));
 }
 
-float UniformSpherePdf::Value(glm::vec3 origin, glm::vec3 direction) const {
+float UniformSpherePdf::Value(const Ray &ray) const {
   return 0.25f * INV_PI;
 }
 
@@ -67,7 +67,7 @@ UniformHemispherePdf::UniformHemispherePdf(glm::vec3 normal) {
 UniformHemispherePdf::UniformHemispherePdf(glm::vec3 normal, glm::vec3 tangent) {
   uvw = Onb(normal, tangent);
 }
-glm::vec3 UniformHemispherePdf::Generate(glm::vec3 origin,
+glm::vec3 UniformHemispherePdf::Generate(glm::vec3 origin, float time,
                                          std::mt19937 &rd) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float u1 = dist(rd);
@@ -78,7 +78,7 @@ glm::vec3 UniformHemispherePdf::Generate(glm::vec3 origin,
    return uvw.local(z_r * std::cos(phi), z_r * std::sin(phi), z);
 }
 
-float UniformHemispherePdf::Value(glm::vec3 origin, glm::vec3 direction) const {
+float UniformHemispherePdf::Value(const Ray &ray) const {
   return 0.5f * INV_PI;
 }
 
@@ -88,7 +88,7 @@ CosineHemispherePdf::CosineHemispherePdf(glm::vec3 normal) {
 CosineHemispherePdf::CosineHemispherePdf(glm::vec3 normal, glm::vec3 tangent) {
   uvw = Onb(normal, tangent);
 }
-glm::vec3 CosineHemispherePdf::Generate(glm::vec3 origin,
+glm::vec3 CosineHemispherePdf::Generate(glm::vec3 origin, float time,
                                         std::mt19937 &rd) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float u1 = dist(rd);
@@ -100,8 +100,8 @@ glm::vec3 CosineHemispherePdf::Generate(glm::vec3 origin,
                    z_r * std::sin(phi), z);
 }
 
-float CosineHemispherePdf::Value(glm::vec3 origin, glm::vec3 direction) const {
-  float cos_theta = glm::dot(uvw.w(), direction);
+float CosineHemispherePdf::Value(const Ray &ray) const {
+  float cos_theta = glm::dot(uvw.w(), ray.direction());
   return cos_theta < 0 ? 0 : cos_theta / PI;
 }
 
@@ -134,19 +134,19 @@ MixturePdf::MixturePdf(std::vector<Pdf*> list) : pdfList(list) {
   probList[probList.size() - 1] = 1.0f;
 }
 
-glm::vec3 MixturePdf::Generate(glm::vec3 origin, std::mt19937 &rd) const {
+glm::vec3 MixturePdf::Generate(glm::vec3 origin, float time, std::mt19937 &rd) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float samp = dist(rd);
   int pdfNo = std::lower_bound(probList.begin(), probList.end(), samp) -
               probList.begin();
-  return pdfList[pdfNo]->Generate(origin, rd);
+  return pdfList[pdfNo]->Generate(origin, time, rd);
 }
 
-float MixturePdf::Value(glm::vec3 origin, glm::vec3 direction) const {
-  float result = probList[0] * pdfList[0]->Value(origin, direction);
+float MixturePdf::Value(const Ray &ray) const {
+  float result = probList[0] * pdfList[0]->Value(ray);
   for (int i = 1; i < probList.size(); ++i) {
     result +=
-        (probList[i] - probList[i - 1]) * pdfList[i]->Value(origin, direction);
+        (probList[i] - probList[i - 1]) * pdfList[i]->Value(ray);
   }
   return result;
 }

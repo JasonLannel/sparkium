@@ -22,21 +22,9 @@ class AcceleratedMesh : public Mesh {
                  float t_min,
                  HitRecord *hit_record) const override;
   void BuildAccelerationStructure();
-  glm::vec3 SamplePoint(glm::vec3 origin, std::mt19937 rd) const override;
-  float SamplePdfValue(glm::vec3 origin, glm::vec3 direction) const override;
+  glm::vec3 SamplePoint(glm::vec3 origin, float time, std::mt19937 rd) const override;
+  float SamplePdfValue(const Ray &ray) const override;
   float GetArea() const override;
-  bool IsMoving() const {
-	return _isMoving;
-  };
-  double GetTime0() const {
-        return _time0;
-  };
-  double GetTime1() const {
-        return _time1;
-  };
-  glm::vec3 GetMovingDirection() const {
-        return _movingDirection;
-  };
 
  private:
   int BuildTree(std::vector<int> &aabb_indices,
@@ -46,7 +34,7 @@ class AcceleratedMesh : public Mesh {
   int QuerySAH(std::vector<int> &aabb_indices,
                int start_index,
                int aabb_cnt);
-  void IntersectSlice(const Ray &ray,
+  void IntersectSlice(const Ray &movedRay,
                       int index,
                       float t_min,
                       float &result,
@@ -56,11 +44,6 @@ class AcceleratedMesh : public Mesh {
   std::vector<TreeNode> bvh_nodes_{};
   float area_;
   std::vector<float> probList_;
-  bool _isMoving{false};
-  // some variables related to moving sphere
-  glm::vec3 _movingDirection{0.0f};
-  double _time0{0.0};
-  double _time1{1.0};
 };
 
 }  // namespace sparks

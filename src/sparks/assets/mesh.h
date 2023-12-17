@@ -13,8 +13,8 @@ class Mesh : public Model {
        const std::vector<uint32_t> &indices);
   Mesh(const std::vector<Vertex> &vertices,
        const std::vector<uint32_t> &indices,
-      bool isMoving, const glm::vec3 &movingDirection,
-      double time0, double time1);
+      const glm::vec3 &movingDirection,
+      float time0, float time1);
   explicit Mesh(const tinyxml2::XMLElement *element);
   ~Mesh() override = default;
   [[nodiscard]] float TraceRay(const Ray &ray,
@@ -29,31 +29,21 @@ class Mesh : public Model {
   [[nodiscard]] uint32_t GetIndicesSize() const;
   static Mesh Cube(const glm::vec3 &center, const glm::vec3 &size);
   static Mesh Sphere(const glm::vec3 &center = glm::vec3{0.0f},
-                     float radius = 1.0f, bool isMoving = false, const glm::vec3 &movingDirection = glm::vec3{0.0f},
-                     double time0 = 0.0, double time1 = 0.0);
+                     float radius = 1.0f);
   static bool LoadObjFile(const std::string &obj_file_path, Mesh &mesh);
   void WriteObjFile(const std::string &file_path) const;
   void MergeVertices();
-  bool IsMoving() const {
-    return isMoving_;
-  };
-  double GetTime0() const {
-    return time0_;
-  };
-  double GetTime1() const {
-	return time1_;
-  };
-  glm::vec3 GetMovingDirection() const {
-        return movingDirection_;
-  };
+  float GetTime0() const;
+  float GetTime1() const;
+  glm::vec3 GetMovingDirection() const;
+  glm::vec3 GetDisplacement(float time) const;
 
  protected:
   std::vector<Vertex> vertices_;
   std::vector<uint32_t> indices_;
-  bool isMoving_{false};
   // some variables related to moving sphere
   glm::vec3 movingDirection_{0.0f};
-  double time0_{0.0};
-  double time1_{1.0};
+  float time0_{0.0};
+  float time1_{1.0};
 };
 }  // namespace sparks

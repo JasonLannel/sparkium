@@ -2,6 +2,7 @@
 #include "random"
 #include "sparks/assets/util.h"
 #include "sparks/assets/vertex.h"
+#include "sparks/assets/ray.h"
 
 namespace sparks {
 class Onb {
@@ -21,10 +22,10 @@ class Onb {
 class Pdf {
  public:
   virtual ~Pdf() = default;
-  virtual glm::vec3 Generate(glm::vec3 origin, std::mt19937 &rd) const {
+  virtual glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const {
     return glm::vec3(1, 0, 0);
  }
-  virtual float Value(glm::vec3 origin, glm::vec3 direction) const {
+  virtual float Value(const Ray &ray) const {
     return 1.0f;
   }
 };
@@ -33,8 +34,8 @@ class UniformSpherePdf : public Pdf {
  public:
   UniformSpherePdf(glm::vec3 normal);
   UniformSpherePdf(glm::vec3 normal, glm::vec3 tangent);
-  glm::vec3 Generate(glm::vec3 origin, std::mt19937 &rd) const override;
-  float Value(glm::vec3 origin, const glm::vec3 direction) const override;
+  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
+  float Value(const Ray &ray) const override;
 
  private:
   Onb uvw;
@@ -44,8 +45,8 @@ class UniformHemispherePdf : public Pdf {
  public:
   UniformHemispherePdf(glm::vec3 normal);
   UniformHemispherePdf(glm::vec3 normal, glm::vec3 tangent);
-  glm::vec3 Generate(glm::vec3 origin, std::mt19937 &rd) const override;
-  float Value(glm::vec3 origin, const glm::vec3 direction) const override;
+  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
+  float Value(const Ray &ray) const override;
 
  private:
   Onb uvw;
@@ -55,8 +56,8 @@ class CosineHemispherePdf : public Pdf {
  public:
   CosineHemispherePdf(glm::vec3 normal);
   CosineHemispherePdf(glm::vec3 normal, glm::vec3 tangent);
-  glm::vec3 Generate(glm::vec3 origin, std::mt19937 &rd) const override;
-  float Value(glm::vec3 origin, glm::vec3 direction) const override;
+  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
+  float Value(const Ray &ray) const override;
 
  private:
   Onb uvw;
@@ -67,8 +68,8 @@ class MixturePdf : public Pdf {
   MixturePdf(Pdf* p1, Pdf* p2, float prob1);
   MixturePdf(std::vector<Pdf*> list, std::vector<float> prob);
   MixturePdf(std::vector<Pdf*> list);
-  glm::vec3 Generate(glm::vec3 origin, std::mt19937 &rd) const override;
-  float Value(glm::vec3 origin, glm::vec3 direction) const override;
+  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
+  float Value(const Ray &ray) const override;
 
  private:
   std::vector<Pdf*> pdfList;

@@ -12,7 +12,7 @@ class Ray {
       : orig_(origin), dir_(direction), time_(0.0) {
   }
 
-  Ray(const glm::vec3 &origin, const glm::vec3 &direction, double time)
+  Ray(const glm::vec3 &origin, const glm::vec3 &direction, float time)
       : orig_(origin), dir_(direction), time_(time) {}
 
   glm::vec3 origin() const {
@@ -21,18 +21,18 @@ class Ray {
   glm::vec3 direction() const {
     return dir_;
   }
-  double time() const {
+  float time() const {
     return time_;
   }
 
-  glm::vec3 at(double t) const {
+  glm::vec3 at(float t) const {
     return orig_ + dir_ * glm::vec3(t);
   }
 
  private:
   glm::vec3 orig_{glm::vec3(0.0f)};
   glm::vec3 dir_{glm::vec3(0.0f)};
-  double time_{0.0};
+  float time_{0.0};
   // RayColor color_;
 };
 

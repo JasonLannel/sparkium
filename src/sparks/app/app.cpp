@@ -534,6 +534,9 @@ void App::UpdateImGui() {
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
         reset_accumulation_ |= ImGui::SliderFloat(
             "Fuzz Radius", &material.fuzz, 0.0f, 1.0f, "%.3f");
+      } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
+        reset_accumulation_ |= ImGui::SliderFloat("Index of Refraction", &material.refract,
+                                                  1.0f, 3.0f, "%.3f");
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
         reset_accumulation_ |= ImGui::SliderFloat(
             "Subsurface", &material.subsurface, 0.0f, 1.0f, "%.3f");
