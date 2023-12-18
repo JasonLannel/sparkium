@@ -37,7 +37,7 @@ struct Material {
   //Specular, default ideal specular
   float fuzz{0.0f};
   //Transmissive, default glass
-  float refract_idx{1.5f};
+  float IOR{1.5f};
   //Principle BRDF
   float subsurface{0.0f};
   float metallic{0.0f};

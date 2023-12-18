@@ -36,7 +36,77 @@ Mesh::Mesh(const std::vector<Vertex>& vertices,
 }
 
 Mesh Mesh::Cube(const glm::vec3 &center, const glm::vec3 &size) {
-  return {{}, {}};
+  std::vector<Vertex> vertices;
+  std::vector<uint32_t> indices;
+  glm::vec3 disp = size * 0.5f;
+  glm::vec2 TexBase((disp.z + 0.5f * disp.x) / (size.x + size.z),
+                       0.5f);
+  for (int i = 0; i < 4; ++i) {
+    // 0 Left, 1 Front, 2 Right, 3 Back;
+    glm::vec3 MeshCenter(center.x, center.y, center.z);
+    glm::vec3 MeshDispX(0);
+    glm::vec3 MeshDispY(0, disp.y, 0);
+    glm::vec2 TexCenter =
+        glm::vec2((disp.x + disp.z) * (i - 1) * 0.5f / (size.x + size.z), 0) +
+        TexBase;
+    glm::vec2 TexDispX(0.f);
+    glm::vec2 TexDispY(0.f, disp.y / (size.y + 2 * size.z));
+    glm::vec3 Normal;
+    float delta = i & 2 ? 1.f : -1.f;
+    if (i & 1) {
+      Normal = glm::vec3(0, 0, -delta);
+      MeshCenter += glm::vec3(0, 0, disp.z) * Normal;
+      MeshDispX = glm::vec3(-delta * disp.x, 0, 0);
+      TexDispX[0] = disp.x * 0.5f / (size.x + size.z);
+    } else {
+      Normal = glm::vec3(delta, 0, 0);
+      MeshCenter += glm::vec3(disp.x, 0, 0) * Normal;
+      MeshDispX = glm::vec3(0, 0, -delta * disp.z);
+      TexDispX[0] = disp.z * 0.5f / (size.x + size.z);
+    }
+    for (float dy = -1; dy <= 1; dy += 2)
+      for (float dx = -1; dx <= 1; dx += 2) {
+        glm::vec3 coord = MeshCenter + dx * MeshDispX + dy * MeshDispY;
+        glm::vec2 tex_coord = TexCenter + dx * TexDispX + dy * TexDispY;
+        tex_coord[1] = 1 - tex_coord[1];
+        vertices.push_back(Vertex(MeshCenter + dx * MeshDispX + dy * MeshDispY,
+                                  Normal,
+                                  {tex_coord}));
+      }
+    int index_base = i << 2;
+    indices.push_back(index_base);
+    indices.push_back(index_base + 1);
+    indices.push_back(index_base + 2);
+    indices.push_back(index_base + 1);
+    indices.push_back(index_base + 3);
+    indices.push_back(index_base + 2);
+  }
+  for (int i = 0; i < 2; ++i) {
+    float delta = i == 1 ? 1 : -1;
+    glm::vec3 Normal = delta * glm::vec3(0, 1, 0);
+    glm::vec3 MeshCenter = center + Normal * disp.y;
+    glm::vec3 MeshDispX = glm::vec3(disp.x, 0, 0);
+    glm::vec3 MeshDispY = glm::vec3(0, 0, -delta * disp.z);
+    glm::vec2 TexCenter =
+        glm::vec2(0, (disp.y + disp.z) / (2 * size.z + size.y)) * delta + TexBase;
+    glm::vec2 TexDispX(disp.x * 0.25f / (size.x + size.z), 0.f);
+    glm::vec2 TexDispY(0.f, disp.z / (size.y + 2 * size.z));
+    for (float dy = -1; dy <= 1; dy += 2)
+      for (float dx = -1; dx <= 1; dx += 2) {
+        glm::vec2 tex_coord = TexCenter + dx * TexDispX + dy * TexDispY;
+        tex_coord[1] = 1 - tex_coord[1];
+        vertices.push_back(Vertex(MeshCenter + dx * MeshDispX + dy * MeshDispY,
+                                  Normal, {tex_coord}));
+      }
+    int index_base = (i << 2) + 16;
+    indices.push_back(index_base);
+    indices.push_back(index_base + 1);
+    indices.push_back(index_base + 2);
+    indices.push_back(index_base + 1);
+    indices.push_back(index_base + 3);
+    indices.push_back(index_base + 2);
+  }
+  return {{vertices}, {indices}};
 }
 
 Mesh Mesh::Sphere(const glm::vec3 &center, float radius) {
@@ -338,6 +408,19 @@ Mesh::Mesh(const tinyxml2::XMLElement *element) {
       radius = std::stof(child_element->FindAttribute("value")->Value());
     }
     *this = Mesh::Sphere(center, radius);
+  } else if (mesh_type == "cube") {
+    glm::vec3 center{0.0f};
+    glm::vec3 size{1.0f};
+    auto child_element = element->FirstChildElement("center");
+    if (child_element) {
+      center = StringToVec3(child_element->FindAttribute("value")->Value());
+    }
+
+    child_element = element->FirstChildElement("size");
+    if (child_element) {
+      size = StringToVec3(child_element->FindAttribute("value")->Value());
+    }
+    *this = Mesh::Cube(center, size);
   } else if (mesh_type == "obj") {
     Mesh::LoadObjFile(
         element->FirstChildElement("filename")->FindAttribute("value")->Value(),

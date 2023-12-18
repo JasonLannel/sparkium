@@ -42,5 +42,14 @@
 			<albedo value="1 1 1"/>
 		</material>
 	</model>
+  
+  <model type="cube">
+    <center value="0.0 0.0 0"/>
+    <size value="0.5 1 1.5"/>
+
+    <material type="lambertian">
+      <albedo value="1 1 1"/>
+    </material>
+  </model>
 
 </scene>

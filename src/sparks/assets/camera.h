@@ -37,14 +37,14 @@ class Camera {
   }
   [[nodiscard]] float GetFrontDOF() const {
     return CoC_ * focus_distance_ * (focus_distance_-focal_length_) /
-            (aperture_ * focal_length_ + CoC_ * (focus_distance_-focal_length_));
+            (2 * aperture_ * focal_length_ + CoC_ * (focus_distance_-focal_length_));
   }
   [[nodiscard]] float GetBackDOF() const {
-    if (aperture_ * focal_length_ - CoC_ * (focus_distance_ - focal_length_) <
+    if (2 * aperture_ * focal_length_ - CoC_ * (focus_distance_ - focal_length_) <
         1e-4)
       return CoC_ * focus_distance_ * (focus_distance_ - focal_length_) * 1e4;
     return CoC_ * focus_distance_ * (focus_distance_ - focal_length_) /
-           (aperture_ * focal_length_ -
+           (2 * aperture_ * focal_length_ -
             CoC_ * (focus_distance_ - focal_length_));
   }
 

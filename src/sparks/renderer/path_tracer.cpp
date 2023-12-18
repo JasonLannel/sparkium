@@ -99,11 +99,18 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           // Assume all lights have same index of refraction
           if (glm::dot(normal, ray.direction()) > 0)
             normal = -normal;
-          float refract_ratio = hit_record.front_face ? (1.0 / material.refract_idx)
-                                                      : material.refract_idx;
+          /*
+          * if(thin)
+          *     reflect_ratio = (1 - reflect_ratio) * (1-reflect_ratio) * reflect_ratio / (1 - reflect_ratio * reflect_ratio);
+          * See https://www.pbr-book.org/4ed/Reflection_Models/Dielectric_BSDF#ThinDielectricBSDF
+          */
+          float refract_ratio = hit_record.front_face ? (1.0 / material.IOR)
+                                                      : material.IOR;
           float cos_theta = fmin(glm::dot(-ray.direction(), normal), 1.0f);
           direction = glm::refract(ray.direction(), normal, refract_ratio);
-          if (direction.length() < 1e-4f || material.FresnelSchlick(refract_ratio, cos_theta) > RandomProb(rd)) {
+          if (direction.length() < 1e-4f ||
+              material.FresnelSchlick(refract_ratio, cos_theta) >
+                  RandomProb(rd)) {
             direction = glm::reflect(ray.direction(), normal);
           }
           glm::normalize(direction);
