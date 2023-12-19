@@ -31,26 +31,34 @@ struct Material {
   Material(Scene *scene, const tinyxml2::XMLElement *material_element);
   //Emission
   glm::vec3 emission{0.0f};
-  float emission_strength{1.0f};
+  float emission_strength{0.0f};
   //Lambertian
   float reflectance{0.9f};
   //Specular, default ideal specular
   float fuzz{0.0f};
   //Transmissive, default glass
   float IOR{1.5f};
+  bool thin{false};
   //Principle BRDF
   float subsurface{0.0f};
   float metallic{0.0f};
+  /// eta -> IOR
+  float roughness{0.5f};
   float specular{0.0f};
+  float specTrans{0.0f};
   float specularTint{0.0f};
-  float roughness{0.0f};
   float anisotropic{0.0f};
   float sheen{0.0f};
-  float sheenTint{0.0f};
-  glm::vec3 clearcoat{0.0f};
-  float clearcoatGloss{0.0f};
+  float sheenTint{0.5f};
+  float clearcoat{0.0f};
+  float clearcoatGloss{1.f};
+  float diffTrans{1.0f};
+  float flatness{0.0f};
+  glm::vec3 scatterDis{0.0f};
 
+  float clamp(float x, float xmin, float xmax) const;
   float FresnelSchlick(float f0, float cosTheta) const;
+  float SchlickWeight(float cosTheta) const;
   glm::vec3 DisneyPrincipled(glm::vec3 N,
                              glm::vec3 L,
                              glm::vec3 V,

@@ -199,32 +199,24 @@ int AcceleratedMesh::QuerySAH(std::vector<int> &aabb_indices,
 
 void AcceleratedMesh::CreatePdf(){
     area_ = 0;
-    probList_.resize(indices_.size() / 3);
-    for (int i = 0, j = 0; i < probList_.size(); ++i, j += 3) {
+    std::vector<float> probList;
+    probList.resize(indices_.size() / 3);
+    for (int i = 0, j = 0; i < probList.size(); ++i, j += 3) {
         Vertex a = vertices_[indices_[j]];
         Vertex b = vertices_[indices_[j + 1]];
         Vertex c = vertices_[indices_[j + 2]];
-        probList_[i] =
+        probList[i] =
             glm::cross(a.position - b.position, a.position - c.position)
                 .length();
-        area_ += probList_[i];
+        area_ += probList[i];
     }
-    for (int i = 0; i < probList_.size(); ++i) {
-        probList_[i] = probList_[i] / area_;
-    }
-    for (int i = 1; i < probList_.size(); ++i) {
-        probList_[i] += probList_[i - 1];
-    }
-    probList_[probList_.size() - 1] = 1.0f;
+    generator = DistributionPdf_1D(probList.begin(), probList.size());
 }
 
 glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, float time, std::mt19937 rd) const {
-    if (!probList_.size())
-        return glm::vec3(0);
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     float samp = dist(rd);
-    int pdfNo = std::lower_bound(probList_.begin(), probList_.end(), samp) -
-                probList_.begin();
+    int pdfNo = generator.Generate_Discrete(samp);
     pdfNo *= 3;
     glm::vec3 displacement = GetDisplacement(time);
     glm::vec3 v0 = vertices_[indices_[pdfNo]].position + displacement;

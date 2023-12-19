@@ -73,13 +73,24 @@ Material::Material(Scene *scene, const tinyxml2::XMLElement *material_element)
 Material::Material(const glm::vec3 &albedo) : Material() {
   albedo_color = albedo;
 }
+float Material::clamp(float x, float xmin, float xmax) const {
+  if (x < xmin)
+    x = xmin;
+  if (x > xmax)
+    x = xmax;
+  return x;
+}
+    
+float Material::SchlickWeight(float cosTheta) const {
+  float m = clamp(1 - cosTheta, 0, 1);
+  float m2 = m * m;
+  return m2 * m2 * m;
+}
 
 float Material::FresnelSchlick(float ref_idx, float cosTheta) const {
   float f0 = (1 - ref_idx) / (1 + ref_idx);
   f0 *= f0;
-  float m = 1 - cosTheta;
-  float m2 = m * m;
-  return f0 + (1.0f - f0) * m2 * m2 * m;
+  return f0 + (1.0f - f0) * SchlickWeight(cosTheta);
 }
 
 glm::vec3 Material::DisneyPrincipled(glm::vec3 N,
@@ -175,7 +186,7 @@ glm::vec3 Material::DisneyPrincipled(glm::vec3 N,
   glm::vec3 Dialectric = INV_PI * GlmMix(Fd, Fss, 1.0f - subsurface) * C;
   glm::vec3 Metallic = Fs * Gs * Ds;
   glm::vec3 Sheen = Fsh;
-  glm::vec3 Clearcoat = 0.25f * clearcoat * Fc * Gc * Dc;
+  glm::vec3 Clearcoat = 0.25f * clearcoat * Fc * Gc * Dc * glm::vec3(1);
   return (Dialectric + Sheen) * (1 - metallic) + Metallic + Clearcoat;
 }
 }  // namespace sparks

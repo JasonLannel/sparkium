@@ -75,11 +75,11 @@ Mesh Mesh::Cube(const glm::vec3 &center, const glm::vec3 &size) {
       }
     int index_base = i << 2;
     indices.push_back(index_base);
-    indices.push_back(index_base + 1);
     indices.push_back(index_base + 2);
     indices.push_back(index_base + 1);
+    indices.push_back(index_base + 1);
+    indices.push_back(index_base + 2);
     indices.push_back(index_base + 3);
-    indices.push_back(index_base + 2);
   }
   for (int i = 0; i < 2; ++i) {
     float delta = i == 1 ? 1 : -1;
@@ -100,11 +100,11 @@ Mesh Mesh::Cube(const glm::vec3 &center, const glm::vec3 &size) {
       }
     int index_base = (i << 2) + 16;
     indices.push_back(index_base);
-    indices.push_back(index_base + 1);
     indices.push_back(index_base + 2);
     indices.push_back(index_base + 1);
+    indices.push_back(index_base + 1);
+    indices.push_back(index_base + 2);
     indices.push_back(index_base + 3);
-    indices.push_back(index_base + 2);
   }
   return {{vertices}, {indices}};
 }
@@ -265,7 +265,7 @@ uint32_t Mesh::GetIndicesSize() const {
 
 bool Mesh::LoadObjFile(const std::string &obj_file_path, Mesh &mesh) {
   tinyobj::ObjReaderConfig reader_config;
-  reader_config.mtl_search_path = "./";  // Path to material files
+  //reader_config.mtl_search_path = "./";  // Path to material files
 
   tinyobj::ObjReader reader;
 

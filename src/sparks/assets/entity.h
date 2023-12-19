@@ -33,6 +33,8 @@ class Entity {
   [[nodiscard]] Material &GetMaterial();
   [[nodiscard]] const Material &GetMaterial() const;
   [[nodiscard]] const std::string &GetName() const;
+  [[nodiscard]] float GetPower() const;
+  [[nodiscard]] Pdf *GetPdf() const;
 
  private:
   std::unique_ptr<Model> model_;

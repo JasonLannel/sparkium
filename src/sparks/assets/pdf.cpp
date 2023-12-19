@@ -43,6 +43,145 @@ glm::vec3 Onb::local(glm::vec3 t) const {
   return t.x * _u + t.y * _v + t.z * _w;
 }
 
+DistributionPdf_1D::DistributionPdf_1D() {
+  func.resize(1);
+  cdf.resize(2);
+  cdf[0] = 0;
+  cdf[1] = 1;
+  func[0] = 1;
+  funcInt = 1;
+}
+
+DistributionPdf_1D::DistributionPdf_1D(const float *f, int n) {
+  func.resize(n);
+  cdf.resize(n + 1);
+  cdf[0] = 0;
+  for (int i = 0; i < n; ++i) {
+    func[i] = f[i];
+    cdf[i + 1] = cdf[i] + func[i] / n;
+  }
+  funcInt = cdf[n];
+  if (funcInt == 0) {
+    for (int i = 1; i <= n; ++i) {
+      cdf[i] = i * 1.0 / n;
+    }
+  } else {
+    for (int i = 1; i <= n; ++i) {
+      cdf[i] /= funcInt;
+    }
+  }
+}
+
+DistributionPdf_1D::DistributionPdf_1D(std::vector<float>::const_iterator f, int n) {
+  func.resize(n);
+  cdf.resize(n + 1);
+  for (int i = 0; i < n; ++i) {
+    func[i] = *(f + i);
+    cdf[i + 1] = cdf[i] + func[i] / n;
+  }
+  funcInt = cdf[n];
+  if (funcInt == 0) {
+    for (int i = 1; i <= n; ++i) {
+      cdf[i] = i * 1.0 / n;
+    }
+  } else {
+    for (int i = 1; i <= n; ++i) {
+      cdf[i] /= funcInt;
+    }
+  }
+}
+
+int DistributionPdf_1D::Count() const{
+  return func.size();
+}
+
+float DistributionPdf_1D::FuncInt() const {
+  return funcInt;
+}
+
+float DistributionPdf_1D::Func(int idx) const {
+  if (idx >= Count())
+    return 0;
+  return func[idx];
+}
+
+float DistributionPdf_1D::Generate_Continuous(float u,
+                                              float *pdf,
+                                              int *off) const {
+  int offset = lower_bound(cdf.begin(), cdf.end(), u) - cdf.begin() - 1;
+  if (off)
+    *off = offset;
+  float du = u - cdf[offset];
+  if ((cdf[offset + 1] - cdf[offset]) > 0)
+    du /= cdf[offset + 1] - cdf[offset];
+  if (pdf)
+    *pdf = func[offset] / funcInt;
+  return (offset + du) / Count();
+}
+
+float DistributionPdf_1D::Generate_Discrete(float u) const {
+  return lower_bound(cdf.begin(), cdf.end(), u) - cdf.begin() - 1;
+}
+
+float DistributionPdf_1D::Value(int idx) const {
+  return func[idx] / (funcInt * Count());
+}
+
+DistributionPdf_2D::DistributionPdf_2D() {
+  std::vector<float> v;
+  v.resize(1);
+  v[0] = 1;
+  *this = DistributionPdf_2D(v.begin(), 1, 1);
+}
+
+DistributionPdf_2D::DistributionPdf_2D(const float *data, int nu, int nv) {
+  for (int v = 0; v < nv; ++v) {
+    pConditionalV.emplace_back(new DistributionPdf_1D(&data[v * nu], nu));
+  }
+  std::vector<float> marginalFunc;
+  for (int v = 0; v < nv; ++v) {
+    marginalFunc.push_back(pConditionalV[v]->FuncInt());
+  }
+  pMarginal.reset(new DistributionPdf_1D(marginalFunc.begin(), nv));
+}
+
+DistributionPdf_2D::DistributionPdf_2D(std::vector<float>::const_iterator data,
+                                       int nu,
+                                       int nv) {
+  for (int v = 0; v < nv; ++v) {
+    pConditionalV.emplace_back(new DistributionPdf_1D(data + v * nu, nu));
+  }
+  std::vector<float> marginalFunc;
+  for (int v = 0; v < nv; ++v) {
+    marginalFunc.push_back(pConditionalV[v]->FuncInt());
+  }
+  pMarginal.reset(new DistributionPdf_1D(marginalFunc.begin(), nv));
+}
+
+glm::vec2 DistributionPdf_2D::Generate_Continuous(
+    glm::vec2 u,
+    float *pdf) const {
+  float pdfs[2];
+  int v;
+  float d1 = pMarginal->Generate_Continuous(u.x, &pdfs[1], &v);
+  float d0 = pConditionalV[v]->Generate_Continuous(u.y, &pdfs[0]);
+  if(pdf)
+      *pdf = pdfs[0] * pdfs[1];
+  return glm::vec2(d0, d1);
+}
+
+float DistributionPdf_2D::Value(glm::vec2 u) const {
+  int iu = u.x * pConditionalV[0]->Count();
+  int iv = u.y * pMarginal->Count();
+  if (pMarginal->FuncInt() > 0.0f)
+    return pConditionalV[iv]->Func(iu) / pMarginal->FuncInt();
+  return 0.0f;
+}
+
+float DistributionPdf_2D::FuncInt() const {
+  return pMarginal->FuncInt();
+}
+
 UniformSpherePdf::UniformSpherePdf(glm::vec3 normal){
   uvw = Onb(normal);
 }
@@ -93,60 +232,91 @@ glm::vec3 CosineHemispherePdf::Generate(glm::vec3 origin, float time,
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float u1 = dist(rd);
   float u2 = dist(rd);
-  double z_r = sqrt(1.0 - u1);
-  double z = sqrt(u1);
-  double phi = 2.0 * PI * u2;
+  float z_r = sqrt(u1);
+  float z = sqrt(1.f - u1);
+  float phi = 2.0 * PI * u2;
   return uvw.local(z_r * std::cos(phi),
                    z_r * std::sin(phi), z);
 }
 
 float CosineHemispherePdf::Value(const Ray &ray) const {
   float cos_theta = glm::dot(uvw.w(), ray.direction());
-  return cos_theta < 0 ? 0 : cos_theta / PI;
+  return cos_theta < 0 ? 0 : cos_theta * INV_PI;
+}
+
+EnvmapPdf::EnvmapPdf(const DistributionPdf_2D *sampler, const float offset) {
+  sampler_ = sampler;
+  offset_ = offset;
+}
+
+glm::vec3 EnvmapPdf::Generate(glm::vec3 origin,
+                              float time,
+                              std::mt19937 &rd) const {
+  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+  glm::vec2 rprob(dist(rd), dist(rd));
+  float mapPdf;
+  glm::vec2 uv = sampler_->Generate_Continuous(rprob, &mapPdf);
+  if (mapPdf == 0)
+      return glm::vec3(0, 0, 1);
+  float theta = uv.y * PI, phi = uv.x * 2 * PI + offset_;
+  float cosTheta = cos(theta);
+  return glm::vec3(cos(phi) * cosTheta, sin(phi) * cosTheta, sin(theta));
+}
+
+float EnvmapPdf::Value(const Ray &ray) const {
+  auto direction = ray.direction();
+  float phi = offset_;
+  float theta = acos(ray.direction().y);
+  if (glm::length(glm::vec2{direction.x, direction.y}) > 1e-4) {
+      phi += glm::atan(direction.x, -direction.z);
+  }
+  if (phi > 2 * PI)
+      phi -= 2 * PI;
+  if (phi < 0)
+      phi += 2 * PI;
+  float sinTheta = sin(theta);
+  if (sinTheta == 0)
+      return 0;
+  return sampler_->Value(glm::vec2(phi * INV_PI * 0.5, theta * INV_PI)) * 0.5f * INV_PI * INV_PI / sinTheta;
+}
+
+float EnvmapPdf::FuncInt() const {
+  return sampler_->FuncInt();
 }
 
 MixturePdf::MixturePdf(Pdf* p1, Pdf* p2, float prob1){
   pdfList.resize(2);
-  probList.resize(2);
+  std::vector<float> probList;
   pdfList[0] = p1;
-  probList[0] = prob1;
+  probList.push_back(prob1);
   pdfList[1] = p2;
-  probList[1] = 1.0f;
+  probList.push_back(1.0f-prob1);
+  generator = DistributionPdf_1D(probList.begin(), 2);
 }
 
 MixturePdf::MixturePdf(std::vector<Pdf*> list, std::vector<float> weight)
-    : pdfList(list){
-  probList = weight;
-  float sum = 0;
-  for (int i = 0; i < probList.size(); ++i)
-    sum += probList[i];
-  for (int i = 0; i < probList.size(); ++i)
-    probList[i] /= sum;
-  for (int i = 1; i < probList.size(); ++i)
-    probList[i] += probList[i-1];
-  probList[probList.size() - 1] = 1.0f;
+    : pdfList(list) {
+  generator = DistributionPdf_1D(weight.begin(), list.size());
 }
 
-MixturePdf::MixturePdf(std::vector<Pdf*> list) : pdfList(list) {
-  probList.resize(list.size());
-  for (int i = 0; i < probList.size(); ++i)
-    probList[i] = (i + 1) * 1.0f / probList.size();
-  probList[probList.size() - 1] = 1.0f;
+MixturePdf::MixturePdf(std::vector<Pdf *> list) : pdfList(list) {
+  std::vector<float> probList;
+  for (int i = 0; i < list.size(); ++i)
+      probList.push_back(1 / probList.size());
+  generator = DistributionPdf_1D(probList.begin(), list.size());
 }
 
 glm::vec3 MixturePdf::Generate(glm::vec3 origin, float time, std::mt19937 &rd) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float samp = dist(rd);
-  int pdfNo = std::lower_bound(probList.begin(), probList.end(), samp) -
-              probList.begin();
+  int pdfNo = generator.Generate_Discrete(samp);
   return pdfList[pdfNo]->Generate(origin, time, rd);
 }
 
 float MixturePdf::Value(const Ray &ray) const {
-  float result = probList[0] * pdfList[0]->Value(ray);
-  for (int i = 1; i < probList.size(); ++i) {
-    result +=
-        (probList[i] - probList[i - 1]) * pdfList[i]->Value(ray);
+  float result = 0;
+  for (int i = 0; i < pdfList.size(); ++i) {
+    result += generator.Value(i) * pdfList[i]->Value(ray);
   }
   return result;
 }

@@ -58,8 +58,6 @@ class Scene {
   [[nodiscard]] glm::vec3 GetEnvmapLightDirection() const;
   [[nodiscard]] const glm::vec3 &GetEnvmapMinorColor() const;
   [[nodiscard]] const glm::vec3 &GetEnvmapMajorColor() const;
-  [[nodiscard]] const std::vector<float> &GetEnvmapCdf() const;
-  ;
   [[nodiscard]] glm::vec4 SampleEnvmap(const glm::vec3 &direction) const;
 
   float TraceRay(const Ray &ray,
@@ -82,7 +80,7 @@ class Scene {
 
   int envmap_id_{1};
   float envmap_offset_{0.0f};
-  std::vector<float> envmap_cdf_;
+  DistributionPdf_2D envmap_sample_;
   glm::vec3 envmap_light_direction_{0.0f, 1.0f, 0.0f};
   glm::vec3 envmap_major_color_{0.5f};
   glm::vec3 envmap_minor_color_{0.3f};

@@ -19,6 +19,36 @@ class Onb {
   glm::vec3 _u, _v, _w;
 };
 
+class DistributionPdf_1D{
+ public:
+  DistributionPdf_1D();
+  DistributionPdf_1D(const float *f, int n);
+  DistributionPdf_1D(std::vector<float>::const_iterator f, int n);
+  int Count() const;
+  float FuncInt() const;
+  float Func(int idx) const;
+  float Generate_Continuous(float u, float *pdf, int *off = nullptr) const;
+  float Generate_Discrete(float u) const;
+  float Value(int idx) const;
+ private:
+  std::vector<float> func, cdf;
+  float funcInt;
+};
+
+class DistributionPdf_2D {
+ public:
+  DistributionPdf_2D();
+  DistributionPdf_2D(const float *data, int nu, int nv);
+  DistributionPdf_2D(std::vector<float>::const_iterator data, int nu, int nv);
+  glm::vec2 Generate_Continuous(glm::vec2 u, float *pdf) const;
+  float Value(glm::vec2) const;
+  float FuncInt() const;
+
+ private:
+  std::vector<std::unique_ptr<DistributionPdf_1D>> pConditionalV;
+  std::unique_ptr<DistributionPdf_1D> pMarginal;
+};
+
 class Pdf {
  public:
   virtual ~Pdf() = default;
@@ -29,6 +59,8 @@ class Pdf {
     return 1.0f;
   }
 };
+
+
 
 class UniformSpherePdf : public Pdf {
  public:
@@ -63,6 +95,20 @@ class CosineHemispherePdf : public Pdf {
   Onb uvw;
 };
 
+class EnvmapPdf : public Pdf {
+ public:
+  EnvmapPdf(const DistributionPdf_2D *sampler, float offset);
+  glm::vec3 Generate(glm::vec3 origin,
+                     float time,
+                     std::mt19937 &rd) const override;
+  float Value(const Ray &ray) const override;
+  float FuncInt() const;
+
+ private:
+  const DistributionPdf_2D *sampler_;
+  float offset_;
+};
+
 class MixturePdf : public Pdf {
  public:
   MixturePdf(Pdf* p1, Pdf* p2, float prob1);
@@ -73,6 +119,7 @@ class MixturePdf : public Pdf {
 
  private:
   std::vector<Pdf*> pdfList;
-  std::vector<float> probList;
+  DistributionPdf_1D generator;
 };
+
 }  // namespace sparks

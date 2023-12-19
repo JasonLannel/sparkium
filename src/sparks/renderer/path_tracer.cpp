@@ -69,20 +69,16 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         if (glm::dot(normal, ray.direction()) > 0)
           normal = -normal;
           CosineHemispherePdf Dialectric(normal, tangent);
-          Pdf *Gen;
-          if (Light != nullptr) {
-            Gen = new MixturePdf(&Dialectric, Light, 0.5f);
-          } else {
-            Gen = &Dialectric;
-          }
+          Pdf *Gen = new MixturePdf(&Dialectric, Light, 0.5f);
           direction = Gen->Generate(origin, ray.time(), rd);
           ray = Ray(origin, direction, ray.time());
           float pdf = Gen->Value(ray);
           float scatter = std::max(0.f, glm::dot(normal, direction) * INV_PI);
           float reflectance = material.reflectance;
           throughput *= albedo * reflectance * scatter / pdf;
-          if (Light != nullptr)
-            delete Gen;
+          delete Gen;
+          if (glm::dot(normal, direction) < 0)
+            break;
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
           if (glm::dot(normal, ray.direction()) > 0)
             normal = -normal;
@@ -91,42 +87,43 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           UniformHemispherePdf Fuzz(direction);
           glm::vec3 fuzzDirection = Fuzz.Generate(origin, ray.time(), rd);
           direction = glm::normalize(direction + fuzzDirection * material.fuzz);
-          if (glm::dot(normal, direction) < 0)
-            break;  // Absorb Energy.
           ray = Ray(origin, direction, ray.time());
           throughput *= albedo;
+          if (glm::dot(normal, direction) < 0)
+            break;
       } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
           // Assume all lights have same index of refraction
           if (glm::dot(normal, ray.direction()) > 0)
             normal = -normal;
-          /*
-          * if(thin)
-          *     reflect_ratio = (1 - reflect_ratio) * (1-reflect_ratio) * reflect_ratio / (1 - reflect_ratio * reflect_ratio);
-          * See https://www.pbr-book.org/4ed/Reflection_Models/Dielectric_BSDF#ThinDielectricBSDF
-          */
           float refract_ratio = hit_record.front_face ? (1.0 / material.IOR)
                                                       : material.IOR;
-          float cos_theta = fmin(glm::dot(-ray.direction(), normal), 1.0f);
-          direction = glm::refract(ray.direction(), normal, refract_ratio);
-          if (direction.length() < 1e-4f ||
-              material.FresnelSchlick(refract_ratio, cos_theta) >
-                  RandomProb(rd)) {
-            direction = glm::reflect(ray.direction(), normal);
+          if (material.thin) {
+            float reflect_ratio = 1 - refract_ratio;
+            reflect_ratio = (1 - reflect_ratio) * (1 - reflect_ratio) *
+                            reflect_ratio / (1 - reflect_ratio * reflect_ratio);
+            if (reflect_ratio > RandomProb(rd)) {
+              direction = glm::reflect(ray.direction(), normal);
+            } else {
+              direction = ray.direction();
+            }
+          } else {
+              float cos_theta = fmin(glm::dot(-ray.direction(), normal), 1.0f);
+              direction = glm::refract(ray.direction(), normal, refract_ratio);
+              if (direction.length() < 1e-4f ||
+                  material.FresnelSchlick(refract_ratio, cos_theta) >
+                      RandomProb(rd)) {
+                direction = glm::reflect(ray.direction(), normal);
+              }
           }
-          glm::normalize(direction);
-          ray = Ray(origin, direction, ray.time());
-          throughput *= albedo;
+        glm::normalize(direction);
+        ray = Ray(origin, direction, ray.time());
+        throughput *= albedo;
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
-          // 别忘记补上折射, 还没实现，这里是有问题的，只是用在 BRDF 时对
+          // 别忘记补上折射, 还没实现，这里是有问题的
           if (glm::dot(normal, ray.direction()) > 0)
           normal = -normal;
           CosineHemispherePdf Dialectric(normal, tangent);
-          Pdf *Gen;
-          if (Light != nullptr) {
-            Gen = new MixturePdf(&Dialectric, Light, 0.5f);
-          } else {
-            Gen = &Dialectric;
-          }
+          Pdf *Gen = new MixturePdf(&Dialectric, Light, 0.5f);
           direction = Gen->Generate(origin, ray.time(), rd);
           Onb onb(normal);
           throughput *= material.DisneyPrincipled(
@@ -134,8 +131,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           ray = Ray(origin, direction, ray.time());
           float pdf = Gen->Value(ray);
           throughput /= pdf;
-          if (Light != nullptr)
-            delete Gen;
+          delete Gen;
       }
       throughput *= INV_RR;
     } else {

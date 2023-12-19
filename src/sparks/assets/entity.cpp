@@ -26,4 +26,13 @@ const std::string &Entity::GetName() const {
   return name_;
 }
 
+float Entity::GetPower() const {
+  glm::vec3 emission = material_.emission;
+  return model_.get()->GetArea() * material_.emission_strength * fmax(emission.x, fmax(emission.y, emission.z));
+}
+
+Pdf *Entity::GetPdf() const {
+  return new ModelPdf(model_.get());
+}
+
 }  // namespace sparks

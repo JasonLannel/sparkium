@@ -535,8 +535,9 @@ void App::UpdateImGui() {
         reset_accumulation_ |= ImGui::SliderFloat(
             "Fuzz Radius", &material.fuzz, 0.0f, 1.0f, "%.3f");
       } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
-        reset_accumulation_ |= ImGui::SliderFloat("Index of Refraction", &material.IOR,
-                                                  1.0f, 3.0f, "%.3f");
+        reset_accumulation_ |= ImGui::SliderFloat("Index of Refraction", &material.IOR, 1.0f, 3.0f, "%.3f");
+        reset_accumulation_ |= ImGui::Checkbox(
+            "Thin (thickness can be omited)", &material.thin);
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
         reset_accumulation_ |= ImGui::SliderFloat(
             "Subsurface", &material.subsurface, 0.0f, 1.0f, "%.3f");
@@ -554,9 +555,8 @@ void App::UpdateImGui() {
               ImGui::SliderFloat("Sheen", &material.sheen, 0.0f, 1.0f, "%.3f");
         reset_accumulation_ |= ImGui::SliderFloat(
             "SheenTint", &material.sheenTint, 0.0f, 1.0f, "%.3f");
-          reset_accumulation_ |= ImGui::ColorEdit3(
-              "Clearcoat", &material.clearcoat[0],
-              ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
+          reset_accumulation_ |= ImGui::SliderFloat(
+            "Clearcoat", &material.clearcoat, 0.0f, 1.0f, "%.3f");
         reset_accumulation_ |= ImGui::SliderFloat(
             "ClearcoatGloss", &material.clearcoatGloss, 0.0f, 1.0f, "%.3f");
       }

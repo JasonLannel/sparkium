@@ -43,7 +43,7 @@ class AcceleratedMesh : public Mesh {
 
   std::vector<TreeNode> bvh_nodes_{};
   float area_;
-  std::vector<float> probList_;
+  DistributionPdf_1D generator;
 };
 
 }  // namespace sparks

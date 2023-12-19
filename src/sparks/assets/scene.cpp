@@ -11,6 +11,7 @@ namespace sparks {
 Scene::Scene() {
   AddTexture(Texture(1, 1, glm::vec4{1.0f}, SAMPLE_TYPE_LINEAR), "Pure White");
   AddTexture(Texture(1, 1, glm::vec4{0.0f}, SAMPLE_TYPE_LINEAR), "Pure Black");
+  UpdateEnvmapConfiguration();
 }
 
 int Scene::AddTexture(const Texture &texture, const std::string &name) {
@@ -121,7 +122,8 @@ void Scene::UpdateEnvmapConfiguration() {
 
   envmap_minor_color_ = glm::vec3{0.0f};
   envmap_major_color_ = glm::vec3{0.0f};
-  envmap_cdf_.resize(envmap_texture.GetWidth() * envmap_texture.GetHeight());
+  std::vector<float> envmap_prob_;
+  envmap_prob_.resize(envmap_texture.GetWidth() * envmap_texture.GetHeight());
 
   std::vector<float> sample_scale_(envmap_texture.GetHeight() + 1);
   auto inv_width = 1.0f / float(envmap_texture.GetWidth());
@@ -132,7 +134,6 @@ void Scene::UpdateEnvmapConfiguration() {
   }
 
   auto width_height = envmap_texture.GetWidth() * envmap_texture.GetHeight();
-  float total_weight = 0.0f;
   float major_strength = -1.0f;
   for (int y = 0; y < envmap_texture.GetHeight(); y++) {
     auto scale = sample_scale_[y + 1] - sample_scale_[y];
@@ -161,15 +162,11 @@ void Scene::UpdateEnvmapConfiguration() {
         major_strength = strength;
       }
 
-      total_weight += strength * scale;
-      envmap_cdf_[i] = total_weight;
+      envmap_prob_[i] = strength * scale;
     }
   }
-
-  auto inv_total_weight = 1.0f / total_weight;
-  for (auto &v : envmap_cdf_) {
-    v *= inv_total_weight;
-  }
+  envmap_sample_ = DistributionPdf_2D(&envmap_prob_[0], envmap_texture.GetWidth(),
+                                      envmap_texture.GetHeight());
 }
 glm::vec3 Scene::GetEnvmapLightDirection() const {
   float sin_offset = std::sin(envmap_offset_);
@@ -185,9 +182,6 @@ const glm::vec3 &Scene::GetEnvmapMinorColor() const {
 }
 const glm::vec3 &Scene::GetEnvmapMajorColor() const {
   return envmap_major_color_;
-}
-const std::vector<float> &Scene::GetEnvmapCdf() const {
-  return envmap_cdf_;
 }
 
 float Scene::TraceRay(const Ray &ray,
@@ -382,15 +376,17 @@ Scene::Scene(const std::string &filename) : Scene() {
 Pdf* Scene::GetLightPdf() const{
   std::vector<Pdf *> emissiveList_;
   std::vector<float> weight;
+  emissiveList_.push_back(new EnvmapPdf(&envmap_sample_, envmap_offset_));
+  float WorldRadius = 1e4;
+  weight.push_back(WorldRadius * WorldRadius * PI * envmap_sample_.FuncInt());
   for (int i = 0; i < entities_.size(); ++i) {
-    if (entities_[i].GetMaterial().material_type == MATERIAL_TYPE_EMISSION) {
-      emissiveList_.push_back(new ModelPdf(entities_[i].GetModel()));
-      weight.push_back( entities_[i].GetModel()->GetArea());
+    float power = entities_[i].GetPower();
+    if (power > 1e-4f) {
+      emissiveList_.push_back(entities_[i].GetPdf());
+      weight.push_back(power);
     }
   }
-  if (emissiveList_.size() > 0)
-    return new MixturePdf(emissiveList_, weight);
-  return nullptr;
+  return new MixturePdf(emissiveList_, weight);
 }
 
 }  // namespace sparks
