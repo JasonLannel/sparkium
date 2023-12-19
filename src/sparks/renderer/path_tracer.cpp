@@ -65,9 +65,9 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       }
       glm::normalize(normal);
       glm::normalize(tangent);
+      if (glm::dot(normal, ray.direction()) > 0)
+        normal = -normal;
       if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
-        if (glm::dot(normal, ray.direction()) > 0)
-          normal = -normal;
           CosineHemispherePdf Dialectric(normal, tangent);
           Pdf *Gen = new MixturePdf(&Dialectric, Light, 0.5f);
           direction = Gen->Generate(origin, ray.time(), rd);
@@ -80,8 +80,6 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           if (glm::dot(normal, direction) < 0)
             break;
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
-          if (glm::dot(normal, ray.direction()) > 0)
-            normal = -normal;
           direction = glm::reflect(ray.direction(), normal);
           // Fuzz
           UniformHemispherePdf Fuzz(direction);
@@ -93,8 +91,6 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             break;
       } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
           // Assume all lights have same index of refraction
-          if (glm::dot(normal, ray.direction()) > 0)
-            normal = -normal;
           float refract_ratio = hit_record.front_face ? (1.0 / material.IOR)
                                                       : material.IOR;
           if (material.thin) {
@@ -120,8 +116,6 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         throughput *= albedo;
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
           // 别忘记补上折射, 还没实现，这里是有问题的
-          if (glm::dot(normal, ray.direction()) > 0)
-          normal = -normal;
           CosineHemispherePdf Dialectric(normal, tangent);
           Pdf *Gen = new MixturePdf(&Dialectric, Light, 0.5f);
           direction = Gen->Generate(origin, ray.time(), rd);

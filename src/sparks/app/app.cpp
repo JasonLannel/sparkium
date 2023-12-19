@@ -558,7 +558,7 @@ void App::UpdateImGui() {
           reset_accumulation_ |= ImGui::SliderFloat(
             "Clearcoat", &material.clearcoat, 0.0f, 1.0f, "%.3f");
         reset_accumulation_ |= ImGui::SliderFloat(
-            "ClearcoatGloss", &material.clearcoatGloss, 0.0f, 1.0f, "%.3f");
+              "ClearcoatGloss", &material.clearcoatGloss, 0.0f, 1.0f, "%.3f");
       }
     }
 

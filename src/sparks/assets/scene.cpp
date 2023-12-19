@@ -284,11 +284,9 @@ int Scene::LoadTexture(const std::string &file_path) {
 }
 
 int Scene::LoadObjMesh(const std::string &file_path) {
-  AcceleratedMesh mesh;
-  if (Mesh::LoadObjFile(file_path, mesh)) {
-    mesh.BuildAccelerationStructure();
-    return AddEntity(mesh, Material{}, glm::mat4{1.0f},
-                     PathToFilename(file_path));
+  Entity entity = Entity();
+  if (entity.LoadObjFile(file_path)) {
+    return AddEntity(entity);
   } else {
     return -1;
   }
@@ -347,23 +345,7 @@ Scene::Scene(const std::string &filename) : Scene() {
       }
       camera_ = Camera(fov, aperture, focal_length, 0.0, 1.0);
     } else if (element_type == "model") {
-      Mesh mesh = Mesh(child_element);
-      Material material{};
-
-      auto grandchild_element = child_element->FirstChildElement("material");
-      if (grandchild_element) {
-        material = Material(this, grandchild_element);
-      }
-
-      glm::mat4 transformation = XmlComposeTransformMatrix(child_element);
-
-      auto name_attribute = child_element->FindAttribute("name");
-      if (name_attribute) {
-        AddEntity(AcceleratedMesh(mesh), material, transformation,
-                  std::string(name_attribute->Value()));
-      } else {
-        AddEntity(AcceleratedMesh(mesh), material, transformation);
-      }
+      AddEntity(this, child_element);
     } else {
       LAND_ERROR("Unknown Element Type: {}", child_element->Value());
     }
