@@ -114,19 +114,19 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         glm::normalize(direction);
         ray = Ray(origin, direction, ray.time());
         throughput *= albedo;
-      } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
-          // 别忘记补上折射, 还没实现，这里是有问题的
-          CosineHemispherePdf Dialectric(normal, tangent);
-          Pdf *Gen = new MixturePdf(&Dialectric, Light, 0.5f);
-          direction = Gen->Generate(origin, ray.time(), rd);
-          Onb onb(normal);
-          throughput *= material.DisneyPrincipled(
-              normal, -ray.direction(), direction, onb.u(), onb.v(), albedo);
-          ray = Ray(origin, direction, ray.time());
-          float pdf = Gen->Value(ray);
-          throughput /= pdf;
-          delete Gen;
-      }
+      } //else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
+          // // 别忘记补上折射, 还没实现，这里是有问题的
+          //CosineHemispherePdf Dialectric(normal, tangent);
+          //Pdf *Gen = new MixturePdf(&Dialectric, Light, 0.5f);
+          //direction = Gen->Generate(origin, ray.time(), rd);
+          //Onb onb(normal);
+          //throughput *= material.DisneyPrincipled(
+              //normal, -ray.direction(), direction, onb.u(), onb.v(), albedo);
+          //ray = Ray(origin, direction, ray.time());
+          //float pdf = Gen->Value(ray);
+          //throughput /= pdf;
+          //delete Gen;
+      //}
       throughput *= INV_RR;
     } else {
       radiance += throughput * glm::vec3{scene_->SampleEnvmap(ray.direction())};

@@ -73,120 +73,400 @@ Material::Material(Scene *scene, const tinyxml2::XMLElement *material_element)
 Material::Material(const glm::vec3 &albedo) : Material() {
   albedo_color = albedo;
 }
-float Material::clamp(float x, float xmin, float xmax) const {
-  if (x < xmin)
-    x = xmin;
-  if (x > xmax)
-    x = xmax;
-  return x;
-}
     
 float Material::SchlickWeight(float cosTheta) const {
-  float m = clamp(1 - cosTheta, 0, 1);
-  float m2 = m * m;
-  return m2 * m2 * m;
+  float m = clamp(1 - cosTheta, 0.0f, 1.0f);
+  return pow5(m);
 }
 
-float Material::FresnelSchlick(float ref_idx, float cosTheta) const {
-  float f0 = (1 - ref_idx) / (1 + ref_idx);
-  f0 *= f0;
-  return f0 + (1.0f - f0) * SchlickWeight(cosTheta);
+float Material::FresnelSchlick(float R0, float cosTheta) const {
+  return interpolate(R0, 1.0f, SchlickWeight(cosTheta));
 }
 
-glm::vec3 Material::DisneyPrincipled(glm::vec3 N,
-                                     glm::vec3 L,
-                                     glm::vec3 V,
-                                     glm::vec3 X,
-                                     glm::vec3 Y, glm::vec3 C) const {
-  auto sqr = [](float x) { return x * x; };
-  auto max = [](float x, float y) { return x > y ? x : y; };
-  auto Mix = [](float f1, float f2, float t) { return f1 * t + f2 * (1 - t); };
-  auto GlmMix = [](glm::vec3 f1, glm::vec3 f2, float t) {
-    return f1 * t + f2 * (1.f - t);
-  };
-  auto FresnelSchlick = [sqr](float u){
-    float m = 1.f - u;
-    return m*sqr(sqr(m));
-  };
-  auto smithG_GGX = [sqr](float NdotV, float alphaG) {
-    float a = sqr(alphaG);
-    float b = sqr(NdotV);
-    return 1 / (NdotV + sqrt(a + b - a * b));
-  };
-  auto smithG_GGX_aniso = [sqr](float NdotV, float VdotX, float VdotY, float ax, float ay) {
-    return 1 / (NdotV + sqrt(sqr(VdotX * ax) + sqr(VdotY * ay) +
-                             sqr(NdotV)));
-  };
-  auto GTR1 = [sqr](float NdotH, float a) {
-    if (a >= 1)
-      return 1 / PI;
-    float a2 = sqr(a);
-    float t = 1 + (a2 - 1) * NdotH * NdotH;
-    return (a2 - 1) / float(PI * log(a2) * t);
-  };
-  auto GTR2 = [sqr](float NdotH, float a) { 
-      float a2 = sqr(a);
-      float t = 1 + (a2 - 1) * NdotH * NdotH;
-      return a2 / (PI * sqr(t));
-  };
-  auto GTR2_aniso = [sqr](float NdotH, float HdotX, float HdotY, float ax,
-                          float ay) {
-    return 1 / (PI * ax * ay *
-                sqr(sqr(HdotX / ax) + sqr(HdotY / ay) + sqr(NdotH)));
-  };
+glm::vec3 Material::FresnelSchlick(glm::vec3 SpecularColor, float cosTheta) const {
+  return interpolate(SpecularColor, glm::vec3(1.0f), SchlickWeight(cosTheta));
+}
 
-  float NdotL = glm::dot(N, L);
-  float NdotV = glm::dot(N, V);
-  if (NdotL < 0 || NdotV < 0)
-    return glm::vec3(0);
+float Material::SchlickR0FromRelativeIOR(float eta) const {
+  return square(eta - 1.0f) / square(eta + 1.0f);
+}
 
-  glm::vec3 H = glm::normalize(L + V);
-  float NdotH = glm::dot(N, H);
-  float LdotH = glm::dot(L, H);
+glm::vec3 Material::CalculateTint(glm::vec3 baseColor) const {
+  float luminance = glm::dot(glm::vec3(0.3f, 0.6f, 1.0f), baseColor);
+  return (luminance > 0.0f) ? baseColor * (1.0f / luminance) : glm::vec3(1.0f);
+}
 
-  // Disney Principled.
-  // (1-metal)(C * INV_PI * mix(diffuse, microfacet) + sheen)
-  // Specular: D_s*F_s*G_s/ 4(N*L)(N*V)
-  // Clearcoat: clearcoat/4 * F_c*G_c*D_c/4(N*L)(N*V)
-  // Microfacet
-  float Fss90 = sqr(LdotH) * roughness;
-  glm::vec3 Fss = 1.25f * C * INV_PI * (Mix(1, FresnelSchlick(NdotL), Fss90) *
-                          Mix(1, FresnelSchlick(NdotV), Fss90) *
-                          (1.0f / (NdotL + NdotV) - 0.5f) +
-                      0.5f);
-  // Diffuse
-  float Fd90 = 0.5f + 2 * Fss90;
-  glm::vec3 Fd = C * INV_PI *
-      Mix(1, FresnelSchlick(NdotL), Fd90) * Mix(1, FresnelSchlick(NdotV), Fd90);
-  // Sheen
-  float respLum = 0.2126f * C.x + 0.7152f * C.y +
-                  0.0722f * C.z;
-  glm::vec3 Ctint = respLum > 0 ? C / respLum : glm::vec3(1);
-  glm::vec3 Fsh =
-      GlmMix(glm::vec3(1), Ctint, sheenTint) * sheen *
-                  FresnelSchlick(LdotH);
-  // Specular
-  glm::vec3 Cs =
-      GlmMix(0.08f * specular * GlmMix(glm::vec3(1), Ctint, specularTint),
-             C, metallic);
-  glm::vec3 Fs = Cs + (glm::vec3(1) - Cs) * FresnelSchlick(LdotH);
-  float aspect = sqrt(1 - 0.9 * anisotropic);
-  float ax = max(0.001f, sqr(roughness) / aspect);
-  float ay = max(0.001f, sqr(roughness) * aspect);
-  float Gs = smithG_GGX_aniso(NdotL, glm::dot(L, X), glm::dot(L, Y), ax, ay) *
-             smithG_GGX_aniso(NdotV, glm::dot(V, X), glm::dot(V, Y), ax, ay);
-  float Ds = GTR2_aniso(NdotH, glm::dot(H, X), glm::dot(H, Y), ax, ay);
-  
-  // Clearcoat
-  float Fc = Mix(1, FresnelSchlick(LdotH), 0.04);
-  float Gc = smithG_GGX(NdotL, 0.25) * smithG_GGX(NdotV, 0.25);
-  float Dc = GTR1(NdotH, Mix(0.1, 0.001, clearcoatGloss));
+void Material::CalculateAnisotropicParams(float roughness,
+                                       float anisotropic,
+                                       float &ax,
+                                       float &ay) const {
+  float aspect = sqrt(1.0f - 0.9f * anisotropic);
+  ax = std::max(0.001f, square(roughness) / aspect);
+  ay = std::max(0.001f, square(roughness) * aspect);
+}
 
-  // Mixture: (1-metal)(C/PI * mix(diffuse, microfacet) + sheen) + specular + clearcoat
-  glm::vec3 Dialectric = INV_PI * GlmMix(Fd, Fss, 1.0f - subsurface) * C;
-  glm::vec3 Metallic = Fs * Gs * Ds;
-  glm::vec3 Sheen = Fsh;
-  glm::vec3 Clearcoat = 0.25f * clearcoat * Fc * Gc * Dc * glm::vec3(1);
-  return (Dialectric + Sheen) * (1 - metallic) + Metallic + Clearcoat;
+void Material::CalculateLobePdfs(float &pSpecular,
+                       float &pDiffuse,
+                       float &pClearcoat,
+                       float &pSpecTrans) const {
+  float metallicBRDF = this->metallic;
+  float specularBSDF = (1.0f - this->metallic) * this->specTrans;
+  float dielectricBRDF = (1.0f - this->specTrans) * (1.0f - this->metallic);
+
+  float specularWeight = metallicBRDF + dielectricBRDF;
+  float transmissionWeight = specularBSDF;
+  float diffuseWeight = dielectricBRDF;
+  float clearcoatWeight = 1.0f * clamp(this->clearcoat, 0.0f, 1.0f);
+
+  float norm = 1.0f / (specularWeight + transmissionWeight + diffuseWeight +
+                       clearcoatWeight);
+
+  pSpecular = specularWeight * norm;
+  pSpecTrans = transmissionWeight * norm;
+  pDiffuse = diffuseWeight * norm;
+  pClearcoat = clearcoatWeight * norm;
+}
+
+void Material::GgxVndfAnisotropicPdf(const glm::vec3 &wi,
+                           const glm::vec3 &wm,
+                           const glm::vec3 &wo,
+                           float ax,
+                           float ay,
+                           float &forwardPdfW,
+                           float &reversePdfW) const {
+  float D = GgxAnisotropicD(wm, ax, ay);
+
+  float absDotNL = calAbsCosTheta(wi);
+  float absDotHL = std::abs(glm::dot(wm, wi));
+  float G1v = SeparableSmithGGXG1(wo, wm, ax, ay);
+  forwardPdfW = G1v * absDotHL * D / absDotNL;
+
+  float absDotNV = calAbsCosTheta(wo);
+  float absDotHV = std::abs(glm::dot(wm, wo));
+  float G1l = SeparableSmithGGXG1(wi, wm, ax, ay);
+  reversePdfW = G1l * absDotHV * D / absDotNV;
+}
+
+glm::vec3 Material::EvaluateSheen(const glm::vec3 &wo,
+                               const glm::vec3 &wm,
+                               const glm::vec3 &wi) const {
+  if (this->sheen <= 0.0f) {
+    return glm::vec3 {0.0f};
+  }
+  float dotHL = glm::dot(wm, wi);
+  glm::vec3 tint = CalculateTint(albedo_color); // original: baseColor, are they the same?
+  return this->sheen * interpolate(glm::vec3(1.0f), tint, this->sheenTint) * SchlickWeight(dotHL);
+}
+
+float Material::GTR1(float absDotHL, float a) const {
+  if (a >= 1) {
+    return INV_PI;
+  }
+  float a2 = a * a;
+  return (a2 - 1.0f) /
+         (PI * log(a2) * (1.0f + (a2 - 1.0f) * absDotHL * absDotHL));
+}
+
+float Material::SeparableSmithGGXG1(const glm::vec3 &w, float a) const {
+  float a2 = a * a;
+  float absDotNV = calAbsCosTheta(w);
+  return 2.0f / (1.0f + sqrt(a2 + (1 - a2) * absDotNV * absDotNV));
+}
+
+float Material::EvaluateDisneyClearcoat(float clearcoat,
+                                        float alpha,
+                                        const glm::vec3 &wo,
+                                        const glm::vec3 &wm,
+                                        const glm::vec3 &wi,
+                                        float &fPdfW,
+                                        float &rPdfW) const {
+  if (clearcoat <= 0.0f) {
+    return 0.0f;
+  }
+
+  float absDotNH = calAbsCosTheta(wm);
+  float absDotNL = calAbsCosTheta(wi);
+  float absDotNV = calAbsCosTheta(wo);
+  float dotHL = glm::dot(wm, wi);
+
+  float d = GTR1(absDotNH, interpolate(0.1f, 0.001f, alpha));
+  float f = FresnelSchlick(0.04f, dotHL);
+  float gl = SeparableSmithGGXG1(wi, 0.25f);
+  float gv = SeparableSmithGGXG1(wo, 0.25f);
+
+  fPdfW = d / (4.0f * absDotNL);
+  rPdfW = d / (4.0f * absDotNV);
+
+  return 0.25f * clearcoat * d * f * gl * gv;
+}
+
+float Material::GgxAnisotropicD(const glm::vec3 &wm, float ax, float ay) const {
+  float dotHX2 = wm.x * wm.x;
+  float dotHY2 = wm.z * wm.z;
+  float cos2Theta = Cos2Theta(wm);
+  float ax2 = ax * ax;
+  float ay2 = ay * ay;
+
+  return 1.0f / (PI * ax * ay * (dotHX2 / ax2 + dotHY2 / ay2 + cos2Theta) *
+                 (dotHX2 / ax2 + dotHY2 / ay2 + cos2Theta));
+}
+
+float Material::SeparableSmithGGXG1(const glm::vec3 &w,
+                                    const glm::vec3 &wm,
+                                    float ax,
+                                    float ay) const {
+  float dotHW = glm::dot(w, wm);
+  if (dotHW <= 0.0f) {
+    return 0.0f;
+  }
+  float absTanTheta = calAbsTanTheta(w);
+  if (absTanTheta == INFTY) {
+    return 0.0f;
+  }
+
+  float a = sqrt(Cos2Phi(w) * ax * ax + Sin2Phi(w) * ay * ay);
+  float a2Tan2Theta = a * absTanTheta * a * absTanTheta;
+
+  float lambda = 0.5f * (-1.0f + sqrt(1.0f + a2Tan2Theta));
+  return 1.0f / (1.0f + lambda);
+}
+
+glm::vec3 Material::EvaluateDisneyBRDF(const glm::vec3 &wo,
+                                       const glm::vec3 &wm,
+                                       const glm::vec3 &wi,
+                                       float &fPdf,
+                                       float &rPdf) const {
+  fPdf = 0.0f;
+  rPdf = 0.0f;
+
+  float dotNL = CosTheta(wi);
+  float dotNV = CosTheta(wo);
+  if (dotNL <= 0.0f || dotNV <= 0.0f) {
+    return glm::vec3{0.0f};
+  }
+
+  float ax, ay;
+  CalculateAnisotropicParams(this->roughness, this->anisotropic, ax, ay);
+
+  float d = GgxAnisotropicD(wm, ax, ay);
+  float gl = SeparableSmithGGXG1(wi, wm, ax, ay);
+  float gv = SeparableSmithGGXG1(wo, wm, ax, ay);
+
+  glm::vec3 f = DisneyFresnel(wo, wm, wi);
+
+  GgxVndfAnisotropicPdf(wi, wm, wo, ax, ay, fPdf, rPdf);
+  fPdf *= (1.0f / (4 * std::abs(glm::dot(wo, wm))));
+  rPdf *= (1.0f / (4 * std::abs(glm::dot(wo, wm))));
+
+  return d * gl * gv * f / (4.0f * dotNL * dotNV);
+}
+
+
+float Material::ThinTransmissionRoughness(float ior, float roughness) const {
+  return clamp((0.65f * ior - 0.35f) * roughness, 0.0f, 1.0f);
+}
+
+glm::vec3 Material::EvaluateDisneySpecTransmission(const glm::vec3 &wo,
+                                         const glm::vec3 &wm,
+                                         const glm::vec3 &wi,
+                                             float ax,
+                                             float ay,
+                                             bool thin) const {
+  float relativeIor = this->IOR; // original: relativeIOR, are they the same?
+  float n2 = relativeIor * relativeIor;
+
+  float absDotNL = calAbsCosTheta(wi);
+  float absDotNV = calAbsCosTheta(wo);
+  float dotHL = glm::dot(wm, wi);
+  float dotHV = glm::dot(wm, wo);
+  float absDotHL = std::abs(dotHL);
+  float absDotHV = std::abs(dotHV);
+
+  float d = GgxAnisotropicD(wm, ax, ay);
+  float gl = SeparableSmithGGXG1(wi, wm, ax, ay);
+  float gv = SeparableSmithGGXG1(wo, wm, ax, ay);
+
+  float f = FrDielectric(dotHV, 1.0f, 1.0f / relativeIor);
+
+  glm::vec3 color;
+  if (thin)
+    color = sqrt(this->albedo_color);
+  else
+    color = this->albedo_color;
+  float c = (absDotHL * absDotHV) / (absDotNL * absDotNV);
+  float t = (n2 / square(dotHL + relativeIor * dotHV));
+  return color * c * t * (1.0f - f) * gl * gv * d;
+}
+
+float Material::EvaluateDisneyRetroDiffuse(const glm::vec3 &wo,
+                                 const glm::vec3 &wm,
+                                 const glm::vec3 &wi) const {
+  float dotNL = calAbsCosTheta(wi);
+  float dotNV = calAbsCosTheta(wo);
+
+  float roughness = this->roughness * this->roughness;
+
+  float rr = 0.5f + 2.0f * dotNL * dotNL * roughness;
+  float fl = SchlickWeight(dotNL);
+  float fv = SchlickWeight(dotNV);
+
+  return rr * (fl + fv + fl * fv * (rr - 1.0f));
+}
+
+float Material::EvaluateDisneyDiffuse(const glm::vec3 &wo,
+                                      const glm::vec3 &wm,
+                                      const glm::vec3 &wi,
+                                      bool thin) const {
+  float dotNL = calAbsCosTheta(wi);
+  float dotNV = calAbsCosTheta(wo);
+
+  float fl = SchlickWeight(dotNL);
+  float fv = SchlickWeight(dotNV);
+
+  float hanrahanKrueger = 0.0f;
+
+  if (thin && flatness > 0.0f) {
+    float roughness = this->roughness * this->roughness;
+
+    float dotHL = glm::dot(wm, wi);
+    float fss90 = dotHL * dotHL * roughness;
+    float fss = interpolate(1.0f, fss90, fl) * interpolate(1.0f, fss90, fv);
+
+    float ss = 1.25f * (fss * (1.0f / (dotNL + dotNV) - 0.5f) + 0.5f);
+    hanrahanKrueger = ss;
+  }
+
+  float lambert = 1.0f;
+  float retro = EvaluateDisneyRetroDiffuse(wo, wm, wi);
+  float subsurfaceApprox =
+      interpolate(lambert, hanrahanKrueger, thin ? this->flatness : 0.0f);
+
+  return INV_PI *
+         (retro + subsurfaceApprox * (1.0f - 0.5f * fl) * (1.0f - 0.5f * fv));
+}
+
+glm::vec3 Material::DisneyFresnel(const glm::vec3 &wo,
+                               const glm::vec3 &wm,
+                               const glm::vec3 &wi) const {
+  float dotHV = std::abs(glm::dot(wm, wo));
+
+  glm::vec3 tint = CalculateTint(this->albedo_color);
+
+  glm::vec3 R0 = SchlickR0FromRelativeIOR(this->IOR) *
+                 interpolate(glm::vec3(1.0f), tint, this->specularTint); // here is relativeIOR originally.
+  R0 = interpolate(R0, this->albedo_color, this->metallic);
+
+  float dielectricFresnel = FrDielectric(dotHV, 1.0f, this->IOR);
+  glm::vec3 metallicFresnel = FresnelSchlick(R0, glm::dot(wi, wm));
+
+  return interpolate(glm::vec3(dielectricFresnel), metallicFresnel, this->metallic);
+}
+
+glm::vec3 Material::EvaluateDisney( const glm::vec3 v,
+                                    const glm::vec3 l,
+                                    const glm::vec3 normal,
+                                    float &forwardPdf,
+                                    float &reversePdf) const {
+  // construct tangent space matrix. We assume normal vector here is in world space.
+  glm::vec3 n = glm::normalize(normal);
+  glm::vec3 t, b;
+  MakeOrthogonalCoordinateSystem(n, &t, &b);
+  glm::mat3x3 tangentToWorld = glm::mat3x3(t, n, b);
+  glm::mat3x3 worldToTangent = glm::transpose(tangentToWorld);
+
+
+  glm::vec3 wo = glm::normalize(worldToTangent * v);
+  glm::vec3 wi = glm::normalize(worldToTangent * l);
+  glm::vec3 wm = glm::normalize(wo + wi);
+
+  float dotNV = CosTheta(wo);
+  float dotNL = CosTheta(wi);
+
+  glm::vec3 reflectance = glm::vec3(0.0f);
+  forwardPdf = 0.0f;
+  reversePdf = 0.0f;
+
+  float pBRDF, pDiffuse, pClearcoat, pSpecTrans;
+  CalculateLobePdfs(pBRDF, pDiffuse, pClearcoat, pSpecTrans);
+
+  glm::vec3 baseColor = this->albedo_color;
+  float metallic = this->metallic;
+  float specTrans = this->specTrans;
+  float roughness = this->roughness;
+
+  // calculate all of the anisotropic params
+  float ax, ay;
+  CalculateAnisotropicParams(roughness, this->anisotropic, ax, ay);
+
+  float diffuseWeight = (1.0f - metallic) * (1.0f - specTrans);
+  float transWeight = (1.0f - metallic) * specTrans;
+
+  // -- Clearcoat
+  bool upperHemisphere = dotNL > 0.0f && dotNV > 0.0f;
+  if (upperHemisphere && this->clearcoat > 0.0f) {
+    float forwardClearcoatPdfW;
+    float reverseClearcoatPdfW;
+
+    float clearcoat = EvaluateDisneyClearcoat(this->clearcoat, this->clearcoatGloss, wo, wm, wi,
+        forwardClearcoatPdfW, reverseClearcoatPdfW);
+    reflectance += glm::vec3(clearcoat);
+    forwardPdf += pClearcoat * forwardClearcoatPdfW;
+    reversePdf += pClearcoat * reverseClearcoatPdfW;
+  }
+
+  // -- Diffuse
+  if (diffuseWeight > 0.0f) {
+    float forwardDiffusePdfW = calAbsCosTheta(wi);
+    float reverseDiffusePdfW = calAbsCosTheta(wo);
+    float diffuse = EvaluateDisneyDiffuse(wo, wm, wi, this->thin);
+
+    glm::vec3 sheen = EvaluateSheen(wo, wm, wi);
+
+    reflectance += diffuseWeight * (diffuse * baseColor + sheen);
+
+    forwardPdf += pDiffuse * forwardDiffusePdfW;
+    reversePdf += pDiffuse * reverseDiffusePdfW;
+  }
+
+  // -- transmission
+  if (transWeight > 0.0f) {
+    float rscaled =
+        this->thin ? ThinTransmissionRoughness(this->IOR, roughness)
+             : roughness;
+    float tax, tay;
+    CalculateAnisotropicParams(rscaled, this->anisotropic, tax, tay);
+
+    glm::vec3 transmission =
+        EvaluateDisneySpecTransmission(wo, wm, wi, tax, tay, this->thin);
+    reflectance += transWeight * transmission;
+
+    float forwardTransmissivePdfW;
+    float reverseTransmissivePdfW;
+    GgxVndfAnisotropicPdf(wi, wm, wo, tax, tay, forwardTransmissivePdfW,
+                                reverseTransmissivePdfW);
+
+    float dotLH = glm::dot(wm, wi);
+    float dotVH = glm::dot(wm, wo);
+    // originally relativeIOR in the two rows below.
+    forwardPdf += pSpecTrans * forwardTransmissivePdfW /
+                  (square(dotLH + this->IOR * dotVH));
+    reversePdf += pSpecTrans * reverseTransmissivePdfW /
+                  (square(dotVH + this->IOR * dotLH));
+  }
+
+  // -- specular
+  if (upperHemisphere) {
+    float forwardMetallicPdfW;
+    float reverseMetallicPdfW;
+    glm::vec3 specular = EvaluateDisneyBRDF(wo, wm, wi, forwardMetallicPdfW, reverseMetallicPdfW);
+
+    reflectance += specular;
+    forwardPdf += pBRDF * forwardMetallicPdfW / (4 * std::abs(glm::dot(wo, wm)));
+    reversePdf += pBRDF * reverseMetallicPdfW / (4 * std::abs(glm::dot(wi, wm)));
+  }
+
+  reflectance = reflectance * std::abs(dotNL);
+
+  return reflectance;
 }
 }  // namespace sparks

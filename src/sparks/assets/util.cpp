@@ -126,4 +126,37 @@ glm::mat4 XmlComposeTransformMatrix(tinyxml2::XMLElement *object_element) {
   }
   return result;
 }
+
+glm::vec3 uniformSampleSphere(const glm::vec2 &sample) {
+  // Uniform sample sphere
+  float z = std::clamp(2 * sample.x - 1, float(-1 + EPSILON * 1e2),
+                       float(1 - EPSILON * 1e2));
+  float radius = std::sqrt(std::clamp(1 - z * z, 0.0f, 1.1f));
+  float phi = PI * 2 * sample.y;
+  return glm::vec3(radius * std::cos(phi), radius * std::sin(phi), z);
+}
+
+float FrDielectric(float cosThetaI, float etaI, float etaT) {
+  cosThetaI = clamp(cosThetaI, -1, 1);
+  // Potentially swap indices of refraction
+  bool entering = cosThetaI > 0.f;
+  if (!entering) {
+    std::swap(etaI, etaT);
+    cosThetaI = std::abs(cosThetaI);
+  }
+
+  // Compute _cosThetaT_ using Snell's law
+  float sinThetaI = sqrt(std::max(0.0f, 1.0f - cosThetaI * cosThetaI));
+  float sinThetaT = etaI / etaT * sinThetaI;
+
+  // Handle total internal reflection
+  if (sinThetaT >= 1)
+    return 1;
+  float cosThetaT = sqrt(std::max(0.0f, 1.0f - sinThetaT * sinThetaT));
+  float Rparl = ((etaT * cosThetaI) - (etaI * cosThetaT)) /
+                ((etaT * cosThetaI) + (etaI * cosThetaT));
+  float Rperp = ((etaI * cosThetaI) - (etaT * cosThetaT)) /
+                ((etaI * cosThetaI) + (etaT * cosThetaT));
+  return (Rparl * Rparl + Rperp * Rperp) / 2;
+}
 }  // namespace sparks
