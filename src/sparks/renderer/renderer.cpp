@@ -241,8 +241,8 @@ int Renderer::LoadTexture(const std::string &file_path) {
   return SafeOperation<int>([&]() { return scene_.LoadTexture(file_path); });
 }
 
-int Renderer::LoadObjMesh(const std::string &file_path) {
-  return SafeOperation<int>([&]() { return scene_.LoadObjMesh(file_path); });
+int Renderer::LoadObjEntity(const std::string &file_path) {
+  return SafeOperation<int>([&]() { return scene_.LoadObjEntity(file_path); });
 }
 
 int Renderer::GetAccumulatedSamples() {

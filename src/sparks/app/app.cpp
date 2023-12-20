@@ -470,7 +470,9 @@ void App::UpdateImGui() {
     reset_accumulation_ |= ImGui::SliderInt(
         "Bounces", &renderer_->GetRendererSettings().num_bounces, 1, 128);
 
-    scene.EntityCombo("Selected Entity", &selected_entity_id_);
+    if (scene.EntityCombo("Selected Entity", &selected_entity_id_)) {
+      selected_material_id_ = 0;
+    }
     ImGui::Checkbox("Use FXAA", &useFXAA_);
 
     ImGui::NewLine();
@@ -502,63 +504,72 @@ void App::UpdateImGui() {
       ImGui::NewLine();
       ImGui::Text("Material");
       ImGui::Separator();
-      static int current_item = 0;
-      std::vector<const char *> material_types = {
-          "Lambertian", "Specular", "Transmissive", "Principled", "Emission"};
-      Material &material = scene.GetEntity(selected_entity_id_).GetMaterial();
-      reset_accumulation_ |=
-          ImGui::Combo("Type", reinterpret_cast<int *>(&material.material_type),
-                       material_types.data(), material_types.size());
-      reset_accumulation_ |= ImGui::ColorEdit3(
-          "Albedo Color", &material.albedo_color[0],
-          ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
-      reset_accumulation_ |=
-          scene.TextureCombo("Albedo Texture", &material.albedo_texture_id);
-      reset_accumulation_ |=
-          ImGui::Checkbox("Use Normal Texture", &material.use_normal_texture);
-      reset_accumulation_ |=
-          scene.TextureCombo("Normal Texture", &material.normal_texture_id);
-      reset_accumulation_ |= ImGui::ColorEdit3(
-          "Emission", &material.emission[0],
-          ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
-      reset_accumulation_ |=
-          ImGui::SliderFloat("Emission Strength", &material.emission_strength,
-                             0.0f, 1e5f, "%.3f", ImGuiSliderFlags_Logarithmic);
-      reset_accumulation_ |=
-          ImGui::SliderFloat("Alpha", &material.alpha, 0.0f, 1.0f, "%.3f");
-      reset_accumulation_ |=
-          ImGui::SliderFloat("Bump Scale", &material.bumpScale, -1.0f, 1.0f, "%.3f");
-      if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
+      Entity &entity = scene.GetEntity(selected_entity_id_);
+      entity.MaterialCombo("Selected Material", &selected_material_id_);
+      if (selected_material_id_ > entity.GetMaterialSize())
+        selected_material_id_ = 0;
+      Material &material = entity.GetMaterial(selected_material_id_);
+      if (entity.GetMaterialSize() > 1 && selected_material_id_ == 0) {
+        reset_accumulation_ |=
+            ImGui::SliderFloat("Alpha of Entity", &material.alpha, 0.0f, 1.0f, "%.3f");
+      } else {
+        std::vector<const char *> material_types = {
+            "Lambertian", "Specular", "Transmissive", "Principled", "Emission"};
+        reset_accumulation_ |= ImGui::Combo(
+            "Type", reinterpret_cast<int *>(&material.material_type),
+            material_types.data(), material_types.size());
+        reset_accumulation_ |= ImGui::ColorEdit3(
+            "Albedo Color", &material.albedo_color[0],
+            ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
+        reset_accumulation_ |=
+            scene.TextureCombo("Albedo Texture", &material.albedo_texture_id);
+        reset_accumulation_ |=
+            ImGui::Checkbox("Use Normal Texture", &material.use_normal_texture);
+        reset_accumulation_ |=
+            scene.TextureCombo("Normal Texture", &material.normal_texture_id);
+        reset_accumulation_ |= ImGui::ColorEdit3(
+            "Emission", &material.emission[0],
+            ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
         reset_accumulation_ |= ImGui::SliderFloat(
-            "Reflectance", &material.reflectance, 0.0f, 1.0f, "%.3f");
-      } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
+            "Emission Strength", &material.emission_strength, 0.0f, 1e5f,
+            "%.3f", ImGuiSliderFlags_Logarithmic);
+        reset_accumulation_ |=
+            ImGui::SliderFloat("Alpha", &material.alpha, 0.0f, 1.0f, "%.3f");
         reset_accumulation_ |= ImGui::SliderFloat(
-            "Fuzz Radius", &material.fuzz, 0.0f, 1.0f, "%.3f");
-      } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
-        reset_accumulation_ |= ImGui::SliderFloat("Index of Refraction", &material.IOR, 1.0f, 3.0f, "%.3f");
-        reset_accumulation_ |= ImGui::Checkbox(
-            "Thin (thickness can be omited)", &material.thin);
-      } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
-        reset_accumulation_ |= ImGui::SliderFloat(
-            "Subsurface", &material.subsurface, 0.0f, 1.0f, "%.3f");
-        reset_accumulation_ |= ImGui::SliderFloat(
-            "Metallic", &material.metallic, 0.0f, 1.0f, "%.3f");
+            "Bump Scale", &material.bumpScale, -1.0f, 1.0f, "%.3f");
+        if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Reflectance", &material.reflectance, 0.0f, 1.0f, "%.3f");
+        } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Fuzz Radius", &material.fuzz, 0.0f, 1.0f, "%.3f");
+        } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Index of Refraction", &material.IOR, 1.0f, 3.0f, "%.3f");
+          reset_accumulation_ |=
+              ImGui::Checkbox("Thin (thickness can be omited)", &material.thin);
+        } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Subsurface", &material.subsurface, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Metallic", &material.metallic, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |= ImGui::SliderFloat(
               "Specular", &material.specular, 0.0f, 1.0f, "%.3f");
-        reset_accumulation_ |= ImGui::SliderFloat(
-            "SpecularTint", &material.specularTint, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "SpecularTint", &material.specularTint, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |= ImGui::SliderFloat(
               "Roughness", &material.roughness, 0.0f, 1.0f, "%.3f");
-        reset_accumulation_ |= ImGui::SliderFloat(
-            "Anisotropic", &material.anisotropic, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Anisotropic", &material.anisotropic, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |=
               ImGui::SliderFloat("Sheen", &material.sheen, 0.0f, 1.0f, "%.3f");
-        reset_accumulation_ |= ImGui::SliderFloat(
-            "SheenTint", &material.sheenTint, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |= ImGui::SliderFloat(
-            "Clearcoat", &material.clearcoat, 0.0f, 1.0f, "%.3f");
-        reset_accumulation_ |= ImGui::SliderFloat(
+              "SheenTint", &material.sheenTint, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Clearcoat", &material.clearcoat, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::SliderFloat(
               "ClearcoatGloss", &material.clearcoatGloss, 0.0f, 1.0f, "%.3f");
+        }
       }
     }
 
@@ -1243,7 +1254,7 @@ void App::OpenFile(const std::string &path) {
       absl::EndsWith(path, ".jpeg")) {
     renderer_->LoadTexture(path);
   } else if (absl::EndsWith(path, ".obj")) {
-    renderer_->LoadObjMesh(path);
+    renderer_->LoadObjEntity(path);
   } else if (absl::EndsWith(path, ".xml")) {
     renderer_->LoadScene(path);
     renderer_->ResetAccumulation();

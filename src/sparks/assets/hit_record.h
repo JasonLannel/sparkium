@@ -4,6 +4,7 @@
 namespace sparks {
 struct HitRecord {
   int hit_entity_id{-1};
+  int material_id{0};
   glm::vec3 position{};
   glm::vec3 normal{};
   glm::vec3 geometry_normal{};

@@ -4,7 +4,10 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "iostream"
 #include "sparks/sparks.h"
+
+#ifndef TINYOBJLOADER_H_
 #include "tiny_obj_loader.h"
+#endif
 
 ABSL_FLAG(bool,
           validation_layer,

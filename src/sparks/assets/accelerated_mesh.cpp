@@ -53,6 +53,7 @@ void AcceleratedMesh::IntersectSlice(const Ray &movedRay,
         hit_record->geometry_normal = geometry_normal;
         hit_record->normal = v0.normal * w + v1.normal * u + v2.normal * v;
         hit_record->tangent = v0.tangent * w + v1.tangent * u + v2.tangent * v;
+        hit_record->material_id = material_ids_[index];
         hit_record->tex_coord =
             v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
         hit_record->front_face = true;
@@ -62,6 +63,7 @@ void AcceleratedMesh::IntersectSlice(const Ray &movedRay,
         hit_record->normal = -(v0.normal * w + v1.normal * u + v2.normal * v);
         hit_record->tangent =
             -(v0.tangent * w + v1.tangent * u + v2.tangent * v);
+        hit_record->material_id = material_ids_[index];
         hit_record->tex_coord =
             v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
         hit_record->front_face = false;

@@ -13,9 +13,20 @@ class Mesh : public Model {
        const std::vector<uint32_t> &indices);
   Mesh(const std::vector<Vertex> &vertices,
        const std::vector<uint32_t> &indices,
+       const std::vector<uint32_t> &material_ids);
+  Mesh(const std::vector<Vertex> &vertices,
+       const std::vector<uint32_t> &indices,
       const glm::vec3 &movingDirection,
-      float time0, float time1);
-  explicit Mesh(const tinyxml2::XMLElement *element);
+       float time0,
+       float time1);
+  Mesh(const std::vector<Vertex> &vertices,
+       const std::vector<uint32_t> &indices,
+       const std::vector<uint32_t> &material_ids,
+       const glm::vec3 &movingDirection,
+       float time0,
+       float time1);
+  explicit Mesh(const tinyxml2::XMLElement *element,
+                bool keep_material = false);
   ~Mesh() override = default;
   [[nodiscard]] float TraceRay(const Ray &ray,
                                float t_min,
@@ -30,7 +41,7 @@ class Mesh : public Model {
   static Mesh Cube(const glm::vec3 &center, const glm::vec3 &size);
   static Mesh Sphere(const glm::vec3 &center = glm::vec3{0.0f},
                      float radius = 1.0f);
-  static bool LoadObjFile(const std::string &obj_file_path, Mesh &mesh);
+  static bool LoadObjFile(const std::string &obj_file_path, Mesh &mesh, bool keep_material = false);
   void WriteObjFile(const std::string &file_path) const;
   void MergeVertices();
   float GetTime0() const;
@@ -41,6 +52,7 @@ class Mesh : public Model {
  protected:
   std::vector<Vertex> vertices_;
   std::vector<uint32_t> indices_;
+  std::vector<uint32_t> material_ids_;
   // some variables related to moving sphere
   glm::vec3 movingDirection_{0.0f};
   float time0_{0.0};

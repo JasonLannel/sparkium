@@ -68,7 +68,7 @@ class Scene {
   bool TextureCombo(const char *label, int *current_item) const;
   bool EntityCombo(const char *label, int *current_item) const;
   int LoadTexture(const std::string &file_path);
-  int LoadObjMesh(const std::string &file_path);
+  int LoadObjEntity(const std::string &file_path);
 
   Pdf* GetLightPdf() const;
 

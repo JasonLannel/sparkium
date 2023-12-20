@@ -6,6 +6,9 @@
 #include "sparks/assets/accelerated_mesh.h"
 #include "sparks/util/util.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
+
 namespace sparks {
 
 Scene::Scene() {
@@ -191,8 +194,13 @@ float Scene::TraceRay(const Ray &ray,
   float result = -1.0f;
   HitRecord local_hit_record;
   float local_result;
+  std::random_device seed;
+  std::mt19937 rd(seed());
+  std::uniform_real_distribution<float> randomProb(0.0f, 1.0f);
   for (int entity_id = 0; entity_id < entities_.size(); entity_id++) {
     auto &entity = entities_[entity_id];
+    if (randomProb(rd) > entity.GetMaterial(0).alpha)
+        continue;
     auto &transform = entity.GetTransformMatrix();
     auto inv_transform = glm::inverse(transform);
     auto transformed_direction =
@@ -283,13 +291,12 @@ int Scene::LoadTexture(const std::string &file_path) {
   }
 }
 
-int Scene::LoadObjMesh(const std::string &file_path) {
+int Scene::LoadObjEntity(const std::string &file_path) {
   Entity entity = Entity();
-  if (entity.LoadObjFile(file_path)) {
-    return AddEntity(entity);
-  } else {
+  if (!entity.LoadObjFile(this, file_path)) {
     return -1;
   }
+  return AddEntity(entity);
 }
 
 Scene::Scene(const std::string &filename) : Scene() {
@@ -369,6 +376,181 @@ Pdf* Scene::GetLightPdf() const{
     }
   }
   return new MixturePdf(emissiveList_, weight);
+}
+
+bool Mesh::LoadObjFile(const std::string &obj_file_path,
+                       Mesh &mesh,
+                       bool keep_material) {
+  tinyobj::ObjReaderConfig reader_config;
+  tinyobj::ObjReader reader;
+
+  if (!reader.ParseFromFile(obj_file_path, reader_config)) {
+    if (!reader.Error().empty()) {
+      LAND_WARN("[Load obj, ERROR]: {}", reader.Error());
+    }
+    return false;
+  }
+
+  if (!reader.Warning().empty()) {
+    LAND_WARN("{}", reader.Warning());
+  }
+
+  auto &attrib = reader.GetAttrib();
+  auto &shapes = reader.GetShapes();
+
+  std::vector<Vertex> vertices;
+  std::vector<uint32_t> indices;
+  std::vector<uint32_t> material_ids;
+
+  int mat_size = reader.GetMaterials().size() + 1;
+
+  // Loop over shapes
+  for (size_t s = 0; s < shapes.size(); s++) {
+    // Loop over faces(polygon)
+    size_t index_offset = 0;
+    for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+      size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
+
+      // Loop over vertices in the face.
+      std::vector<Vertex> face_vertices;
+      uint32_t material_id = shapes[s].mesh.material_ids[f] + 1;
+      for (size_t v = 0; v < fv; v++) {
+        Vertex vertex{};
+        // access to vertex
+        tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+        tinyobj::real_t vx = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
+        tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
+        tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
+        vertex.position = {vx, vy, vz};
+        // Check if `normal_index` is zero or positive. negative = no normal
+        // data
+        if (idx.normal_index >= 0) {
+          tinyobj::real_t nx = attrib.normals[3 * size_t(idx.normal_index) + 0];
+          tinyobj::real_t ny = attrib.normals[3 * size_t(idx.normal_index) + 1];
+          tinyobj::real_t nz = attrib.normals[3 * size_t(idx.normal_index) + 2];
+          vertex.normal = {nx, ny, nz};
+        } else {
+          vertex.normal = {0.0f, 0.0f, 0.0f};
+        }
+
+        // Check if `texcoord_index` is zero or positive. negative = no texcoord
+        // data
+        if (idx.texcoord_index >= 0) {
+          tinyobj::real_t tx =
+              attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+          tinyobj::real_t ty =
+              attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+          vertex.tex_coord = {tx, ty};
+        }
+        face_vertices.push_back(vertex);
+      }
+
+      for (int i = 1; i < face_vertices.size() - 1; i++) {
+        Vertex v0 = face_vertices[0];
+        Vertex v1 = face_vertices[i];
+        Vertex v2 = face_vertices[i + 1];
+        auto geometry_normal = glm::normalize(
+            glm::cross(v2.position - v0.position, v1.position - v0.position));
+        if (v0.normal == glm::vec3{0.0f, 0.0f, 0.0f}) {
+          v0.normal = geometry_normal;
+        } else if (glm::dot(geometry_normal, v0.normal) < 0.0f) {
+          v0.normal = -v0.normal;
+        }
+        if (v1.normal == glm::vec3{0.0f, 0.0f, 0.0f}) {
+          v1.normal = geometry_normal;
+        } else if (glm::dot(geometry_normal, v1.normal) < 0.0f) {
+          v1.normal = -v1.normal;
+        }
+        if (v2.normal == glm::vec3{0.0f, 0.0f, 0.0f}) {
+          v2.normal = geometry_normal;
+        } else if (glm::dot(geometry_normal, v2.normal) < 0.0f) {
+          v2.normal = -v2.normal;
+        }
+        indices.push_back(vertices.size());
+        indices.push_back(vertices.size() + 1);
+        indices.push_back(vertices.size() + 2);
+        vertices.push_back(v0);
+        vertices.push_back(v1);
+        vertices.push_back(v2);
+        material_ids.push_back(material_id);
+      }
+
+      index_offset += fv;
+    }
+  }
+  mesh = Mesh(vertices, indices, material_ids);
+  mesh.MergeVertices();
+  return true;
+}
+
+bool Entity::LoadObjFile(Scene *scene, const std::string &file_path) {
+  tinyobj::ObjReaderConfig reader_config;
+  tinyobj::ObjReader reader;
+
+  if (!reader.ParseFromFile(file_path, reader_config)) {
+    if (!reader.Error().empty()) {
+      LAND_WARN("[Load obj, ERROR]: {}", reader.Error());
+    }
+    return false;
+  }
+
+  if (!reader.Warning().empty()) {
+    LAND_WARN("{}", reader.Warning());
+  }
+
+  AcceleratedMesh mesh;
+  if (!Mesh::LoadObjFile(file_path, mesh, true))
+    return false;
+  mesh.BuildAccelerationStructure();
+  model_ = std::make_unique<AcceleratedMesh>(mesh);
+
+  auto &attrib = reader.GetAttrib();
+  auto &shapes = reader.GetShapes();
+  auto &materials = reader.GetMaterials();
+  
+  // Deal with materials.
+  int mat_size = materials.size() + 1;
+  materials_.resize(mat_size, Material());
+  std::string path_base = ".";
+  size_t pos = file_path.find_last_of("/\\");
+  if (pos != std::string::npos) {
+    path_base = file_path.substr(0, pos);
+  }
+  path_base = path_base + "\\";
+  for (int i = 1; i <= materials.size(); ++i) {
+    tinyobj::material_t material = materials[i - 1];
+    materials_[i].name = material.name;
+    materials_[i].IOR = material.ior;
+    materials_[i].albedo_color = glm::vec3(
+        material.diffuse[0], material.diffuse[1], material.diffuse[2]);
+    materials_[i].emission = glm::vec3(
+        material.emission[0], material.emission[1], material.emission[2]);
+    // material.emissive_texname 发光纹理
+    // material.specular;   镜面反射颜色
+    if (!material.diffuse_texname.empty()) {
+      materials_[i].albedo_texture_id =
+          scene->LoadTexture(path_base + material.diffuse_texname);
+    }
+    if (!material.normal_texname.empty()) {
+      materials_[i].normal_texture_id =
+          scene->LoadTexture(path_base + material.normal_texname);
+      materials_[i].use_normal_texture = true;
+    }
+    materials_[i].alpha = material.dissolve;
+    // material.alpha_texname alpha 纹理
+    materials_[i].metallic = material.metallic;
+    // material.metallic_texname metallic纹理
+    materials_[i].anisotropic = material.anisotropy;
+    // materials.clearcoat_roughness/thickness 清漆
+    // material.transmittance 透光系数
+    // material.anisotropy_rotation 各向异性旋转角
+    // material.diffuse_texname  漫反射纹理
+    materials_[i].roughness = material.roughness;
+    materials_[i].sheen = material.sheen;
+  }
+  transform_ = glm::mat4{1.0};
+  name_ = PathToFilename(file_path);
+  return true;
 }
 
 }  // namespace sparks

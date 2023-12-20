@@ -4,14 +4,14 @@ namespace sparks {
 
 Entity::Entity() {
   model_ = std::make_unique<Mesh>(Mesh());
-  material_ = Material();
+  materials_.resize(1, Material());
   transform_ = glm::mat4(1.0f);
   name_ = model_->GetDefaultEntityName();
 }
 
 Entity::Entity(Entity &entity) {
   model_ = std::move(entity.model_);
-  material_ = entity.material_;
+  materials_ = entity.materials_;
   transform_ = entity.transform_;
   name_ = entity.name_;
 }
@@ -21,7 +21,7 @@ Entity::Entity(const ModelType &model,
        const Material &material,
        const glm::mat4 &transform) {
   model_ = std::make_unique<ModelType>(model);
-  material_ = material;
+  materials_.resize(1, material);
   transform_ = transform;
   name_ = model_->GetDefaultEntityName();
 }
@@ -30,22 +30,26 @@ template <class ModelType>
 Entity::Entity(const ModelType &model,
        const Material &material,
        const glm::mat4 &transform,
-       const std::string &name) {
+               const std::string &name) {
   model_ = std::make_unique<ModelType>(model);
-  material_ = material;
+  materials_.resize(1, material);
   transform_ = transform;
   name_ = name;
 }
 
 Entity::Entity(Scene *scene, tinyxml2::XMLElement *element) {
-  model_ = std::make_unique<AcceleratedMesh>(Mesh(element));
-  Material material{};
-
-  auto child_element = element->FirstChildElement("material");
-  if (child_element) {
-    material_ = Material(scene, child_element);
+  std::string mesh_type{};
+  auto element_type = element->FindAttribute("type");
+  if (element_type) {
+    mesh_type = element_type->Value();
   }
-
+  if (mesh_type == "obj") {
+    LoadObjFile(scene, element->FirstChildElement("filename")
+                           ->FindAttribute("value")
+                           ->Value());
+    return;
+  }
+  model_ = std::make_unique<AcceleratedMesh>(Mesh(element));
   transform_ = XmlComposeTransformMatrix(element);
 
   auto name_attribute = element->FindAttribute("name");
@@ -54,21 +58,25 @@ Entity::Entity(Scene *scene, tinyxml2::XMLElement *element) {
   } else {
     name_ = model_->GetDefaultEntityName();
   }
+  auto child_element = element->FirstChildElement("material");
+  materials_.resize(1, Material());
+  if (child_element) {
+    materials_[0] = Material(scene, child_element);
+  }
 }
 
-bool Entity::LoadObjFile(const std::string &file_path){
-  AcceleratedMesh mesh;
-  if (Mesh::LoadObjFile(file_path, mesh)) {
-    mesh.BuildAccelerationStructure();
-    model_.release();
-    model_ = std::make_unique<AcceleratedMesh>(mesh);
-    material_ = Material{};
-    transform_ = glm::mat4{1.0};
-    name_ = PathToFilename(file_path);
-    return true;
-  } else {
-    return false;
+std::vector<const char *> Entity::GetMaterialNameList() const {
+  std::vector<const char *> result;
+  result.reserve(materials_.size());
+  for (const auto &material : materials_) {
+    result.push_back(material.name.data());
   }
+  return result;
+}
+
+bool Entity::MaterialCombo(const char *label, int *current_item) const {
+  return ImGui::Combo(label, current_item, GetMaterialNameList().data(),
+                      materials_.size());
 }
 
 const Model *Entity::GetModel() const {
@@ -83,12 +91,20 @@ const glm::mat4 &Entity::GetTransformMatrix() const {
   return transform_;
 }
 
-Material &Entity::GetMaterial() {
-  return material_;
+Material &Entity::GetMaterial(int id) {
+  if (id >= materials_.size())
+    id = 0;
+  return materials_[id];
 }
 
-const Material &Entity::GetMaterial() const {
-  return material_;
+const Material &Entity::GetMaterial(int id) const {
+  if (id >= materials_.size())
+    id = 0;
+  return materials_[id];
+}
+
+int Entity::GetMaterialSize() const {
+  return materials_.size();
 }
 
 const std::string &Entity::GetName() const {
@@ -96,8 +112,9 @@ const std::string &Entity::GetName() const {
 }
 
 float Entity::GetPower() const {
-  glm::vec3 emission = material_.emission;
-  return model_.get()->GetArea() * material_.emission_strength * fmax(emission.x, fmax(emission.y, emission.z));
+  glm::vec3 emission = materials_[0].emission;
+  return model_.get()->GetArea() * materials_[0].emission_strength *
+         fmax(emission.x, fmax(emission.y, emission.z));
 }
 
 Pdf *Entity::GetPdf() const {

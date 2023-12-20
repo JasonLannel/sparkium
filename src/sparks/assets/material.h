@@ -16,6 +16,7 @@ enum MaterialType : int {
 class Scene;
 
 struct Material {
+  std::string name{"Default"};
   glm::vec3 albedo_color{0.8f};
   int albedo_texture_id{0};
   //Normal Texture
@@ -33,7 +34,7 @@ struct Material {
   glm::vec3 emission{0.0f};
   float emission_strength{0.0f};
   //Lambertian
-  float reflectance{0.9f};
+  float reflectance{1.0f};
   //Specular, default ideal specular
   float fuzz{0.0f};
   //Transmissive, default glass

@@ -31,24 +31,28 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
     if (scene_->TraceRay(ray, 1e-3f, 1e4f,
                          &hit_record) > 0.0f) {
       auto &material =
-          scene_->GetEntity(hit_record.hit_entity_id).GetMaterial();
+          scene_->GetEntity(hit_record.hit_entity_id).GetMaterial(hit_record.material_id);
       radiance += throughput * material.emission * material.emission_strength;
       if (material.material_type == MATERIAL_TYPE_EMISSION)
         break;
+      albedo = material.albedo_color;
+      float alpha = material.alpha;
+      if (material.albedo_texture_id >= 0) {
+        auto tex_sample =
+            scene_->GetTextures()[material.albedo_texture_id].Sample(
+                hit_record.tex_coord);
+        albedo *= glm::vec3(tex_sample);
+        alpha *= tex_sample.w;
+      }
+      if (hit_record.material_id > 0 && RandomProb(rd) > alpha) {
+        //Alpha Shadow
+        ray = Ray(hit_record.position, ray.direction(), ray.time());
+        --i;
+        continue;
+      }
       if (RandomProb(rd) > RR)
         break;
       origin = hit_record.position;
-      if (RandomProb(rd) > material.alpha) {
-        //Alpha Shadow
-        ray = Ray(hit_record.position, ray.direction(), ray.time());
-        continue;
-      }
-      albedo = material.albedo_color;
-      if (material.albedo_texture_id >= 0) {
-        albedo *=
-            glm::vec3{scene_->GetTextures()[material.albedo_texture_id].Sample(
-                hit_record.tex_coord)};
-      }
       normal = hit_record.normal;
       tangent = hit_record.tangent;
       if (material.use_normal_texture) {
@@ -69,14 +73,16 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         normal = -normal;
       if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
           CosineHemispherePdf Dialectric(normal, tangent);
-          Pdf *Gen = new MixturePdf(&Dialectric, Light, 0.5f);
+          Pdf *Gen = new MixturePdf(&Dialectric, Light, 1.f);
           direction = Gen->Generate(origin, ray.time(), rd);
           ray = Ray(origin, direction, ray.time());
           float pdf = Gen->Value(ray);
           float scatter = std::max(0.f, glm::dot(normal, direction) * INV_PI);
           float reflectance = material.reflectance;
-          throughput *= albedo * reflectance * scatter / pdf;
           delete Gen;
+          if (pdf < 1e-5)
+            break;
+          throughput *= albedo * reflectance * scatter / pdf;
           if (glm::dot(normal, direction) < 0)
             break;
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {

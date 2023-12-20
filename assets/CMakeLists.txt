@@ -1,4 +1,4 @@
-
+add_subdirectory(custom_meshes)
 add_subdirectory(fonts)
 add_subdirectory(textures)
 add_subdirectory(meshes)

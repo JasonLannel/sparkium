@@ -61,6 +61,9 @@ bool Texture::Load(const std::string &file_path, Texture &texture) {
         convert_buffer[i] = glm::vec4{result[i * 4], result[i * 4 + 1],
                                       result[i * 4 + 2], result[i * 4 + 3]} *
                             inv_255;
+        convert_buffer[i].x = glm::pow(convert_buffer[i].x, 2.2f);
+        convert_buffer[i].y = glm::pow(convert_buffer[i].y, 2.2f);
+        convert_buffer[i].z = glm::pow(convert_buffer[i].z, 2.2f);
       }
       texture = Texture(x, y, convert_buffer.data(), SAMPLE_TYPE_LINEAR);
       stbi_image_free(result);
