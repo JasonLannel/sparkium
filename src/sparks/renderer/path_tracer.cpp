@@ -73,7 +73,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         normal = -normal;
       if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
           CosineHemispherePdf Dialectric(normal, tangent);
-          Pdf *Gen = new MixturePdf(&Dialectric, Light, 1.f);
+          Pdf *Gen = new MixturePdf(&Dialectric, Light, 0.5f);
           direction = Gen->Generate(origin, ray.time(), rd);
           ray = Ray(origin, direction, ray.time());
           float pdf = Gen->Value(ray);
@@ -86,15 +86,13 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           if (glm::dot(normal, direction) < 0)
             break;
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
+          // You should change this into Cook-Torrence.
           direction = glm::reflect(ray.direction(), normal);
-          // Fuzz
-          UniformHemispherePdf Fuzz(direction);
-          glm::vec3 fuzzDirection = Fuzz.Generate(origin, ray.time(), rd);
-          direction = glm::normalize(direction + fuzzDirection * material.fuzz);
-          ray = Ray(origin, direction, ray.time());
-          throughput *= albedo;
+          float cos_theta = fmin(glm::dot(-ray.direction(), normal), 1.0f);
+          throughput *= material.FresnelSchlick(albedo, cos_theta);
           if (glm::dot(normal, direction) < 0)
             break;
+          ray = Ray(origin, direction, ray.time());
       } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
           // Assume all lights have same index of refraction
           float refract_ratio = hit_record.front_face ? (1.0 / material.IOR)
@@ -103,23 +101,30 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             float reflect_ratio = 1 - refract_ratio;
             reflect_ratio = (1 - reflect_ratio) * (1 - reflect_ratio) *
                             reflect_ratio / (1 - reflect_ratio * reflect_ratio);
+            float cos_theta = fmin(glm::dot(-ray.direction(), normal), 1.0f);
             if (reflect_ratio > RandomProb(rd)) {
               direction = glm::reflect(ray.direction(), normal);
+              throughput *= material.FresnelSchlick(albedo, cos_theta);
             } else {
               direction = ray.direction();
+              throughput *= albedo;
             }
           } else {
               float cos_theta = fmin(glm::dot(-ray.direction(), normal), 1.0f);
+              float f0 = (1 - refract_ratio) / (1 + refract_ratio);
+              f0 *= f0;
               direction = glm::refract(ray.direction(), normal, refract_ratio);
-              if (direction.length() < 1e-4f ||
-                  material.FresnelSchlick(refract_ratio, cos_theta) >
+              if (direction.length() == 0.f ||
+                  material.FresnelSchlick(f0, cos_theta) >
                       RandomProb(rd)) {
                 direction = glm::reflect(ray.direction(), normal);
+                throughput *= material.FresnelSchlick(albedo, cos_theta);
+              } else {
+                throughput *= albedo;
               }
           }
         glm::normalize(direction);
         ray = Ray(origin, direction, ray.time());
-        throughput *= albedo;
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
           // decide which lobe to sample
         float metallicBRDF = material.metallic;
