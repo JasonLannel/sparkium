@@ -10,7 +10,8 @@ enum MaterialType : int {
   MATERIAL_TYPE_SPECULAR = 1,
   MATERIAL_TYPE_TRANSMISSIVE = 2,
   MATERIAL_TYPE_PRINCIPLED = 3,
-  MATERIAL_TYPE_EMISSION = 4
+  MATERIAL_TYPE_EMISSION = 4,
+  MATERIAL_TYPE_MEDIUM = 5
 };
 
 class Scene;
@@ -55,6 +56,8 @@ struct Material {
   float clearcoatGloss{0.5f};
   float diffTrans{0.5f};
   float flatness{0.5f};
+  //Constant Medium
+  float density{ 0.01f };
 
   float FresnelSchlick(float f0, float cosTheta) const;
   glm::vec3 FresnelSchlick(glm::vec3 SpecularColor, float cosTheta) const;

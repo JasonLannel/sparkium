@@ -211,23 +211,66 @@ float Scene::TraceRay(const Ray &ray,
     }
     Ray local_ray = Ray(inv_transform * glm::vec4{ray.origin(), 1.0f},
                   transformed_direction / transformed_direction_length, ray.time());
-    local_result = entity.GetModel()->TraceRay(local_ray, t_min, hit_record ? &local_hit_record : nullptr);
+    local_result = entity.GetModel()->TraceRay(local_ray, t_min, &local_hit_record);
     local_result /= transformed_direction_length;
     if (local_result > t_min && local_result < t_max &&
         (result < 0.0f || local_result < result)) {
-      result = local_result;
-      if (hit_record) {
-        local_hit_record.position =
-            transform * glm::vec4{local_hit_record.position, 1.0f};
-        local_hit_record.normal = glm::transpose(inv_transform) *
-                                  glm::vec4{local_hit_record.normal, 0.0f};
-        local_hit_record.tangent =
-            transform * glm::vec4{local_hit_record.tangent, 0.0f};
-        local_hit_record.geometry_normal =
-            glm::transpose(inv_transform) *
-            glm::vec4{local_hit_record.geometry_normal, 0.0f};
-        *hit_record = local_hit_record;
-        hit_record->hit_entity_id = entity_id;
+      if (entity.GetMaterial(local_hit_record.material_id).material_type !=
+          MATERIAL_TYPE_MEDIUM) {
+        result = local_result;
+        if (hit_record) {
+          local_hit_record.position =
+              transform * glm::vec4{local_hit_record.position, 1.0f};
+          local_hit_record.normal = glm::transpose(inv_transform) *
+                                    glm::vec4{local_hit_record.normal, 0.0f};
+          local_hit_record.tangent =
+              transform * glm::vec4{local_hit_record.tangent, 0.0f};
+          local_hit_record.geometry_normal =
+              glm::transpose(inv_transform) *
+              glm::vec4{local_hit_record.geometry_normal, 0.0f};
+          *hit_record = local_hit_record;
+          hit_record->hit_entity_id = entity_id;
+        }
+      } else {
+        float t0 = 0, t1 = 0;
+        if (!local_hit_record.front_face) {
+          t1 = local_result;
+        } else {
+          t0 = local_result;
+          local_result = entity.GetModel()->TraceRay(
+              local_ray, local_result * transformed_direction_length + 1e-4,
+              nullptr);
+          local_result /= transformed_direction_length;
+          if (result >= 0.0f)
+            local_result = fmin(local_result, result);
+          t1 = fmin(t_max, local_result);
+        }
+        if (t0 < t1) {
+          float hit_dis =
+              -log(fmax(randomProb(rd), 1e-10)) /
+              entity.GetMaterial(local_hit_record.material_id).density;
+          if (hit_dis < t1 - t0) {
+            result = t0 + hit_dis;
+            if (hit_record) {
+              local_hit_record.position =
+                  transform *
+                  glm::vec4{local_ray.origin() +
+                                hit_dis * transformed_direction_length *
+                                    local_ray.direction(),
+                            1.0f};
+              local_hit_record.normal =
+                  glm::transpose(inv_transform) *
+                  glm::vec4{local_hit_record.normal, 0.0f};
+              local_hit_record.tangent =
+                  transform * glm::vec4{local_hit_record.tangent, 0.0f};
+              local_hit_record.geometry_normal =
+                  glm::transpose(inv_transform) *
+                  glm::vec4{local_hit_record.geometry_normal, 0.0f};
+              *hit_record = local_hit_record;
+              hit_record->hit_entity_id = entity_id;
+            }
+          }
+        } 
       }
     }
   }
