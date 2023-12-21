@@ -42,7 +42,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             scene_->GetTextures()[material.albedo_texture_id].Sample(
                 hit_record.tex_coord);
         albedo *= glm::vec3(tex_sample);
-        alpha *= tex_sample.w;
+        //alpha *= tex_sample.w;
       }
       if (hit_record.material_id > 0 && RandomProb(rd) > alpha) {
         //Alpha Shadow

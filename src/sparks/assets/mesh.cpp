@@ -21,6 +21,9 @@ Mesh::Mesh(const std::vector<Vertex> &vertices,
   vertices_ = vertices;
   indices_ = indices;
   material_ids_.resize(indices_.size() / 3, 0);
+  movingDirection_ = glm::vec3(0);
+  time0_ = 0;
+  time1_ = 1;
 }
 
 Mesh::Mesh(const std::vector<Vertex> &vertices,
@@ -29,6 +32,9 @@ Mesh::Mesh(const std::vector<Vertex> &vertices,
   vertices_ = vertices;
   indices_ = indices;
   material_ids_ = material_ids;
+  movingDirection_ = glm::vec3(0);
+  time0_ = 0;
+  time1_ = 1;
 }
 
 Mesh::Mesh(const std::vector<Vertex>& vertices,
@@ -401,6 +407,7 @@ Mesh::Mesh(const tinyxml2::XMLElement *element, bool keep_material) {
       indices_.push_back(i + 2);
     }
     MergeVertices();
+    material_ids_.resize(indices_.size() / 3);
   }
   // Get Movement Info
   auto child_element = element->FirstChildElement("isMoving");
@@ -409,6 +416,10 @@ Mesh::Mesh(const tinyxml2::XMLElement *element, bool keep_material) {
           StringToVec3(child_element->FindAttribute("movingDirection")->Value());
     time0_ = std::stod(child_element->FindAttribute("time0")->Value());
     time1_ = std::stod(child_element->FindAttribute("time1")->Value());
+  } else {
+    movingDirection_ = glm::vec3(0);
+    time0_ = 0;
+    time1_ = 1;
   }
 }
 
