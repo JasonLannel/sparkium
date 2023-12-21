@@ -542,7 +542,7 @@ void App::UpdateImGui() {
               "Reflectance", &material.reflectance, 0.0f, 1.0f, "%.3f");
         } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
           reset_accumulation_ |= ImGui::SliderFloat(
-              "Fuzz Radius", &material.fuzz, 0.0f, 1.0f, "%.3f");
+              "Roughness", &material.roughness, 0.0f, 1.0f, "%.3f");
         } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
           reset_accumulation_ |= ImGui::SliderFloat(
               "Index of Refraction", &material.IOR, 1.0f, 3.0f, "%.3f");

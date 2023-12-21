@@ -36,7 +36,7 @@ struct Material {
   //Lambertian
   float reflectance{1.0f};
   //Specular, default ideal specular
-  float fuzz{0.0f};
+  float roughness{0.5f};
   //Transmissive, default glass
   float IOR{1.5f};
   bool thin{false};
@@ -44,7 +44,7 @@ struct Material {
   float subsurface{0.0f};
   float metallic{0.0f};
   /// eta -> IOR
-  float roughness{0.5f};
+  //  roughness -> roughness
   float specular{0.0f};
   float specTrans{0.0f};
   float specularTint{0.0f};

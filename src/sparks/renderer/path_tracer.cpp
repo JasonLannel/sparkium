@@ -86,15 +86,13 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           if (glm::dot(normal, direction) < 0)
             break;
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
+          // You should change this into Cook-Torrence.
           direction = glm::reflect(ray.direction(), normal);
-          // Fuzz
-          UniformHemispherePdf Fuzz(direction);
-          glm::vec3 fuzzDirection = Fuzz.Generate(origin, ray.time(), rd);
-          direction = glm::normalize(direction + fuzzDirection * material.fuzz);
-          ray = Ray(origin, direction, ray.time());
-          throughput *= albedo;
+          float cos_theta = fmin(glm::dot(-ray.direction(), normal), 1.0f);
+          throughput *= material.FresnelSchlick(albedo, cos_theta);
           if (glm::dot(normal, direction) < 0)
             break;
+          ray = Ray(origin, direction, ray.time());
       } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
           // Assume all lights have same index of refraction
           float refract_ratio = hit_record.front_face ? (1.0 / material.IOR)
