@@ -280,7 +280,7 @@ glm::vec3 SampleDisneyBRDFPdf::Generate(glm::vec3 v,
 }
 
 float SampleDisneyBRDFPdf::Value(const Ray &ray) const {
-  return p_;
+  return 1.0f;
 }
 
 SampleDisneyClearCoatPdf::SampleDisneyClearCoatPdf(glm::vec3 normal, Material material, float p) {
@@ -323,7 +323,7 @@ glm::vec3 SampleDisneyClearCoatPdf::Generate(glm::vec3 v,
 }
 
 float SampleDisneyClearCoatPdf::Value(const Ray &ray) const {
-  return p_;
+  return 1.0f;
 }
 
 SampleDisneyDiffusePdf::SampleDisneyDiffusePdf(glm::vec3 normal,
@@ -366,7 +366,7 @@ glm::vec3 SampleDisneyDiffusePdf::Generate(glm::vec3 v, float time, std::mt19937
 }
 
 float SampleDisneyDiffusePdf::Value(const Ray &ray) const {
-  return p_;
+  return 1.0f;
 }
 
 SampleDisneySpecTransPdf::SampleDisneySpecTransPdf(glm::vec3 normal,
@@ -434,7 +434,7 @@ glm::vec3 SampleDisneySpecTransPdf::Generate(glm::vec3 v,
 }
 
 float SampleDisneySpecTransPdf::Value(const Ray &ray) const {
-  return p_;
+  return 1.0f;
 }
 
 EnvmapPdf::EnvmapPdf(const DistributionPdf_2D *sampler, const float offset) {

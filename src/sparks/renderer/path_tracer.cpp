@@ -157,10 +157,10 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           probList.push_back(pDiffuse);
           probList.push_back(pSpecTrans);
           Pdf *Gen = new MixturePdf(pdfList, probList);
-          direction = Gen->Generate(origin, ray.time(), rd);
+          direction = Gen->Generate(ray.direction(), ray.time(), rd);
 
           throughput *= material.EvaluateDisney(-ray.direction(), direction, normal, albedo);
-
+          direction = glm::normalize(direction);
           ray = Ray(origin, direction, ray.time());
           float pdf = Gen->Value(ray);
           throughput /= pdf;
