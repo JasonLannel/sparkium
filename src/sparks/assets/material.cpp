@@ -149,12 +149,13 @@ void Material::GgxVndfAnisotropicPdf(const glm::vec3 &wi,
 
 glm::vec3 Material::EvaluateSheen(const glm::vec3 &wo,
                                const glm::vec3 &wm,
-                               const glm::vec3 &wi) const {
+                               const glm::vec3 &wi,
+                               const glm::vec3 baseColor) const {
   if (this->sheen <= 0.0f) {
     return glm::vec3 {0.0f};
   }
   float dotHL = glm::dot(wm, wi);
-  glm::vec3 tint = CalculateTint(albedo_color); // original: baseColor, are they the same?
+  glm::vec3 tint = CalculateTint(baseColor); // original: baseColor, are they the same?
   return this->sheen * interpolate(glm::vec3(1.0f), tint, this->sheenTint) * SchlickWeight(dotHL);
 }
 
@@ -365,8 +366,7 @@ glm::vec3 Material::DisneyFresnel(const glm::vec3 &wo,
 glm::vec3 Material::EvaluateDisney( const glm::vec3 v,
                                     const glm::vec3 l,
                                     const glm::vec3 normal,
-                                    float &forwardPdf,
-                                    float &reversePdf) const {
+                                    glm::vec3 albedo) const {
   // construct tangent space matrix. We assume normal vector here is in world space.
   glm::vec3 n = glm::normalize(normal);
   glm::vec3 t, b;
@@ -383,13 +383,13 @@ glm::vec3 Material::EvaluateDisney( const glm::vec3 v,
   float dotNL = CosTheta(wi);
 
   glm::vec3 reflectance = glm::vec3(0.0f);
-  forwardPdf = 0.0f;
-  reversePdf = 0.0f;
+  float forwardPdf = 0.0f;
+  float reversePdf = 0.0f;
 
   float pBRDF, pDiffuse, pClearcoat, pSpecTrans;
   CalculateLobePdfs(pBRDF, pDiffuse, pClearcoat, pSpecTrans);
 
-  glm::vec3 baseColor = this->albedo_color;
+  glm::vec3 baseColor = albedo;
   float metallic = this->metallic;
   float specTrans = this->specTrans;
   float roughness = this->roughness;

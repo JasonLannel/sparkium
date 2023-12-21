@@ -131,4 +131,22 @@ inline void MakeOrthogonalCoordinateSystem(const glm::vec3 &v1,
   *v3 = glm::cross(v1, *v2);
 }
 
+glm::vec3 SampleGgxVndfAnisotropic(const glm::vec3 &wo,
+                                float ax,
+                                float ay,
+                                float u1,
+                                float u2);
+inline bool Transmit(glm::vec3 wm, glm::vec3 wi, float n, glm::vec3 &wo) {
+  float c = glm::dot(wi, wm);
+  if (c < 0.0f) {
+    c = -c;
+    wm = -wm;
+  }
+  float root = 1.0f - n * n * (1.0f - c * c);
+  if (root <= 0)
+    return false;
+  wo = (n * c - sqrt(root)) * wm - n * wi;
+  return true;
+}
+
 }  // namespace sparks

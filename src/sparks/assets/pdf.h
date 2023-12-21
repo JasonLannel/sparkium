@@ -3,6 +3,7 @@
 #include "sparks/assets/util.h"
 #include "sparks/assets/vertex.h"
 #include "sparks/assets/ray.h"
+#include "sparks/assets/material.h"
 
 namespace sparks {
 class Onb {
@@ -93,6 +94,64 @@ class CosineHemispherePdf : public Pdf {
 
  private:
   Onb uvw;
+};
+
+class SampleDisneyBRDFPdf : public Pdf {
+ public:
+  SampleDisneyBRDFPdf(glm::vec3 normal, Material material, float p);
+  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
+  float Value(const Ray &ray) const override;
+
+  private:
+  Material material_;
+   Onb uvw;
+  glm::mat3 world2tangent;
+   float p_;
+};
+
+class SampleDisneyClearCoatPdf : public Pdf {
+ public:
+  SampleDisneyClearCoatPdf(glm::vec3 normal, Material material, float p);
+  glm::vec3 Generate(glm::vec3 origin,
+                     float time,
+                     std::mt19937 &rd) const override;
+  float Value(const Ray &ray) const override;
+
+ private:
+  Material material_;
+  Onb uvw;
+  glm::mat3 world2tangent;
+  float p_;
+};
+
+class SampleDisneyDiffusePdf : public Pdf {
+ public:
+  SampleDisneyDiffusePdf(glm::vec3 normal, Material material, float p);
+  glm::vec3 Generate(glm::vec3 origin,
+                     float time,
+                     std::mt19937 &rd) const override;
+  float Value(const Ray &ray) const override;
+
+ private:
+  Material material_;
+  Onb uvw;
+  glm::mat3 world2tangent;
+  float p_;
+};
+
+class SampleDisneySpecTransPdf : public Pdf {
+ public:
+  SampleDisneySpecTransPdf(glm::vec3 normal, Material material, float p);
+  glm::vec3 Generate(glm::vec3 origin,
+                     float time,
+                     std::mt19937 &rd) const override;
+  float Value(const Ray &ray) const override;
+
+ private:
+  Material material_;
+  Onb uvw;
+  glm::mat3 world2tangent;
+  float p_;
 };
 
 class EnvmapPdf : public Pdf {
