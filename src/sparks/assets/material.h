@@ -72,7 +72,8 @@ struct Material {
                          float &pSpecTrans) const;
   glm::vec3 EvaluateSheen(const glm::vec3 &wo,
                           const glm::vec3 &wm,
-                          const glm::vec3 &wi) const;
+                          const glm::vec3 &wi,
+                          const glm::vec3 &baseColor) const;
   float Material::GTR1(float absDotHL, float a) const;
   float Material::SeparableSmithGGXG1(const glm::vec3 &w, float a) const;
   float Material::EvaluateDisneyClearcoat(float clearcoat,
@@ -100,14 +101,16 @@ struct Material {
                                          const glm::vec3 &wm,
                                          const glm::vec3 &wi,
                                          float &fPdf,
-                                         float &rPdf) const;
+                                         float &rPdf,
+                                         const glm::vec3 &albedo) const;
   float Material::ThinTransmissionRoughness(float ior, float roughness) const;
   glm::vec3 Material::EvaluateDisneySpecTransmission(const glm::vec3 &wo,
                                                      const glm::vec3 &wm,
                                                      const glm::vec3 &wi,
                                                      float ax,
                                                      float ay,
-                                                     bool thin) const;
+      bool thin,
+      const glm::vec3 &albedo) const;
   float EvaluateDisneyRetroDiffuse(const glm::vec3 &wo,
                                    const glm::vec3 &wm,
                                    const glm::vec3 &wi) const;
@@ -117,7 +120,8 @@ struct Material {
                                         bool thin) const;
   glm::vec3 Material::DisneyFresnel(const glm::vec3 &wo,
                                     const glm::vec3 &wm,
-                                    const glm::vec3 &wi) const;
+                                    const glm::vec3 &wi,
+                                    const glm::vec3 &albedo) const;
   glm::vec3 Material::EvaluateDisney(const glm::vec3 v,
                                      const glm::vec3 l,
                                      const glm::vec3 n,

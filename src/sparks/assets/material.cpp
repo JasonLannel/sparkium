@@ -150,7 +150,7 @@ void Material::GgxVndfAnisotropicPdf(const glm::vec3 &wi,
 glm::vec3 Material::EvaluateSheen(const glm::vec3 &wo,
                                const glm::vec3 &wm,
                                const glm::vec3 &wi,
-                               const glm::vec3 baseColor) const {
+                               const glm::vec3 &baseColor) const {
   if (this->sheen <= 0.0f) {
     return glm::vec3 {0.0f};
   }
@@ -236,7 +236,8 @@ glm::vec3 Material::EvaluateDisneyBRDF(const glm::vec3 &wo,
                                        const glm::vec3 &wm,
                                        const glm::vec3 &wi,
                                        float &fPdf,
-                                       float &rPdf) const {
+                                       float &rPdf,
+                                       const glm::vec3 &albedo) const {
   fPdf = 0.0f;
   rPdf = 0.0f;
 
@@ -253,7 +254,7 @@ glm::vec3 Material::EvaluateDisneyBRDF(const glm::vec3 &wo,
   float gl = SeparableSmithGGXG1(wi, wm, ax, ay);
   float gv = SeparableSmithGGXG1(wo, wm, ax, ay);
 
-  glm::vec3 f = DisneyFresnel(wo, wm, wi);
+  glm::vec3 f = DisneyFresnel(wo, wm, wi, albedo);
 
   GgxVndfAnisotropicPdf(wi, wm, wo, ax, ay, fPdf, rPdf);
   fPdf *= (1.0f / (4 * std::abs(glm::dot(wo, wm))));
@@ -272,7 +273,8 @@ glm::vec3 Material::EvaluateDisneySpecTransmission(const glm::vec3 &wo,
                                          const glm::vec3 &wi,
                                              float ax,
                                              float ay,
-                                             bool thin) const {
+                                             bool thin, 
+                                             const glm::vec3 &albedo) const {
   float relativeIor = this->IOR; // original: relativeIOR, are they the same?
   float n2 = relativeIor * relativeIor;
 
@@ -291,9 +293,9 @@ glm::vec3 Material::EvaluateDisneySpecTransmission(const glm::vec3 &wo,
 
   glm::vec3 color;
   if (thin)
-    color = sqrt(this->albedo_color);
+    color = sqrt(albedo);
   else
-    color = this->albedo_color;
+    color = albedo;
   float c = (absDotHL * absDotHV) / (absDotNL * absDotNV);
   float t = (n2 / square(dotHL + relativeIor * dotHV));
   return color * c * t * (1.0f - f) * gl * gv * d;
@@ -348,14 +350,15 @@ float Material::EvaluateDisneyDiffuse(const glm::vec3 &wo,
 
 glm::vec3 Material::DisneyFresnel(const glm::vec3 &wo,
                                const glm::vec3 &wm,
-                               const glm::vec3 &wi) const {
+                               const glm::vec3 &wi,
+                               const glm::vec3 &albedo) const {
   float dotHV = std::abs(glm::dot(wm, wo));
 
-  glm::vec3 tint = CalculateTint(this->albedo_color);
+  glm::vec3 tint = CalculateTint(albedo);
 
   glm::vec3 R0 = SchlickR0FromRelativeIOR(this->IOR) *
                  interpolate(glm::vec3(1.0f), tint, this->specularTint); // here is relativeIOR originally.
-  R0 = interpolate(R0, this->albedo_color, this->metallic);
+  R0 = interpolate(R0, albedo, this->metallic);
 
   float dielectricFresnel = FrDielectric(dotHV, 1.0f, this->IOR);
   glm::vec3 metallicFresnel = FresnelSchlick(R0, glm::dot(wi, wm));
@@ -420,7 +423,7 @@ glm::vec3 Material::EvaluateDisney( const glm::vec3 v,
     float reverseDiffusePdfW = calAbsCosTheta(wo);
     float diffuse = EvaluateDisneyDiffuse(wo, wm, wi, this->thin);
 
-    glm::vec3 sheen = EvaluateSheen(wo, wm, wi);
+    glm::vec3 sheen = EvaluateSheen(wo, wm, wi, baseColor);
 
     reflectance += diffuseWeight * (diffuse * baseColor + sheen);
 
@@ -437,7 +440,7 @@ glm::vec3 Material::EvaluateDisney( const glm::vec3 v,
     CalculateAnisotropicParams(rscaled, this->anisotropic, tax, tay);
 
     glm::vec3 transmission =
-        EvaluateDisneySpecTransmission(wo, wm, wi, tax, tay, this->thin);
+        EvaluateDisneySpecTransmission(wo, wm, wi, tax, tay, this->thin, baseColor);
     reflectance += transWeight * transmission;
 
     float forwardTransmissivePdfW;
@@ -458,7 +461,7 @@ glm::vec3 Material::EvaluateDisney( const glm::vec3 v,
   if (upperHemisphere) {
     float forwardMetallicPdfW;
     float reverseMetallicPdfW;
-    glm::vec3 specular = EvaluateDisneyBRDF(wo, wm, wi, forwardMetallicPdfW, reverseMetallicPdfW);
+    glm::vec3 specular = EvaluateDisneyBRDF(wo, wm, wi, forwardMetallicPdfW, reverseMetallicPdfW, baseColor);
 
     reflectance += specular;
     forwardPdf += pBRDF * forwardMetallicPdfW / (4 * std::abs(glm::dot(wo, wm)));
