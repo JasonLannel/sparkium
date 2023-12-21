@@ -101,23 +101,30 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             float reflect_ratio = 1 - refract_ratio;
             reflect_ratio = (1 - reflect_ratio) * (1 - reflect_ratio) *
                             reflect_ratio / (1 - reflect_ratio * reflect_ratio);
+            float cos_theta = fmin(glm::dot(-ray.direction(), normal), 1.0f);
             if (reflect_ratio > RandomProb(rd)) {
               direction = glm::reflect(ray.direction(), normal);
+              throughput *= material.FresnelSchlick(albedo, cos_theta);
             } else {
               direction = ray.direction();
+              throughput *= albedo;
             }
           } else {
               float cos_theta = fmin(glm::dot(-ray.direction(), normal), 1.0f);
+              float f0 = (1 - refract_ratio) / (1 + refract_ratio);
+              f0 *= f0;
               direction = glm::refract(ray.direction(), normal, refract_ratio);
-              if (direction.length() < 1e-4f ||
-                  material.FresnelSchlick(refract_ratio, cos_theta) >
+              if (direction.length() == 0.f ||
+                  material.FresnelSchlick(f0, cos_theta) >
                       RandomProb(rd)) {
                 direction = glm::reflect(ray.direction(), normal);
+                throughput *= material.FresnelSchlick(albedo, cos_theta);
+              } else {
+                throughput *= albedo;
               }
           }
         glm::normalize(direction);
         ray = Ray(origin, direction, ray.time());
-        throughput *= albedo;
       } //else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
           // // 别忘记补上折射, 还没实现，这里是有问题的
           //CosineHemispherePdf Dialectric(normal, tangent);
