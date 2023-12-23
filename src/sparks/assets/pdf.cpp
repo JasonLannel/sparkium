@@ -271,7 +271,7 @@ glm::vec3 SampleDisneyBRDFPdf::Generate(glm::vec3 v,
   glm::vec3 wm = SampleGgxVndfAnisotropic(wo, ax, ay, r0, r1);
 
   // -- Reflect over wm
-  glm::vec3 wi = glm::normalize(glm::reflect(wo, wm));
+  glm::vec3 wi = glm::normalize(glm::reflect(-wo, wm));
   if (CosTheta(wi) <= 0.0f) {
     wi = glm::vec3(0.0f);
   }
@@ -314,7 +314,7 @@ glm::vec3 SampleDisneyClearCoatPdf::Generate(glm::vec3 v,
     wm = -wm;
   }
 
-  glm::vec3 wi = glm::reflect(wo, wm);
+  glm::vec3 wi = glm::reflect(-wo, wm);
   if (glm::dot(wi, wo) < 0.0f) {
     return glm::vec3(0.0f);
   }
@@ -412,15 +412,15 @@ glm::vec3 SampleDisneySpecTransPdf::Generate(glm::vec3 v,
   float F = FrDielectric(dotVH, 1.0f, material_.IOR);
   float p = dist(rd);
   if (p <= F) {
-    wi = glm::normalize(glm::reflect(wo, wm));
+    wi = glm::normalize(glm::reflect(-wo, wm));
   } else {
     if (material_.thin) {
-      wi = glm::reflect(wo, wm);
+      wi = glm::reflect(-wo, wm);
       wi.y = -wi.y;
     } else {
       if (Transmit(wm, wo, relativeIOR, wi)) {
       } else {
-        wi = glm::reflect(wo, wm);
+        wi = glm::reflect(-wo, wm);
       }
     }
     wi = glm::normalize(wi);

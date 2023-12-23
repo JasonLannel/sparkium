@@ -549,16 +549,16 @@ void App::UpdateImGui() {
           reset_accumulation_ |=
               ImGui::Checkbox("Thin (thickness can be omited)", &material.thin);
         } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
+          // reset_accumulation_ |= ImGui::SliderFloat(
+              // "Subsurface", &material.subsurface, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |= ImGui::SliderFloat(
-              "Subsurface", &material.subsurface, 0.0f, 1.0f, "%.3f");
+              "Roughness", &material.roughness, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |= ImGui::SliderFloat(
               "Metallic", &material.metallic, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |= ImGui::SliderFloat(
-              "Specular", &material.specular, 0.0f, 1.0f, "%.3f");
+              "SpecularTrans", &material.specTrans, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |= ImGui::SliderFloat(
               "SpecularTint", &material.specularTint, 0.0f, 1.0f, "%.3f");
-          reset_accumulation_ |= ImGui::SliderFloat(
-              "Roughness", &material.roughness, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |= ImGui::SliderFloat(
               "Anisotropic", &material.anisotropic, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |=
@@ -569,6 +569,8 @@ void App::UpdateImGui() {
               "Clearcoat", &material.clearcoat, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |= ImGui::SliderFloat(
               "ClearcoatGloss", &material.clearcoatGloss, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "DiffTrans", &material.diffTrans, 0.0f, 1.0f, "%.3f");
         }
       }
     }

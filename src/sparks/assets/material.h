@@ -34,27 +34,27 @@ struct Material {
   glm::vec3 emission{0.0f};
   float emission_strength{0.0f};
   //Lambertian
-  float reflectance{0.5f};
-  //Specular, default ideal specular
-  float roughness{0.5f};
+  float reflectance{0.8f};
   //Transmissive, default glass
   float IOR{1.5f};
   bool thin{false};
   //Principle BRDF
-  float subsurface{0.5f};
-  float metallic{0.5f};
-  /// eta -> IOR
-  //  roughness -> roughness
-  float specular{0.0f};
-  float specTrans{0.0f};
-  float specularTint{0.0f};
-  float anisotropic{0.0f};
-  float sheen{0.0f};
-  float sheenTint{0.5f};
-  float clearcoat{0.5f};
-  float clearcoatGloss{0.5f};
-  float diffTrans{0.5f};
-  float flatness{0.5f};
+  // float subsurface{0.0f};
+  float roughness{0.2f};
+  float metallic{0.2f};
+  float specTrans{0.2f};
+  float specularTint{0.2f};
+  float anisotropic{0.2f};
+  float sheen{0.2f};
+  float sheenTint{0.2f};
+
+  // TODO: exist bug here. Nonzero clearcoat will make the material black
+  float clearcoat{0.0f};
+  float clearcoatGloss{0.0f};
+
+  float diffTrans{0.2f};
+  // flatness is only useful when material is thin
+  float flatness{0.0f};
 
   float FresnelSchlick(float f0, float cosTheta) const;
   glm::vec3 FresnelSchlick(glm::vec3 SpecularColor, float cosTheta) const;
@@ -102,7 +102,8 @@ struct Material {
                                          const glm::vec3 &wi,
                                          float &fPdf,
                                          float &rPdf,
-                                         const glm::vec3 &albedo) const;
+                                         const glm::vec3 &albedo,
+                                         float relativeIOR) const;
   float Material::ThinTransmissionRoughness(float ior, float roughness) const;
   glm::vec3 Material::EvaluateDisneySpecTransmission(const glm::vec3 &wo,
                                                      const glm::vec3 &wm,
@@ -110,7 +111,8 @@ struct Material {
                                                      float ax,
                                                      float ay,
       bool thin,
-      const glm::vec3 &albedo) const;
+      const glm::vec3 &albedo,
+      float relativeIOR) const;
   float EvaluateDisneyRetroDiffuse(const glm::vec3 &wo,
                                    const glm::vec3 &wm,
                                    const glm::vec3 &wi) const;
@@ -121,11 +123,13 @@ struct Material {
   glm::vec3 Material::DisneyFresnel(const glm::vec3 &wo,
                                     const glm::vec3 &wm,
                                     const glm::vec3 &wi,
-                                    const glm::vec3 &albedo) const;
+                                    const glm::vec3 &albedo,
+                                    float relativeIOR) const;
   glm::vec3 Material::EvaluateDisney(const glm::vec3 v,
                                      const glm::vec3 l,
                                      const glm::vec3 n,
-                                     glm::vec3 albedo) const;
+                                     glm::vec3 albedo,
+                                     float refract_ratio) const;
 
 };
 }  // namespace sparks
