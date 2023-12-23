@@ -514,7 +514,8 @@ void App::UpdateImGui() {
             ImGui::SliderFloat("Alpha of Entity", &material.alpha, 0.0f, 1.0f, "%.3f");
       } else {
         std::vector<const char *> material_types = {
-            "Lambertian", "Specular", "Transmissive", "Principled", "Emission"};
+            "Lambertian", "Specular", "Transmissive",
+            "Principled", "Emission", "Constant Medium"};
         reset_accumulation_ |= ImGui::Combo(
             "Type", reinterpret_cast<int *>(&material.material_type),
             material_types.data(), material_types.size());
@@ -548,6 +549,9 @@ void App::UpdateImGui() {
               "Index of Refraction", &material.IOR, 1.0f, 3.0f, "%.3f");
           reset_accumulation_ |=
               ImGui::Checkbox("Thin (thickness can be omited)", &material.thin);
+        } else if (material.material_type == MATERIAL_TYPE_MEDIUM) {
+          reset_accumulation_ |= ImGui::SliderFloat("Density", &material.density, 0.0f, 1.0f, "%.3f",
+                                 ImGuiSliderFlags_Logarithmic);
         } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
           // reset_accumulation_ |= ImGui::SliderFloat(
               // "Subsurface", &material.subsurface, 0.0f, 1.0f, "%.3f");
@@ -570,7 +574,13 @@ void App::UpdateImGui() {
           reset_accumulation_ |= ImGui::SliderFloat(
               "ClearcoatGloss", &material.clearcoatGloss, 0.0f, 1.0f, "%.3f");
           reset_accumulation_ |= ImGui::SliderFloat(
+              "Index of Refraction", &material.IOR, 1.0f, 3.0f, "%.3f");
+          reset_accumulation_ |=
+              ImGui::Checkbox("Thin (thickness can be omited)", &material.thin);
+          reset_accumulation_ |= ImGui::SliderFloat(
               "DiffTrans", &material.diffTrans, 0.0f, 1.0f, "%.3f");
+          reset_accumulation_ |= ImGui::SliderFloat(
+              "Flatness", &material.flatness, 0.0f, 1.0f, "%.3f");
         }
       }
     }

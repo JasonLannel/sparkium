@@ -37,7 +37,8 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         break;
       albedo = material.albedo_color;
       float alpha = material.alpha;
-      if (material.albedo_texture_id >= 0) {
+      if (material.albedo_texture_id >= 0 &&
+          material.material_type != MATERIAL_TYPE_MEDIUM) {
         auto tex_sample =
             scene_->GetTextures()[material.albedo_texture_id].Sample(
                 hit_record.tex_coord);
@@ -55,7 +56,8 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       origin = hit_record.position;
       normal = hit_record.normal;
       tangent = hit_record.tangent;
-      if (material.use_normal_texture) {
+      if (material.use_normal_texture &&
+          material.material_type != MATERIAL_TYPE_MEDIUM) {
         Onb onb(normal, tangent);
         glm::vec3 normalFromTex =
             glm::vec3{scene_->GetTextures()[material.normal_texture_id].Sample(
@@ -80,8 +82,8 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           float scatter = std::max(0.f, glm::dot(normal, direction) * INV_PI);
           float reflectance = material.reflectance;
           delete Gen;
-          if (pdf < 1e-5)
-            break;
+          if (pdf < 1e-7)
+              break;
           throughput *= albedo * reflectance * scatter / pdf;
           if (glm::dot(normal, direction) < 0)
             break;
@@ -125,6 +127,13 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           }
         glm::normalize(direction);
         ray = Ray(origin, direction, ray.time());
+      } else if (material.material_type == MATERIAL_TYPE_MEDIUM) {
+        UniformSpherePdf Medium(normal);
+        Pdf *Gen = new MixturePdf(&Medium, Light, 0.5f);
+        direction = glm::normalize(Gen->Generate(origin, ray.time(), rd));
+        ray = Ray(origin, direction, ray.time());
+        throughput *= albedo / Gen -> Value(ray);
+        delete Gen;
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
           // decide which lobe to sample
         float metallicBRDF = material.metallic;
