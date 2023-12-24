@@ -156,7 +156,13 @@ class SampleDisneySpecTransPdf : public Pdf {
 
 class EnvmapPdf : public Pdf {
  public:
-  EnvmapPdf(const DistributionPdf_2D *sampler, float offset);
+  EnvmapPdf(std::vector<float>::const_iterator data,
+            int nu,
+            int nv,
+            float offset) {
+    sampler_ = std::make_unique<DistributionPdf_2D>(data, nu, nv);
+    offset_ = offset;
+  }
   glm::vec3 Generate(glm::vec3 origin,
                      float time,
                      std::mt19937 &rd) const override;
@@ -164,14 +170,14 @@ class EnvmapPdf : public Pdf {
   float FuncInt() const;
 
  private:
-  const DistributionPdf_2D *sampler_;
+  std::unique_ptr<DistributionPdf_2D> sampler_;
   float offset_;
 };
 
 class MixturePdf : public Pdf {
  public:
   MixturePdf(Pdf* p1, Pdf* p2, float prob1);
-  MixturePdf(std::vector<Pdf*> list, std::vector<float> prob);
+  MixturePdf(std::vector<Pdf*> list, std::vector<float> weight);
   MixturePdf(std::vector<Pdf*> list);
   glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
   float Value(const Ray &ray) const override;

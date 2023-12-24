@@ -27,9 +27,14 @@ App::App(Renderer *renderer, const AppSettings &app_settings) {
 
 void App::Run() {
   OnInit();
+  static auto last_tp = std::chrono::steady_clock::now();
   while (!glfwWindowShouldClose(core_->GetWindow())) {
     if (!gui_pause_) {
-      OnLoop();
+      auto cur_tp = std::chrono::steady_clock::now();
+      if ((cur_tp - last_tp) / std::chrono::milliseconds(1) > 20) {
+        OnLoop();
+        last_tp = std::chrono::steady_clock::now();
+      }
     }
     glfwPollEvents();
   }

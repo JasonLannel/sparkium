@@ -20,7 +20,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
   std::random_device rd_seed;
   std::mt19937 rd(x ^ y ^ sample ^ rd_seed());
   std::uniform_real_distribution<float> RandomProb(0.0f, 1.0f);
-  Pdf *Light = scene_->GetLightPdf();
+  LightPdf Light(scene_);
   glm::vec3 throughput(1.0f);
   glm::vec3 radiance(0.0f);
   glm::vec3 origin, direction, normal, tangent, albedo;
@@ -68,20 +68,17 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         normalFromTex[2] = 0;
         normalFromTex[2] = sqrt(1.f - glm::dot(normalFromTex, normalFromTex));
         normal = onb.local(normalFromTex);
+        glm::normalize(normal);
       }
-      glm::normalize(normal);
-      glm::normalize(tangent);
       if (glm::dot(normal, ray.direction()) > 0)
         normal = -normal;
       if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
-          CosineHemispherePdf Dialectric(normal, tangent);
-          Pdf *Gen = new MixturePdf(&Dialectric, Light, 0.5f);
-          direction = Gen->Generate(origin, ray.time(), rd);
+        CosineHemispherePdf Gen(normal, tangent);
+          direction = Gen.Generate(origin, ray.time(), rd);
           ray = Ray(origin, direction, ray.time());
-          float pdf = Gen->Value(ray);
+          float pdf = Gen.Value(ray);
           float scatter = std::max(0.f, glm::dot(normal, direction) * INV_PI);
           float reflectance = material.reflectance;
-          delete Gen;
           if (pdf < 1e-7)
               break;
           throughput *= albedo * reflectance * scatter / pdf;
@@ -129,11 +126,10 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         ray = Ray(origin, direction, ray.time());
       } else if (material.material_type == MATERIAL_TYPE_MEDIUM) {
         UniformSpherePdf Medium(normal);
-        Pdf *Gen = new MixturePdf(&Medium, Light, 0.5f);
-        direction = glm::normalize(Gen->Generate(origin, ray.time(), rd));
+        MixturePdf Gen(&Medium, &Light, 0.1f);
+        direction = glm::normalize(Gen.Generate(origin, ray.time(), rd));
         ray = Ray(origin, direction, ray.time());
-        throughput *= albedo / Gen -> Value(ray);
-        delete Gen;
+        throughput *= albedo / Gen.Value(ray);
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
           // decide which lobe to sample
         float metallicBRDF = material.metallic;
@@ -165,17 +161,16 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           probList.push_back(pClearcoat);
           probList.push_back(pDiffuse);
           probList.push_back(pSpecTrans);
-          Pdf *Gen = new MixturePdf(pdfList, probList);
-          direction = Gen->Generate(-ray.direction(), ray.time(), rd);
+          MixturePdf Gen(pdfList, probList);
+          direction = Gen.Generate(ray.direction(), ray.time(), rd);
           float refract_ratio =
               hit_record.front_face ? (1.0 / material.IOR) : material.IOR;
 
           throughput *= material.EvaluateDisney(-ray.direction(), direction, normal, albedo, refract_ratio);
           direction = glm::normalize(direction);
           ray = Ray(origin, direction, ray.time());
-          float pdf = Gen->Value(ray);
+          float pdf = Gen.Value(ray);
           throughput /= pdf;
-          delete Gen;
       }
       throughput *= INV_RR;
     } else {
@@ -183,8 +178,6 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       break;
     }
   }
-  if (Light != nullptr)
-    delete Light;
   return glm::min(radiance, glm::vec3(1));
 }
 }  // namespace sparks

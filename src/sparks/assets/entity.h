@@ -35,7 +35,6 @@ class Entity {
   [[nodiscard]] int GetMaterialSize() const;
   [[nodiscard]] const std::string &GetName() const;
   [[nodiscard]] float GetPower() const;
-  [[nodiscard]] Pdf *GetPdf() const;
   [[nodiscard]] bool LoadObjFile(Scene *scene, const std::string &file_path);   //Declare in Scene
 
  private:

@@ -16,67 +16,14 @@ AcceleratedMesh::AcceleratedMesh(const std::vector<Vertex> &vertices,
   CreatePdf();
 }
 
-void AcceleratedMesh::IntersectSlice(const Ray &movedRay,
-                    int index,
-                    float t_min,
-                    float &result,
-                    HitRecord *hit_record) const{
-  int i = index * 3;
-  const auto &v0 = vertices_[indices_[i]];
-  const auto &v1 = vertices_[indices_[i + 1]];
-  const auto &v2 = vertices_[indices_[i + 2]];
-  glm::vec3 origin = movedRay.origin();
-  glm::vec3 direction = movedRay.direction();
-
-  glm::mat3 A = glm::mat3(v1.position - v0.position, v2.position - v0.position,
-                          -direction);
-  if (std::abs(glm::determinant(A)) < 1e-9f) {
-    return;
-  }
-  A = glm::inverse(A);
-  auto uvt = A * (origin - v0.position);
-  auto &t = uvt.z;
-  if (t < t_min || (result > 0.0f && t > result)) {
-    return;
-  }
-  auto &u = uvt.x;
-  auto &v = uvt.y;
-  auto w = 1.0f - u - v;
-  auto position = origin + t * direction;
-  if (u >= 0.0f && v >= 0.0f && u + v <= 1.0f) {
-    result = t;
-    if (hit_record) {
-      auto geometry_normal = glm::normalize(
-          glm::cross(v2.position - v0.position, v1.position - v0.position));
-      if (glm::dot(geometry_normal, direction) < 0.0f) {
-        hit_record->position = position + GetDisplacement(movedRay.time());
-        hit_record->geometry_normal = geometry_normal;
-        hit_record->normal = v0.normal * w + v1.normal * u + v2.normal * v;
-        hit_record->tangent = v0.tangent * w + v1.tangent * u + v2.tangent * v;
-        hit_record->material_id = material_ids_[index];
-        hit_record->tex_coord =
-            v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
-        hit_record->front_face = true;
-      } else {
-        hit_record->position = position + GetDisplacement(movedRay.time());
-        hit_record->geometry_normal = -geometry_normal;
-        hit_record->normal = -(v0.normal * w + v1.normal * u + v2.normal * v);
-        hit_record->tangent =
-            -(v0.tangent * w + v1.tangent * u + v2.tangent * v);
-        hit_record->material_id = material_ids_[index];
-        hit_record->tex_coord =
-            v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
-        hit_record->front_face = false;
-      }
-    }
-  }
-}
-
 float AcceleratedMesh::TraceRay(const Ray &ray,
                                 float t_min,
                                 HitRecord *hit_record) const {
+  int idx = -1;
+  float u, v, w;
   float result = -1.0f;
   std::vector<int> q;
+  q.reserve(bvh_nodes_.size());
   q.push_back(bvh_nodes_.size() - 1);
   int head = 0;
 
@@ -88,23 +35,76 @@ float AcceleratedMesh::TraceRay(const Ray &ray,
     int cur = q[head++];
     if (bvh_nodes_[cur].aabb.IsIntersect(movedRay, t_min, result)) {
       if (bvh_nodes_[cur].child[0] == -1) {
-        IntersectSlice(movedRay, cur, t_min, result, hit_record);
+        int i = cur * 3;
+        const auto &v0 = vertices_[indices_[i]];
+        const auto &v1 = vertices_[indices_[i + 1]];
+        const auto &v2 = vertices_[indices_[i + 2]];
+        glm::vec3 origin = movedRay.origin();
+        glm::vec3 direction = movedRay.direction();
+        glm::mat3 A = glm::mat3(v1.position - v0.position,
+                                v2.position - v0.position, -direction);
+        if (std::abs(glm::determinant(A)) < 1e-9f) {
+          continue;
+        }
+        A = glm::inverse(A);
+        auto uvt = A * (origin - v0.position);
+        auto &t = uvt.z;
+        if (t < t_min || (result > 0.0f && t > result)) {
+          continue;
+        }
+        auto &du = uvt.x;
+        auto &dv = uvt.y;
+        auto position = origin + t * direction;
+        if (du >= 0.0f && dv >= 0.0f && du + dv <= 1.0f) {
+          result = t;
+          idx = cur;
+          u = du;
+          v = dv;
+        }
       } else {
         q.push_back(bvh_nodes_[cur].child[0]);
         q.push_back(bvh_nodes_[cur].child[1]);
       }
     }
   }
-
+  if (~idx) {
+    int i = idx * 3;
+    const auto &v0 = vertices_[indices_[i]];
+    const auto &v1 = vertices_[indices_[i + 1]];
+    const auto &v2 = vertices_[indices_[i + 2]];
+    w = 1.0f - u - v;
+    auto geometry_normal = glm::normalize(
+        glm::cross(v2.position - v0.position, v1.position - v0.position));
+    auto position = ray.origin() + result * ray.direction();
+    if (glm::dot(geometry_normal, movedRay.direction()) < 0.0f) {
+      hit_record->position = position + GetDisplacement(movedRay.time());
+      hit_record->geometry_normal = geometry_normal;
+      hit_record->normal = v0.normal * w + v1.normal * u + v2.normal * v;
+      hit_record->tangent = v0.tangent * w + v1.tangent * u + v2.tangent * v;
+      hit_record->material_id = material_ids_[idx];
+      hit_record->tex_coord =
+          v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
+      hit_record->front_face = true;
+    } else {
+      hit_record->position = position + GetDisplacement(movedRay.time());
+      hit_record->geometry_normal = -geometry_normal;
+      hit_record->normal = -(v0.normal * w + v1.normal * u + v2.normal * v);
+      hit_record->tangent = -(v0.tangent * w + v1.tangent * u + v2.tangent * v);
+      hit_record->material_id = material_ids_[idx];
+      hit_record->tex_coord =
+          v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
+      hit_record->front_face = false;
+    }
+  }
   return result;
 }
 
 void AcceleratedMesh::BuildAccelerationStructure() {
-    if (indices_.size() == 0) {
+    if (!indices_.size()) {
 		return;
 	}
-    if (bvh_nodes_.size() == 0) {
-        bvh_nodes_.resize(indices_.size() /3 * 2 - 1);
+    if (!bvh_nodes_.size()) {
+        bvh_nodes_.resize(indices_.size() / 3 * 2 - 1);
     }
     int index_cnt = 0;
     glm::mat4 transform(1.f);
@@ -147,26 +147,92 @@ int AcceleratedMesh::BuildTree(std::vector<int> &aabb_indices,
     glm::vec3 box_size =
         glm::vec3(aabb.x_high - aabb.x_low, aabb.y_high - aabb.y_low,
                   aabb.z_high - aabb.z_low);
-
-    int largest_axis = (box_size.x > box_size.y)
-                           ? ((box_size.x > box_size.z) ? 0 : 2)
-                           : ((box_size.y > box_size.z) ? 1 : 2);
-
-    auto compare_fn = [largest_axis, &aabb_indices, this](int a, int b) {
-      if (largest_axis == 0)
-        return bvh_nodes_[a].aabb.x_high < bvh_nodes_[b].aabb.x_high;
-      if (largest_axis == 1)
-        return bvh_nodes_[a].aabb.y_high < bvh_nodes_[b].aabb.y_high;
-      return bvh_nodes_[a].aabb.z_high < bvh_nodes_[b].aabb.z_high;
-    };
-    std::sort(aabb_indices.begin() + start_index,
-                     aabb_indices.begin() + start_index + aabb_cnt, 
-                     compare_fn);
-
-    int best_cut = QuerySAH(aabb_indices, start_index, aabb_cnt);
-    int childLeft = BuildTree(aabb_indices, start_index, best_cut, index_cnt);
+    int best_dim = 0, best_cut = aabb_cnt >> 1;
+    float min_cost = std::numeric_limits<float>::max();
+    for (int i = 0; i < 3; ++i) {
+        int largest_axis = i;
+        switch (i) { 
+            case 0: {
+                std::sort(aabb_indices.begin() + start_index,
+                  aabb_indices.begin() + start_index + aabb_cnt,
+                  [this](int a, int b) {
+                    return bvh_nodes_[a].aabb.x_high <
+                           bvh_nodes_[b].aabb.x_high;
+                  });
+                break;
+            }
+            case 1: {
+                std::sort(aabb_indices.begin() + start_index,
+                          aabb_indices.begin() + start_index + aabb_cnt,
+                          [this](int a, int b) {
+                            return bvh_nodes_[a].aabb.y_high <
+                                   bvh_nodes_[b].aabb.y_high;
+                          });
+                break;
+            }
+            default: {
+                std::sort(aabb_indices.begin() + start_index,
+                          aabb_indices.begin() + start_index + aabb_cnt,
+                          [this](int a, int b) {
+                            return bvh_nodes_[a].aabb.z_high <
+                                   bvh_nodes_[b].aabb.z_high;
+                          });
+                break;
+            }
+        }
+        std::vector<AxisAlignedBoundingBox> aabb_left;
+        aabb_left.clear();
+        aabb_left.reserve(aabb_cnt);
+        aabb_left.push_back(bvh_nodes_[start_index].aabb);
+        for (int j = 1; j < aabb_cnt; ++j)
+            aabb_left.push_back(aabb_left[j - 1] | bvh_nodes_[start_index + j].aabb);
+        AxisAlignedBoundingBox aabb_right =
+            bvh_nodes_[start_index + aabb_cnt - 1].aabb;
+        for (int cut = aabb_cnt - 1; cut > 0; --cut) {
+            aabb_right |= bvh_nodes_[start_index + cut].aabb;
+            float cost = aabb_left[cut - 1].GetSurface() * cut +
+                         aabb_right.GetSurface() * (aabb_cnt - cut);
+            if (cost < min_cost) {
+                min_cost = cost;
+                best_dim = i;
+                best_cut = cut;
+            }
+        }
+    }
+    switch (best_dim) {
+        case 0: {
+            std::sort(aabb_indices.begin() + start_index,
+                      aabb_indices.begin() + start_index + aabb_cnt,
+                      [this](int a, int b) {
+                        return bvh_nodes_[a].aabb.x_high <
+                               bvh_nodes_[b].aabb.x_high;
+                      });
+            break;
+        }
+        case 1: {
+            std::sort(aabb_indices.begin() + start_index,
+                      aabb_indices.begin() + start_index + aabb_cnt,
+                      [this](int a, int b) {
+                        return bvh_nodes_[a].aabb.y_high <
+                               bvh_nodes_[b].aabb.y_high;
+                      });
+            break;
+        }
+        default: {
+            std::sort(aabb_indices.begin() + start_index,
+                      aabb_indices.begin() + start_index + aabb_cnt,
+                      [this](int a, int b) {
+                        return bvh_nodes_[a].aabb.z_high <
+                               bvh_nodes_[b].aabb.z_high;
+                      });
+            break;
+        }
+    }
+    int childLeft =
+        BuildTree(aabb_indices, start_index, best_cut, index_cnt);
     int childRight = BuildTree(aabb_indices, start_index + best_cut,
-                               aabb_cnt - best_cut, index_cnt);
+                                aabb_cnt - best_cut, index_cnt);
+
     bvh_nodes_[index_cnt].aabb =
         bvh_nodes_[childLeft].aabb | bvh_nodes_[childRight].aabb;
     bvh_nodes_[index_cnt].child[0] = childLeft;
@@ -174,30 +240,6 @@ int AcceleratedMesh::BuildTree(std::vector<int> &aabb_indices,
     ++index_cnt;
     return index_cnt - 1;
 }
-
-int AcceleratedMesh::QuerySAH(std::vector<int> &aabb_indices,
-                              int start_index,
-                              int aabb_cnt) {
-    int best_cut = aabb_cnt >> 1;
-    float min_cost = std::numeric_limits<float>::max();
-    std::vector<AxisAlignedBoundingBox> aabb_left;
-    aabb_left.resize(aabb_cnt);
-    aabb_left[0] = bvh_nodes_[start_index].aabb;
-    for (int i = 1; i < aabb_cnt; ++i)
-        aabb_left[i] = aabb_left[i-1] | bvh_nodes_[start_index + i].aabb;
-    AxisAlignedBoundingBox aabb_right = bvh_nodes_[start_index + aabb_cnt - 1].aabb;
-    for (int cut = aabb_cnt-1; cut > 0; --cut) {
-        aabb_right |= bvh_nodes_[start_index + cut].aabb;
-        float cost = aabb_left[cut-1].GetSurface() * cut +
-                     aabb_right.GetSurface() * (aabb_cnt - cut);
-        if (cost < min_cost) {
-            min_cost = cost;
-            best_cut = cut;
-        }
-    }
-    return best_cut;
-}
-
 
 void AcceleratedMesh::CreatePdf(){
     area_ = 0;
@@ -209,7 +251,7 @@ void AcceleratedMesh::CreatePdf(){
         Vertex c = vertices_[indices_[j + 2]];
         probList[i] =
             glm::cross(a.position - b.position, a.position - c.position)
-                .length();
+                .length() / 2;
         area_ += probList[i];
     }
     generator = DistributionPdf_1D(probList.begin(), probList.size());

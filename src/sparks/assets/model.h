@@ -32,16 +32,4 @@ class Model {
   }
 };
 
-class ModelPdf : public Pdf {
- public:
-  ModelPdf(Model *ptr) : model_(ptr) {}
-  ModelPdf(const Model *ptr) : model_(ptr) {}
-  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
-  float Value(const Ray &ray) const override;
-
- private:
-  const Model *model_;
-};
-
-
 }  // namespace sparks

@@ -168,8 +168,22 @@ void Scene::UpdateEnvmapConfiguration() {
       envmap_prob_[i] = strength * scale;
     }
   }
-  envmap_sample_ = DistributionPdf_2D(&envmap_prob_[0], envmap_texture.GetWidth(),
-                                      envmap_texture.GetHeight());
+  envmap_sampler_ = std::make_unique<EnvmapPdf>(
+      envmap_prob_.begin(), envmap_texture.GetWidth(),
+                                  envmap_texture.GetHeight(), envmap_offset_);
+  light_id_.clear();
+  light_id_.push_back(-1);
+  std::vector<float> weight;
+  const float WorldRadius = 1e4;
+  weight.push_back(WorldRadius * WorldRadius * PI * envmap_sampler_->FuncInt());
+  for (int i = 0; i < entities_.size(); ++i) {
+    float power = entities_[i].GetPower();
+    if (power > 1e-4f) {
+      light_id_.push_back(i);
+      weight.push_back(power);
+    }
+  }
+  light_sampler_ = DistributionPdf_1D(weight.begin(), weight.size());
 }
 glm::vec3 Scene::GetEnvmapLightDirection() const {
   float sin_offset = std::sin(envmap_offset_);
@@ -405,20 +419,23 @@ Scene::Scene(const std::string &filename) : Scene() {
   UpdateEnvmapConfiguration();
 }
 
-Pdf* Scene::GetLightPdf() const{
-  std::vector<Pdf *> emissiveList_;
-  std::vector<float> weight;
-  emissiveList_.push_back(new EnvmapPdf(&envmap_sample_, envmap_offset_));
-  float WorldRadius = 1e4;
-  weight.push_back(WorldRadius * WorldRadius * PI * envmap_sample_.FuncInt());
-  for (int i = 0; i < entities_.size(); ++i) {
-    float power = entities_[i].GetPower();
-    if (power > 1e-4f) {
-      emissiveList_.push_back(entities_[i].GetPdf());
-      weight.push_back(power);
-    }
-  }
-  return new MixturePdf(emissiveList_, weight);
+glm::vec3 Scene::SampleLight(glm::vec3 origin,
+                             float time,
+                             std::mt19937 &rd) const {
+  std::uniform_real_distribution<float> prob(0.0f, 1.0f);
+  int idx = light_sampler_.Generate_Discrete(prob(rd));
+  if (!idx)
+    return envmap_sampler_->Generate(origin, time, rd);
+  else
+    return GetEntity(light_id_[idx]).GetModel()->SamplePoint(origin, time, rd);
+}
+
+float Scene::LightValue(const Ray &ray) const {
+  float res = envmap_sampler_->Value(ray) * light_sampler_.Value(0);
+  for (int i = 1; i < light_id_.size(); ++i)
+    res += GetEntity(light_id_[i]).GetModel()->SamplePdfValue(ray) *
+           light_sampler_.Value(i);
+  return res;
 }
 
 bool Mesh::LoadObjFile(const std::string &obj_file_path,

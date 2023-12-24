@@ -124,7 +124,9 @@ float DistributionPdf_1D::Generate_Discrete(float u) const {
 }
 
 float DistributionPdf_1D::Value(int idx) const {
-  return func[idx] / (funcInt * Count());
+  if (idx >= func.size())
+    return 0;
+  return func[idx] / funcInt;
 }
 
 DistributionPdf_2D::DistributionPdf_2D() {
@@ -435,11 +437,6 @@ glm::vec3 SampleDisneySpecTransPdf::Generate(glm::vec3 v,
 
 float SampleDisneySpecTransPdf::Value(const Ray &ray) const {
   return 1.0f;
-}
-
-EnvmapPdf::EnvmapPdf(const DistributionPdf_2D *sampler, const float offset) {
-  sampler_ = sampler;
-  offset_ = offset;
 }
 
 glm::vec3 EnvmapPdf::Generate(glm::vec3 origin,

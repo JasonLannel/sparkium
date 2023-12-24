@@ -47,9 +47,14 @@ Entity::Entity(Scene *scene, tinyxml2::XMLElement *element) {
     LoadObjFile(scene, element->FirstChildElement("filename")
                            ->FindAttribute("value")
                            ->Value());
-    return;
+  } else {
+    model_ = std::make_unique<AcceleratedMesh>(Mesh(element));
+    auto child_element = element->FirstChildElement("material");
+    materials_.resize(1, Material());
+    if (child_element) {
+      materials_[0] = Material(scene, child_element);
+    }
   }
-  model_ = std::make_unique<AcceleratedMesh>(Mesh(element));
   transform_ = XmlComposeTransformMatrix(element);
 
   auto name_attribute = element->FindAttribute("name");
@@ -57,11 +62,6 @@ Entity::Entity(Scene *scene, tinyxml2::XMLElement *element) {
     name_ = std::string(name_attribute->Value());
   } else {
     name_ = model_->GetDefaultEntityName();
-  }
-  auto child_element = element->FirstChildElement("material");
-  materials_.resize(1, Material());
-  if (child_element) {
-    materials_[0] = Material(scene, child_element);
   }
 }
 
@@ -115,10 +115,6 @@ float Entity::GetPower() const {
   glm::vec3 emission = materials_[0].emission;
   return model_.get()->GetArea() * materials_[0].emission_strength *
          fmax(emission.x, fmax(emission.y, emission.z));
-}
-
-Pdf *Entity::GetPdf() const {
-  return new ModelPdf(model_.get());
 }
 
 }  // namespace sparks

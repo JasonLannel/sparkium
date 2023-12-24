@@ -31,14 +31,6 @@ class AcceleratedMesh : public Mesh {
                  int start_index,
                  int aabb_cnt,
                  int &index_cnt);
-  int QuerySAH(std::vector<int> &aabb_indices,
-               int start_index,
-               int aabb_cnt);
-  void IntersectSlice(const Ray &movedRay,
-                      int index,
-                      float t_min,
-                      float &result,
-                      HitRecord *hit_record) const;
   void CreatePdf();
 
   std::vector<TreeNode> bvh_nodes_{};
