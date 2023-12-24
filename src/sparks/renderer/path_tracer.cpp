@@ -146,31 +146,41 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         float pSpecTrans = transmissionWeight * norm;
         float pDiffuse = diffuseWeight * norm;
         float pClearcoat = clearcoatWeight * norm;
-
-          SampleDisneyBRDFPdf sampleBRDF(normal, material, pSpecular);
-          SampleDisneyClearCoatPdf sampleClearCoat(normal, material, pClearcoat);
-          SampleDisneyDiffusePdf sampleDiffuse(normal, material, pDiffuse);
-          SampleDisneySpecTransPdf sampleSpecTrans(normal, material, pSpecTrans);
-          std::vector<Pdf *> pdfList;
-          pdfList.push_back(&sampleBRDF);
-          pdfList.push_back(&sampleClearCoat);
-          pdfList.push_back(&sampleDiffuse);
-          pdfList.push_back(&sampleSpecTrans);
-          std::vector<float> probList;
-          probList.push_back(pSpecular);
-          probList.push_back(pClearcoat);
-          probList.push_back(pDiffuse);
-          probList.push_back(pSpecTrans);
-          MixturePdf Gen(pdfList, probList);
-          direction = Gen.Generate(ray.direction(), ray.time(), rd);
+        if (RandomProb(rd) <= 0.9) {
+              SampleDisneyBRDFPdf sampleBRDF(normal, material, pSpecular);
+              SampleDisneyClearCoatPdf sampleClearCoat(normal, material,
+                                                       pClearcoat);
+              SampleDisneyDiffusePdf sampleDiffuse(normal, material, pDiffuse);
+              SampleDisneySpecTransPdf sampleSpecTrans(normal, material,
+                                                       pSpecTrans);
+              std::vector<Pdf *> pdfList;
+              pdfList.push_back(&sampleBRDF);
+              pdfList.push_back(&sampleClearCoat);
+              pdfList.push_back(&sampleDiffuse);
+              pdfList.push_back(&sampleSpecTrans);
+              std::vector<float> probList;
+              probList.push_back(pSpecular);
+              probList.push_back(pClearcoat);
+              probList.push_back(pDiffuse);
+              probList.push_back(pSpecTrans);
+              MixturePdf Gen(pdfList, probList);
+              float refract_ratio =
+                  hit_record.front_face ? (1.0 / material.IOR) : material.IOR;
+              direction = glm::normalize(direction);
+              throughput *= material.EvaluateDisney(
+                  -ray.direction(), direction, normal, albedo, refract_ratio);
+              ray = Ray(origin, direction, ray.time());
+              throughput /= Gen.Value(ray);
+        } else {
+          direction = Light.Generate(origin, ray.time(), rd);
           float refract_ratio =
               hit_record.front_face ? (1.0 / material.IOR) : material.IOR;
-
-          throughput *= material.EvaluateDisney(-ray.direction(), direction, normal, albedo, refract_ratio);
           direction = glm::normalize(direction);
+          throughput *= material.EvaluateDisney(-ray.direction(), direction,
+                                                normal, albedo, refract_ratio);
           ray = Ray(origin, direction, ray.time());
-          float pdf = Gen.Value(ray);
-          throughput /= pdf;
+          throughput /= Light.Value(ray);
+        }
       }
       throughput *= INV_RR;
     } else {
