@@ -1269,6 +1269,7 @@ void App::OpenFile(const std::string &path) {
     renderer_->LoadTexture(path);
   } else if (absl::EndsWith(path, ".obj")) {
     renderer_->LoadObjEntity(path);
+    reset_accumulation_ = true;
   } else if (absl::EndsWith(path, ".xml")) {
     renderer_->LoadScene(path);
     renderer_->ResetAccumulation();

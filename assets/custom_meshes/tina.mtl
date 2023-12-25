@@ -1,0 +1,812 @@
+# Blender 4.0.2 MTL File: 'None'
+# www.blender.org
+
+newmtl Material.064
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material.067
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_body_BM_NOMIP.00.png
+map_d tex/chr052_body_BM_NOMIP.00.png
+
+newmtl Material.068
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_body_BM_NOMIP.00.png
+map_d tex/chr052_body_BM_NOMIP.00.png
+
+newmtl Material.072
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_body_BM_NOMIP.00.png
+map_d tex/chr052_body_BM_NOMIP.00.png
+
+newmtl Material.076
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_body_BM_NOMIP.00.png
+map_d tex/chr052_body_BM_NOMIP.00.png
+
+newmtl Material.077
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_body_BM_NOMIP.00.png
+map_d tex/chr052_body_BM_NOMIP.00.png
+
+newmtl Material.078
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material.080
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material.084
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material.087
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material.096
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_kao_BM_NOMIP.00.png
+map_d tex/chr052_kao_BM_NOMIP.00.png
+
+newmtl Material.100
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_coat_BM_NOMIP.00.png
+map_d tex/chr052_coat_BM_NOMIP.00.png
+
+newmtl Material.104
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_coat_BM_NOMIP.00.png
+map_d tex/chr052_coat_BM_NOMIP.00.png
+
+newmtl Material.108
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_coat_BM_NOMIP.00.png
+map_d tex/chr052_coat_BM_NOMIP.00.png
+
+newmtl Material.113
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_coat_BM_NOMIP.00.png
+map_d tex/chr052_coat_BM_NOMIP.00.png
+
+newmtl Material.120
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_coat_BM_NOMIP.00.png
+map_d tex/chr052_coat_BM_NOMIP.00.png
+
+newmtl Material.121
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material.124
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#118.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#119.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#124.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#125.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#126.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#127.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#128.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#129.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#130.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#131.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#132.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#133.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#136.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#138.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_coat_BM_NOMIP.00.png
+map_d tex/chr052_coat_BM_NOMIP.00.png
+
+newmtl Material_#140.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_kao_BM_NOMIP.00.png
+map_d tex/chr052_kao_BM_NOMIP.00.png
+
+newmtl Material_#151.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#152.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#153.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#154.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#155.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#156.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_kao_BM_NOMIP.00.png
+map_d tex/chr052_kao_BM_NOMIP.00.png
+
+newmtl Material_#162.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#168.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#172.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#176.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_eye_BM_NOMIP.00.png
+map_d tex/chr052_eye_BM_NOMIP.00.png
+
+newmtl Material_#177.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_eye_BM_NOMIP.00.png
+map_d tex/chr052_eye_BM_NOMIP.00.png
+
+newmtl Material_#181.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#192.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_body_BM_NOMIP.00.png
+map_d tex/chr052_body_BM_NOMIP.00.png
+
+newmtl Material_#193.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_body_BM_NOMIP.00.png
+map_d tex/chr052_body_BM_NOMIP.00.png
+
+newmtl Material_#194.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#195.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_coat_BM_NOMIP.00.png
+map_d tex/chr052_coat_BM_NOMIP.00.png
+
+newmtl Material_#196.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_neck_BM_NOMIP.00.png
+map_d tex/chr052_neck_BM_NOMIP.00.png
+
+newmtl Material_#197.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_coat_BM_NOMIP.00.png
+map_d tex/chr052_coat_BM_NOMIP.00.png
+
+newmtl Material_#200.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
+
+newmtl Material_#203.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_body_BM_NOMIP.00.png
+map_d tex/chr052_body_BM_NOMIP.00.png
+
+newmtl Material_#204.001
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+Pr 0.552786
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd tex/chr052_bag_BM_NOMIP.00.png
+map_d tex/chr052_bag_BM_NOMIP.00.png
