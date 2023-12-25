@@ -73,15 +73,15 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       if (glm::dot(normal, ray.direction()) > 0)
         normal = -normal;
       if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
-        CosineHemispherePdf Gen(normal, tangent);
+          CosineHemispherePdf Lambert(normal, tangent);
+          MixturePdf Gen(&Lambert, &Light, 0.1f);
           direction = Gen.Generate(origin, ray.time(), rd);
           ray = Ray(origin, direction, ray.time());
           float pdf = Gen.Value(ray);
           float scatter = std::max(0.f, glm::dot(normal, direction) * INV_PI);
-          float reflectance = material.reflectance;
-          if (pdf < 1e-7)
+          if (pdf < 1e-9)
               break;
-          throughput *= albedo * reflectance * scatter / pdf;
+          throughput *= albedo * scatter / pdf;
           if (glm::dot(normal, direction) < 0)
             break;
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
@@ -131,9 +131,9 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         ray = Ray(origin, direction, ray.time());
         throughput *= albedo / Gen.Value(ray);
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
-        if (RandomProb(rd) <= 0.5) {
+        const bool UseBSDFSampler = false;
+        if (UseBSDFSampler) {
             // decide which lobe to sample
-            /*
             float metallicBRDF = material.metallic;
             float specularBSDF = (1.0f - material.metallic) * material.specTrans;
             float dielectricBRDF =
@@ -166,9 +166,6 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             probList.push_back(pSpecTrans);
             MixturePdf Gen(pdfList, probList);
             direction = Gen.Generate(-direction, ray.time(), rd);
-            */
-            UniformSpherePdf Gen(normal, tangent);
-            direction = Gen.Generate(origin, ray.time(), rd);
             if (glm::length(direction) < 1e-9)
                   break;
             float refract_ratio =
@@ -179,6 +176,8 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             ray = Ray(origin, direction, ray.time());
             throughput /= Gen.Value(ray);
         } else {
+          UniformSpherePdf USP(normal, tangent);
+          MixturePdf Gen(&USP, &Light, 0.5);
           direction = Light.Generate(origin, ray.time(), rd);
           float refract_ratio =
               hit_record.front_face ? (1.0 / material.IOR) : material.IOR;

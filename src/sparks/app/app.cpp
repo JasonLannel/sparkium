@@ -543,10 +543,7 @@ void App::UpdateImGui() {
             ImGui::SliderFloat("Alpha", &material.alpha, 0.0f, 1.0f, "%.3f");
         reset_accumulation_ |= ImGui::SliderFloat(
             "Bump Scale", &material.bumpScale, -1.0f, 1.0f, "%.3f");
-        if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
-          reset_accumulation_ |= ImGui::SliderFloat(
-              "Reflectance", &material.reflectance, 0.0f, 1.0f, "%.3f");
-        } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
+        if (material.material_type == MATERIAL_TYPE_SPECULAR) {
           reset_accumulation_ |= ImGui::SliderFloat(
               "Roughness", &material.roughness, 0.0f, 1.0f, "%.3f");
         } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {

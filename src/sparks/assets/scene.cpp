@@ -579,7 +579,7 @@ bool Entity::LoadObjFile(Scene *scene, const std::string &file_path) {
   path_base = path_base + "\\";
   for (int i = 1; i <= materials.size(); ++i) {
     tinyobj::material_t material = materials[i - 1];
-    materials_[i].material_type = MATERIAL_TYPE_LAMBERTIAN;
+    materials_[i].material_type = MATERIAL_TYPE_PRINCIPLED;
     materials_[i].name = material.name;
     //materials_[i].IOR = material.ior;
     materials_[i].albedo_color = glm::vec3(
@@ -599,15 +599,15 @@ bool Entity::LoadObjFile(Scene *scene, const std::string &file_path) {
     }
     materials_[i].alpha = material.dissolve;
     // material.alpha_texname alpha 纹理
-    //materials_[i].metallic = material.metallic;
+    materials_[i].metallic = material.metallic;
     // material.metallic_texname metallic纹理
-    //materials_[i].anisotropic = material.anisotropy;
+    materials_[i].anisotropic = material.anisotropy;
     // materials.clearcoat_roughness/thickness 清漆
     // material.transmittance 透光系数
     // material.anisotropy_rotation 各向异性旋转角
     // material.diffuse_texname  漫反射纹理
-    //materials_[i].roughness = material.roughness;
-    //materials_[i].sheen = material.sheen;
+    materials_[i].roughness = material.roughness;
+    materials_[i].sheen = material.sheen;
   }
   transform_ = glm::mat4{1.0};
   name_ = PathToFilename(file_path);

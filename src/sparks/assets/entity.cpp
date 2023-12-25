@@ -47,10 +47,14 @@ Entity::Entity(Scene *scene, tinyxml2::XMLElement *element) {
     LoadObjFile(scene, element->FirstChildElement("filename")
                            ->FindAttribute("value")
                            ->Value());
+    auto child_element = element->FirstChildElement("material");
+    if (child_element) {
+      materials_[0] = Material(scene, child_element);
+    }
   } else {
     model_ = std::make_unique<AcceleratedMesh>(Mesh(element));
-    auto child_element = element->FirstChildElement("material");
     materials_.resize(1, Material());
+    auto child_element = element->FirstChildElement("material");
     if (child_element) {
       materials_[0] = Material(scene, child_element);
     }

@@ -34,8 +34,6 @@ struct Material {
   //Emission
   glm::vec3 emission{0.0f};
   float emission_strength{0.0f};
-  //Lambertian
-  float reflectance{0.8f};
   //Transmissive, default glass
   float IOR{1.5f};
   bool thin{false};
