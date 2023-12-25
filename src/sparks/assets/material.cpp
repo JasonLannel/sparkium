@@ -163,13 +163,13 @@ float Material::GTR1(float absDotHL, float a) const {
   if (a >= 1) {
     return INV_PI;
   }
-  float a2 = a * a;
+  float a2 = square(a);
   return (a2 - 1.0f) /
          (PI * log2f(a2) * (1.0f + (a2 - 1.0f) * absDotHL * absDotHL));
 }
 
 float Material::SeparableSmithGGXG1(const glm::vec3 &w, float a) const {
-  float a2 = a * a;
+  float a2 = square(a);
   float absDotNV = calAbsCosTheta(w);
   return 2.0f / (1.0f + sqrt(a2 + (1 - a2) * absDotNV * absDotNV));
 }
@@ -202,14 +202,13 @@ float Material::EvaluateDisneyClearcoat(float clearcoat,
 }
 
 float Material::GgxAnisotropicD(const glm::vec3 &wm, float ax, float ay) const {
-  float dotHX2 = wm.x * wm.x;
-  float dotHY2 = wm.z * wm.z;
+  float dotHX2 = square(wm.x);
+  float dotHY2 = square(wm.z);
   float cos2Theta = Cos2Theta(wm);
-  float ax2 = ax * ax;
-  float ay2 = ay * ay;
+  float ax2 = square(ax);
+  float ay2 = square(ay);
 
-  return 1.0f / (PI * ax * ay * (dotHX2 / ax2 + dotHY2 / ay2 + cos2Theta) *
-                 (dotHX2 / ax2 + dotHY2 / ay2 + cos2Theta));
+  return 1.0f / (PI * ax * ay * square(dotHX2 / ax2 + dotHY2 / ay2 + cos2Theta));
 }
 
 float Material::SeparableSmithGGXG1(const glm::vec3 &w,
@@ -225,8 +224,8 @@ float Material::SeparableSmithGGXG1(const glm::vec3 &w,
     return 0.0f;
   }
 
-  float a = sqrt(Cos2Phi(w) * ax * ax + Sin2Phi(w) * ay * ay);
-  float a2Tan2Theta = a * absTanTheta * a * absTanTheta;
+  float a = sqrt(Cos2Phi(w) * square(ax) + Sin2Phi(w) * square(ay));
+  float a2Tan2Theta = square(a * absTanTheta);
 
   float lambda = 0.5f * (-1.0f + sqrt(1.0f + a2Tan2Theta));
   return 1.0f / (1.0f + lambda);
@@ -278,7 +277,7 @@ glm::vec3 Material::EvaluateDisneySpecTransmission(const glm::vec3 &wo,
                                              const glm::vec3 &albedo,
                                              float relativeIOR) const {
   float relativeIor = relativeIOR;
-  float n2 = relativeIor * relativeIor;
+  float n2 = square(relativeIor);
 
   float absDotNL = calAbsCosTheta(wi);
   float absDotNV = calAbsCosTheta(wo);
@@ -331,10 +330,10 @@ float Material::EvaluateDisneyDiffuse(const glm::vec3 &wo,
   float hanrahanKrueger = 0.0f;
 
   if (thin && flatness > 0.0f) {
-    float roughness = this->roughness * this->roughness;
+    float roughness = square(this->roughness);
 
     float dotHL = glm::dot(wm, wi);
-    float fss90 = dotHL * dotHL * roughness;
+    float fss90 = square(dotHL) * roughness;
     float fss = interpolate(1.0f, fss90, fl) * interpolate(1.0f, fss90, fv);
 
     float ss = 1.25f * (fss * (1.0f / (dotNL + dotNV) - 0.5f) + 0.5f);

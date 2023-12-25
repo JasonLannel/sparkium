@@ -147,85 +147,55 @@ int AcceleratedMesh::BuildTree(std::vector<int> &aabb_indices,
     glm::vec3 box_size =
         glm::vec3(aabb.x_high - aabb.x_low, aabb.y_high - aabb.y_low,
                   aabb.z_high - aabb.z_low);
-    int best_dim = 0, best_cut = aabb_cnt >> 1;
+    int best_cut = aabb_cnt >> 1;
     float min_cost = std::numeric_limits<float>::max();
-    for (int i = 0; i < 3; ++i) {
-        int largest_axis = i;
-        switch (i) { 
-            case 0: {
-                std::sort(aabb_indices.begin() + start_index,
-                  aabb_indices.begin() + start_index + aabb_cnt,
-                  [this](int a, int b) {
-                    return bvh_nodes_[a].aabb.x_high <
-                           bvh_nodes_[b].aabb.x_high;
-                  });
-                break;
-            }
-            case 1: {
-                std::sort(aabb_indices.begin() + start_index,
-                          aabb_indices.begin() + start_index + aabb_cnt,
-                          [this](int a, int b) {
-                            return bvh_nodes_[a].aabb.y_high <
-                                   bvh_nodes_[b].aabb.y_high;
-                          });
-                break;
-            }
-            default: {
-                std::sort(aabb_indices.begin() + start_index,
-                          aabb_indices.begin() + start_index + aabb_cnt,
-                          [this](int a, int b) {
-                            return bvh_nodes_[a].aabb.z_high <
-                                   bvh_nodes_[b].aabb.z_high;
-                          });
-                break;
-            }
-        }
-        std::vector<AxisAlignedBoundingBox> aabb_left;
-        aabb_left.clear();
-        aabb_left.reserve(aabb_cnt);
-        aabb_left.push_back(bvh_nodes_[start_index].aabb);
-        for (int j = 1; j < aabb_cnt; ++j)
-            aabb_left.push_back(aabb_left[j - 1] | bvh_nodes_[start_index + j].aabb);
-        AxisAlignedBoundingBox aabb_right =
-            bvh_nodes_[start_index + aabb_cnt - 1].aabb;
-        for (int cut = aabb_cnt - 1; cut > 0; --cut) {
-            aabb_right |= bvh_nodes_[start_index + cut].aabb;
-            float cost = aabb_left[cut - 1].GetSurface() * cut +
-                         aabb_right.GetSurface() * (aabb_cnt - cut);
-            if (cost < min_cost) {
-                min_cost = cost;
-                best_dim = i;
-                best_cut = cut;
-            }
-        }
-    }
-    switch (best_dim) {
+    int largest_axis = (box_size.x > box_size.y)
+                           ? ((box_size.x > box_size.z) ? 0 : 2)
+                           : ((box_size.y > box_size.z) ? 1 : 2);
+    switch (best_cut) { 
         case 0: {
             std::sort(aabb_indices.begin() + start_index,
-                      aabb_indices.begin() + start_index + aabb_cnt,
-                      [this](int a, int b) {
-                        return bvh_nodes_[a].aabb.x_high <
-                               bvh_nodes_[b].aabb.x_high;
-                      });
+                aabb_indices.begin() + start_index + aabb_cnt,
+                [this](int a, int b) {
+                return bvh_nodes_[a].aabb.x_high <
+                        bvh_nodes_[b].aabb.x_high;
+                });
             break;
         }
         case 1: {
             std::sort(aabb_indices.begin() + start_index,
-                      aabb_indices.begin() + start_index + aabb_cnt,
-                      [this](int a, int b) {
+                        aabb_indices.begin() + start_index + aabb_cnt,
+                        [this](int a, int b) {
                         return bvh_nodes_[a].aabb.y_high <
-                               bvh_nodes_[b].aabb.y_high;
-                      });
+                                bvh_nodes_[b].aabb.y_high;
+                        });
             break;
         }
         default: {
             std::sort(aabb_indices.begin() + start_index,
-                      aabb_indices.begin() + start_index + aabb_cnt,
-                      [this](int a, int b) {
+                        aabb_indices.begin() + start_index + aabb_cnt,
+                        [this](int a, int b) {
                         return bvh_nodes_[a].aabb.z_high <
-                               bvh_nodes_[b].aabb.z_high;
-                      });
+                                bvh_nodes_[b].aabb.z_high;
+                        });
             break;
+        }
+    }
+    std::vector<AxisAlignedBoundingBox> aabb_left;
+    aabb_left.clear();
+    aabb_left.reserve(aabb_cnt);
+    aabb_left.push_back(bvh_nodes_[start_index].aabb);
+    for (int j = 1; j < aabb_cnt; ++j)
+        aabb_left.push_back(aabb_left[j - 1] | bvh_nodes_[start_index + j].aabb);
+    AxisAlignedBoundingBox aabb_right =
+        bvh_nodes_[start_index + aabb_cnt - 1].aabb;
+    for (int cut = aabb_cnt - 1; cut > 0; --cut) {
+        aabb_right |= bvh_nodes_[start_index + cut].aabb;
+        float cost = aabb_left[cut - 1].GetSurface() * cut +
+                        aabb_right.GetSurface() * (aabb_cnt - cut);
+        if (cost < min_cost) {
+            min_cost = cost;
+            best_cut = cut;
         }
     }
     int childLeft =
@@ -250,8 +220,7 @@ void AcceleratedMesh::CreatePdf(){
         Vertex b = vertices_[indices_[j + 1]];
         Vertex c = vertices_[indices_[j + 2]];
         probList[i] =
-            glm::cross(a.position - b.position, a.position - c.position)
-                .length() / 2;
+            glm::length(glm::cross(a.position - b.position, a.position - c.position)) / 2;
         area_ += probList[i];
     }
     generator = DistributionPdf_1D(probList.begin(), probList.size());
@@ -281,7 +250,7 @@ float AcceleratedMesh::SamplePdfValue(const Ray &ray) const {
     Ray t_ray = ray;
     while (this->TraceRay(t_ray, 1e-3f, &rec) > 0.0f) {
         float dis_squared =
-            (rec.position - ray.origin()).length() * (rec.position - ray.origin()).length();
+            glm::length((rec.position - ray.origin())) * glm::length((rec.position - ray.origin()));
         float cosine = std::fabs(dot(ray.direction(), rec.normal));
         res += dis_squared / (cosine * area_);
         t_ray = Ray(rec.position, ray.direction(), ray.time());

@@ -99,7 +99,7 @@ class CosineHemispherePdf : public Pdf {
 class SampleDisneyBRDFPdf : public Pdf {
  public:
   SampleDisneyBRDFPdf(glm::vec3 normal, Material material, float p);
-  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
+  glm::vec3 Generate(glm::vec3 v, float time, std::mt19937 &rd) const override;
   float Value(const Ray &ray) const override;
 
   private:
@@ -112,7 +112,7 @@ class SampleDisneyBRDFPdf : public Pdf {
 class SampleDisneyClearCoatPdf : public Pdf {
  public:
   SampleDisneyClearCoatPdf(glm::vec3 normal, Material material, float p);
-  glm::vec3 Generate(glm::vec3 origin,
+  glm::vec3 Generate(glm::vec3 v,
                      float time,
                      std::mt19937 &rd) const override;
   float Value(const Ray &ray) const override;
@@ -127,7 +127,7 @@ class SampleDisneyClearCoatPdf : public Pdf {
 class SampleDisneyDiffusePdf : public Pdf {
  public:
   SampleDisneyDiffusePdf(glm::vec3 normal, Material material, float p);
-  glm::vec3 Generate(glm::vec3 origin,
+  glm::vec3 Generate(glm::vec3 v,
                      float time,
                      std::mt19937 &rd) const override;
   float Value(const Ray &ray) const override;
@@ -142,7 +142,7 @@ class SampleDisneyDiffusePdf : public Pdf {
 class SampleDisneySpecTransPdf : public Pdf {
  public:
   SampleDisneySpecTransPdf(glm::vec3 normal, Material material, float p);
-  glm::vec3 Generate(glm::vec3 origin,
+  glm::vec3 Generate(glm::vec3 v,
                      float time,
                      std::mt19937 &rd) const override;
   float Value(const Ray &ray) const override;

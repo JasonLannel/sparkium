@@ -113,7 +113,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
               float f0 = (1 - refract_ratio) / (1 + refract_ratio);
               f0 *= f0;
               direction = glm::refract(ray.direction(), normal, refract_ratio);
-              if (direction.length() == 0.f ||
+              if (glm::length(direction) == 0.f ||
                   material.FresnelSchlick(f0, cos_theta) >
                       RandomProb(rd)) {
                 direction = glm::reflect(ray.direction(), normal);
@@ -131,46 +131,53 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         ray = Ray(origin, direction, ray.time());
         throughput *= albedo / Gen.Value(ray);
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
-          // decide which lobe to sample
-        float metallicBRDF = material.metallic;
-        float specularBSDF = (1.0f - material.metallic) * material.specTrans;
-        float dielectricBRDF =
-            (1.0f - material.specTrans) * (1.0f - material.metallic);
-        float specularWeight = metallicBRDF + dielectricBRDF;
-        float transmissionWeight = specularBSDF;
-        float diffuseWeight = dielectricBRDF;
-        float clearcoatWeight = 1.0f * std::clamp(material.clearcoat, 0.0f, 1.0f);
-        float norm = 1.0f / (specularWeight + transmissionWeight +
-                             diffuseWeight + clearcoatWeight);
-        float pSpecular = specularWeight * norm;
-        float pSpecTrans = transmissionWeight * norm;
-        float pDiffuse = diffuseWeight * norm;
-        float pClearcoat = clearcoatWeight * norm;
-        if (RandomProb(rd) <= 0.9) {
-              SampleDisneyBRDFPdf sampleBRDF(normal, material, pSpecular);
-              SampleDisneyClearCoatPdf sampleClearCoat(normal, material,
-                                                       pClearcoat);
-              SampleDisneyDiffusePdf sampleDiffuse(normal, material, pDiffuse);
-              SampleDisneySpecTransPdf sampleSpecTrans(normal, material,
-                                                       pSpecTrans);
-              std::vector<Pdf *> pdfList;
-              pdfList.push_back(&sampleBRDF);
-              pdfList.push_back(&sampleClearCoat);
-              pdfList.push_back(&sampleDiffuse);
-              pdfList.push_back(&sampleSpecTrans);
-              std::vector<float> probList;
-              probList.push_back(pSpecular);
-              probList.push_back(pClearcoat);
-              probList.push_back(pDiffuse);
-              probList.push_back(pSpecTrans);
-              MixturePdf Gen(pdfList, probList);
-              float refract_ratio =
-                  hit_record.front_face ? (1.0 / material.IOR) : material.IOR;
-              direction = glm::normalize(direction);
-              throughput *= material.EvaluateDisney(
-                  -ray.direction(), direction, normal, albedo, refract_ratio);
-              ray = Ray(origin, direction, ray.time());
-              throughput /= Gen.Value(ray);
+        if (RandomProb(rd) <= 0.5) {
+            // decide which lobe to sample
+            /*
+            float metallicBRDF = material.metallic;
+            float specularBSDF = (1.0f - material.metallic) * material.specTrans;
+            float dielectricBRDF =
+                (1.0f - material.specTrans) * (1.0f - material.metallic);
+            float specularWeight = metallicBRDF + dielectricBRDF;
+            float transmissionWeight = specularBSDF;
+            float diffuseWeight = dielectricBRDF;
+            float clearcoatWeight = 1.0f * std::clamp(material.clearcoat, 0.0f, 1.0f);
+            float norm = 1.0f / (specularWeight + transmissionWeight +
+                                 diffuseWeight + clearcoatWeight);
+            float pSpecular = specularWeight * norm;
+            float pSpecTrans = transmissionWeight * norm;
+            float pDiffuse = diffuseWeight * norm;
+            float pClearcoat = clearcoatWeight * norm;
+            SampleDisneyBRDFPdf sampleBRDF(normal, material, pSpecular);
+            SampleDisneyClearCoatPdf sampleClearCoat(normal, material,
+                                                    pClearcoat);
+            SampleDisneyDiffusePdf sampleDiffuse(normal, material, pDiffuse);
+            SampleDisneySpecTransPdf sampleSpecTrans(normal, material,
+                                                    pSpecTrans);
+            std::vector<Pdf *> pdfList;
+            pdfList.push_back(&sampleBRDF);
+            pdfList.push_back(&sampleClearCoat);
+            pdfList.push_back(&sampleDiffuse);
+            pdfList.push_back(&sampleSpecTrans);
+            std::vector<float> probList;
+            probList.push_back(pSpecular);
+            probList.push_back(pClearcoat);
+            probList.push_back(pDiffuse);
+            probList.push_back(pSpecTrans);
+            MixturePdf Gen(pdfList, probList);
+            direction = Gen.Generate(-direction, ray.time(), rd);
+            */
+            UniformSpherePdf Gen(normal, tangent);
+            direction = Gen.Generate(origin, ray.time(), rd);
+            if (glm::length(direction) < 1e-9)
+                  break;
+            float refract_ratio =
+                hit_record.front_face ? (1.0 / material.IOR) : material.IOR;
+            direction = glm::normalize(direction);
+            throughput *= material.EvaluateDisney(
+                -ray.direction(), direction, normal, albedo, refract_ratio);
+            ray = Ray(origin, direction, ray.time());
+            throughput /= Gen.Value(ray);
         } else {
           direction = Light.Generate(origin, ray.time(), rd);
           float refract_ratio =
