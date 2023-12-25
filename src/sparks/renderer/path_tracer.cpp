@@ -154,18 +154,28 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             SampleDisneyDiffusePdf sampleDiffuse(normal, material, pDiffuse);
             SampleDisneySpecTransPdf sampleSpecTrans(normal, material,
                                                     pSpecTrans);
-            std::vector<Pdf *> pdfList;
-            pdfList.push_back(&sampleBRDF);
-            pdfList.push_back(&sampleClearCoat);
-            pdfList.push_back(&sampleDiffuse);
-            pdfList.push_back(&sampleSpecTrans);
-            std::vector<float> probList;
-            probList.push_back(pSpecular);
-            probList.push_back(pClearcoat);
-            probList.push_back(pDiffuse);
-            probList.push_back(pSpecTrans);
-            MixturePdf Gen(pdfList, probList);
-            direction = Gen.Generate(-direction, ray.time(), rd);
+            float pLobe = 0.0f;
+
+            std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+            float p = dist(rd);
+            if (p <= pSpecular) {
+                direction = sampleBRDF.Generate(-ray.direction(), ray.time(), rd);
+                pLobe = pSpecular;
+            } else if (p > pSpecular && p <= (pSpecular + pClearcoat)) {
+                direction = sampleClearCoat.Generate(-ray.direction(), ray.time(), rd);
+                pLobe = pClearcoat;
+            } else if (p > pSpecular + pClearcoat &&
+                       p <= (pSpecular + pClearcoat + pDiffuse)) {
+                direction = sampleDiffuse.Generate(-ray.direction(), ray.time(), rd);
+                pLobe = pDiffuse;
+            } else if (pSpecTrans >= 0.0f) {
+                direction  = sampleSpecTrans.Generate(-ray.direction(), ray.time(), rd);
+                pLobe = pSpecTrans;
+            } else {
+                // just break
+                break;
+            }
+            
             if (glm::length(direction) < 1e-9)
                   break;
             float refract_ratio =
@@ -174,7 +184,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             throughput *= material.EvaluateDisney(
                 -ray.direction(), direction, normal, albedo, refract_ratio);
             ray = Ray(origin, direction, ray.time());
-            throughput /= Gen.Value(ray);
+            throughput /= pLobe;
         } else {
           UniformSpherePdf USP(normal, tangent);
           MixturePdf Gen(&USP, &Light, 0.5);
