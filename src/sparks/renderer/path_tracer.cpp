@@ -25,6 +25,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
   glm::vec3 radiance(0.0f);
   glm::vec3 origin, direction, normal, tangent, albedo;
   HitRecord hit_record;
+  Ray next_ray(ray), light_ray(ray);
   const float RR = 0.9, INV_RR = 1.0 / RR;
   for (register int i = 0, max_depth = render_settings_->num_bounces; i < max_depth;
        ++i) {
@@ -68,22 +69,51 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         normalFromTex[2] = 0;
         normalFromTex[2] = sqrt(1.f - glm::dot(normalFromTex, normalFromTex));
         normal = onb.local(normalFromTex);
-        glm::normalize(normal);
+        normal = glm::normalize(normal);
+        tangent = glm::normalize(tangent - glm::dot(tangent, normal) * normal);
       }
       if (glm::dot(normal, ray.direction()) > 0)
         normal = -normal;
       if (material.material_type == MATERIAL_TYPE_LAMBERTIAN) {
           CosineHemispherePdf Lambert(normal, tangent);
-          MixturePdf Gen(&Lambert, &Light, 0.1f);
+          // Sample Light First.
+          float Lamb_pdf, Light_pdf, w;
+          direction = Light.Generate(origin, ray.time(), rd);
+          light_ray = Ray(origin, direction, ray.time());
+          Lamb_pdf = Lambert.Value(light_ray);
+          Light_pdf = Light.Value(light_ray);
+          w = square(Light_pdf) / (square(Lamb_pdf) + square(Light_pdf));
+          HitRecord light_hit;
+          if (scene_->TraceRay(light_ray, 1e-3f, 1e4f, &light_hit) > 0.0f) {
+            auto &mat = scene_->GetEntity(light_hit.hit_entity_id)
+                            .GetMaterial(light_hit.material_id);
+            radiance += throughput * albedo *
+                        fmax(0.f, glm::dot(normal, direction)) * w *
+                        mat.emission * mat.emission_strength / Light_pdf;
+
+          } else {
+            radiance += throughput * albedo *
+                        fmax(0.f, glm::dot(normal, direction)) *
+                        w * glm::vec3{scene_->SampleEnvmap(ray.direction())} / Light_pdf;
+          }
+          direction = Lambert.Generate(origin, ray.time(), rd);
+          next_ray = Ray(origin, direction, ray.time());
+          Lamb_pdf = Lambert.Value(next_ray);
+          Light_pdf = Light.Value(next_ray);
+          w = square(Lamb_pdf) / (square(Lamb_pdf) + square(Light_pdf));
+          throughput *= albedo * fmax(0.f, glm::dot(normal, direction)) * w / Lamb_pdf;
+          /*
+          MixturePdf Gen(&Lambert, &Light, 0.5f);
           direction = Gen.Generate(origin, ray.time(), rd);
-          ray = Ray(origin, direction, ray.time());
-          float pdf = Gen.Value(ray);
+          next_ray = Ray(origin, direction, ray.time());
+          float pdf = Gen.Value(next_ray);
           float scatter = std::max(0.f, glm::dot(normal, direction) * INV_PI);
           if (pdf < 1e-9)
               break;
           throughput *= albedo * scatter / pdf;
           if (glm::dot(normal, direction) < 0)
             break;
+          */
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
           // You should change this into Cook-Torrence.
           direction = glm::reflect(ray.direction(), normal);
@@ -91,7 +121,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           throughput *= material.FresnelSchlick(albedo, cos_theta);
           if (glm::dot(normal, direction) < 0)
             break;
-          ray = Ray(origin, direction, ray.time());
+          next_ray = Ray(origin, direction, ray.time());
       } else if (material.material_type == MATERIAL_TYPE_TRANSMISSIVE) {
           // Assume all lights have same index of refraction
           float refract_ratio = hit_record.front_face ? (1.0 / material.IOR)
@@ -122,14 +152,14 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
                 throughput *= albedo;
               }
           }
-        glm::normalize(direction);
-        ray = Ray(origin, direction, ray.time());
+        direction = glm::normalize(direction);
+        next_ray = Ray(origin, direction, ray.time());
       } else if (material.material_type == MATERIAL_TYPE_MEDIUM) {
         UniformSpherePdf Medium(normal);
         MixturePdf Gen(&Medium, &Light, 0.1f);
         direction = glm::normalize(Gen.Generate(origin, ray.time(), rd));
-        ray = Ray(origin, direction, ray.time());
-        throughput *= albedo / Gen.Value(ray);
+        next_ray = Ray(origin, direction, ray.time());
+        throughput *= albedo / Gen.Value(next_ray);
       } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
         const bool UseBSDFSampler = false;
         if (UseBSDFSampler) {
@@ -156,21 +186,21 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
                                                     pSpecTrans);
             float pLobe = 0.0f;
 
-            std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-            float p = dist(rd);
-            if (p <= pSpecular) {
+                std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+                float p = dist(rd);
+                if (p <= pSpecular) {
                 direction = sampleBRDF.Generate(-ray.direction(), ray.time(), rd);
-                pLobe = pSpecular;
-            } else if (p > pSpecular && p <= (pSpecular + pClearcoat)) {
+                  pLobe = pSpecular;
+                } else if (p > pSpecular && p <= (pSpecular + pClearcoat)) {
                 direction = sampleClearCoat.Generate(-ray.direction(), ray.time(), rd);
-                pLobe = pClearcoat;
-            } else if (p > pSpecular + pClearcoat &&
-                       p <= (pSpecular + pClearcoat + pDiffuse)) {
+                  pLobe = pClearcoat;
+                } else if (p > pSpecular + pClearcoat &&
+                           p <= (pSpecular + pClearcoat + pDiffuse)) {
                 direction = sampleDiffuse.Generate(-ray.direction(), ray.time(), rd);
-                pLobe = pDiffuse;
+                  pLobe = pDiffuse;
             } else if (pSpecTrans >= 0.0f) {
                 direction  = sampleSpecTrans.Generate(-ray.direction(), ray.time(), rd);
-                pLobe = pSpecTrans;
+                  pLobe = pSpecTrans;
             } else {
                 // just break
                 break;
@@ -181,23 +211,24 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             float refract_ratio =
                 hit_record.front_face ? (1.0 / material.IOR) : material.IOR;
             direction = glm::normalize(direction);
-            throughput *= material.EvaluateDisney(
-                -ray.direction(), direction, normal, albedo, refract_ratio);
-            ray = Ray(origin, direction, ray.time());
-            throughput /= pLobe;
+            next_ray = Ray(origin, direction, ray.time());
+            throughput *= material.EvaluateDisney(-ray.direction(), next_ray.direction(),
+                                        normal, albedo, refract_ratio) / pLobe;
         } else {
           UniformSpherePdf USP(normal, tangent);
           MixturePdf Gen(&USP, &Light, 0.5);
-          direction = Light.Generate(origin, ray.time(), rd);
+          direction = Gen.Generate(origin, ray.time(), rd);
           float refract_ratio =
               hit_record.front_face ? (1.0 / material.IOR) : material.IOR;
           direction = glm::normalize(direction);
-          throughput *= material.EvaluateDisney(-ray.direction(), direction,
+          next_ray = Ray(origin, direction, ray.time());
+          throughput *=
+              material.EvaluateDisney(-ray.direction(), next_ray.direction(),
                                                 normal, albedo, refract_ratio);
-          ray = Ray(origin, direction, ray.time());
-          throughput /= Light.Value(ray);
+          throughput /= Gen.Value(next_ray);
         }
       }
+      ray = next_ray;
       throughput *= INV_RR;
     } else {
       radiance += throughput * glm::vec3{scene_->SampleEnvmap(ray.direction())};

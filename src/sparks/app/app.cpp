@@ -392,6 +392,7 @@ void App::UpdateImGui() {
                                     file_types.data(), "Mesh Files (*.obj)", 1);
         }
         if (result) {
+          reset_accumulation_ |= true;
           std::vector<std::string> file_paths = absl::StrSplit(result, "|");
           for (auto &file_path : file_paths) {
             OpenFile(file_path);

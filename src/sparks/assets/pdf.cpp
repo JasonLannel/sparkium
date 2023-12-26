@@ -232,8 +232,8 @@ CosineHemispherePdf::CosineHemispherePdf(glm::vec3 normal, glm::vec3 tangent) {
 glm::vec3 CosineHemispherePdf::Generate(glm::vec3 origin, float time,
                                         std::mt19937 &rd) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-  float u1 = dist(rd);
-  float u2 = dist(rd);
+  float u1 = clamp(dist(rd), 0.f, 1.f);
+  float u2 = clamp(dist(rd), 0.f, 1.f);
   float z_r = sqrt(u1);
   float z = sqrt(1.f - u1);
   float phi = 2.0 * PI * u2;

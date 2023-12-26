@@ -428,7 +428,7 @@ glm::vec3 Scene::SampleLight(glm::vec3 origin,
     return envmap_sampler_->Generate(origin, time, rd);
   else
     return GetEntity(light_id_[idx]).GetModel()->SamplePoint(origin, time, rd);
-}
+  }
 
 float Scene::LightValue(const Ray &ray) const {
   float res = envmap_sampler_->Value(ray) * light_sampler_.Value(0);

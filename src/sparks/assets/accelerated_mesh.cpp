@@ -76,24 +76,28 @@ float AcceleratedMesh::TraceRay(const Ray &ray,
     auto geometry_normal = glm::normalize(
         glm::cross(v2.position - v0.position, v1.position - v0.position));
     auto position = ray.origin() + result * ray.direction();
-    if (glm::dot(geometry_normal, movedRay.direction()) < 0.0f) {
-      hit_record->position = position + GetDisplacement(movedRay.time());
-      hit_record->geometry_normal = geometry_normal;
-      hit_record->normal = v0.normal * w + v1.normal * u + v2.normal * v;
-      hit_record->tangent = v0.tangent * w + v1.tangent * u + v2.tangent * v;
-      hit_record->material_id = material_ids_[idx];
-      hit_record->tex_coord =
-          v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
-      hit_record->front_face = true;
-    } else {
-      hit_record->position = position + GetDisplacement(movedRay.time());
-      hit_record->geometry_normal = -geometry_normal;
-      hit_record->normal = -(v0.normal * w + v1.normal * u + v2.normal * v);
-      hit_record->tangent = -(v0.tangent * w + v1.tangent * u + v2.tangent * v);
-      hit_record->material_id = material_ids_[idx];
-      hit_record->tex_coord =
-          v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
-      hit_record->front_face = false;
+    if (hit_record) {
+      if (glm::dot(geometry_normal, movedRay.direction()) < 0.0f) {
+        hit_record->position = position + GetDisplacement(movedRay.time());
+        hit_record->geometry_normal = geometry_normal;
+        hit_record->normal = v0.normal * w + v1.normal * u + v2.normal * v;
+        hit_record->tangent = v0.tangent * w + v1.tangent * u + v2.tangent * v;
+        hit_record->material_id = material_ids_[idx];
+        hit_record->tex_coord =
+            v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
+        hit_record->front_face = true;
+      } else {
+        hit_record->position = position + GetDisplacement(movedRay.time());
+        hit_record->geometry_normal = -geometry_normal;
+        hit_record->normal = -(v0.normal * w + v1.normal * u + v2.normal * v);
+        hit_record->tangent =
+            -(v0.tangent * w + v1.tangent * u + v2.tangent * v);
+        hit_record->material_id = material_ids_[idx];
+        hit_record->tex_coord =
+            v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
+        hit_record->front_face = false;
+      }
+    
     }
   }
   return result;
@@ -230,33 +234,31 @@ glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, float time, std::mt1993
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     float samp = dist(rd);
     int pdfNo = generator.Generate_Discrete(samp);
-    pdfNo *= 3;
-    glm::vec3 displacement = GetDisplacement(time);
-    glm::vec3 v0 = vertices_[indices_[pdfNo]].position + displacement;
-    glm::vec3 v1 = vertices_[indices_[pdfNo + 1]].position + displacement;
-    glm::vec3 v2 = vertices_[indices_[pdfNo + 2]].position + displacement;
-    float u1 = dist(rd);
+    int idx = pdfNo * 3;
+    auto &v0 = vertices_[indices_[idx]].position;
+    auto &v1 = vertices_[indices_[idx + 1]].position;
+    auto &v2 = vertices_[indices_[idx + 2]].position;
+    float u1 = sqrt(dist(rd));
     float u2 = dist(rd);
-    if (u1 + u2 > 1.0f) {
-        u1 = 1.0f - u1;
-        u2 = 1.0f - u2;
-    }
-    return glm::normalize(
-        (v0 * u1 + v1 * u2 + v2 * (1.0f - u1 - u2)) - origin);
+    u2 *= u1;
+    u1 = 1 - u1;
+    return glm::normalize(v0 * (1 - u1 - u2) + v1 * u1 + v2 * u2 +
+                          GetDisplacement(time) - origin);
 }
 float AcceleratedMesh::SamplePdfValue(const Ray &ray) const {
     HitRecord rec;
     float res = 0;
     Ray t_ray = ray;
     while (this->TraceRay(t_ray, 1e-3f, &rec) > 0.0f) {
-        float dis_squared =
-            glm::length((rec.position - ray.origin())) * glm::length((rec.position - ray.origin()));
+        float dis_squared = glm::length((rec.position - ray.origin())) *
+                            glm::length((rec.position - ray.origin()));
         float cosine = std::fabs(dot(ray.direction(), rec.normal));
         res += dis_squared / (cosine * area_);
         t_ray = Ray(rec.position, ray.direction(), ray.time());
     }
     return res;
 }
+
 float AcceleratedMesh::GetArea() const {
     return area_;
 }
