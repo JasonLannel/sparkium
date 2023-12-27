@@ -114,6 +114,8 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           if (glm::dot(normal, direction) < 0)
             break;
           */
+      } else if (material.material_type == MATERIAL_TYPE_MMD) {
+          return glm::vec3(0.2f);
       } else if (material.material_type == MATERIAL_TYPE_SPECULAR) {
           // You should change this into Cook-Torrence.
           direction = glm::reflect(ray.direction(), normal);

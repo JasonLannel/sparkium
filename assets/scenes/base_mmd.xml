@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scene>
+	<camera>
+		<transform type="lookat">
+			<eye value="2.0 1.0 3.0"/>
+			<center value="0.0 0.0 0.0"/>
+			<up value="0.0 1.0 0.0"/>
+		</transform>
+		<fov value="84"/>
+	</camera>
+
+	<envmap type="file" value="../../textures/pureGreen.hdr"/>
+
+	<model type="obj" name="QingQue">
+        <filename value="../../animation_meshes/untitled.obj"/>
+        <transform type="world">
+            <scale value="2 2 2"/>
+            <translation value="0 -2 0"/>
+            <rotation value="0 30 0"/>
+        </transform>
+
+		<material type="mmd">
+            <albedo value="0.0 0.0 0.0"/>
+        </material>
+    </model> 	
+
+</scene>
