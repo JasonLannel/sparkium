@@ -21,7 +21,7 @@ class Model {
   [[nodiscard]] virtual std::vector<Vertex> GetVertices() const = 0;
   [[nodiscard]] virtual std::vector<uint32_t> GetIndices() const = 0;
   virtual const char *GetDefaultEntityName();
-  virtual glm::vec3 SamplePoint(glm::vec3 origin, float time, std::mt19937 rd) const {
+  virtual glm::vec3 SamplePoint(glm::vec3 origin, float time, std::mt19937 rd, float *pdf) const {
     return glm::vec3(0);
   }
   virtual float SamplePdfValue(const Ray &ray) const {

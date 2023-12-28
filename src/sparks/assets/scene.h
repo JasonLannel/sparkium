@@ -71,9 +71,12 @@ class Scene {
   int LoadObjEntity(const std::string &file_path);
 
   glm::vec3 SampleLight(glm::vec3 origin,
-                               float time,
-                               std::mt19937 &rd) const;
+                        float time,
+                        std::mt19937 &rd,
+                        float *pdf,
+                        glm::vec3 *emission) const;
   float LightValue(const Ray &ray) const;
+  void LoadTextureForMaterial(Material &mat, HitRecord &rec) const;
 
  private:
   std::vector<Texture> textures_;
@@ -84,7 +87,6 @@ class Scene {
   int envmap_id_{1};
   float envmap_offset_{0.0f};
   std::unique_ptr<EnvmapPdf> envmap_sampler_;
-  DistributionPdf_1D light_sampler_;
   std::vector<int> light_id_;
   glm::vec3 envmap_light_direction_{0.0f, 1.0f, 0.0f};
   glm::vec3 envmap_major_color_{0.5f};
@@ -94,26 +96,5 @@ class Scene {
   float camera_speed_{3.0f};
   glm::vec3 camera_pitch_yaw_roll_{0.0f, 0.0f, 0.0f};
   Camera camera_{};
-};
-
-class LightPdf : public Pdf {
- public:
-  LightPdf(Scene *scene) {
-    scene_ = scene;
-  }
-  LightPdf(const Scene *scene) {
-    scene_ = scene;
-  }
-  glm::vec3 Generate(glm::vec3 origin,
-                     float time,
-                     std::mt19937 &rd) const override {
-    return scene_->SampleLight(origin, time, rd);
-  }
-  float Value(const Ray &ray) const override{
-    return scene_->LightValue(ray);
-  }
-
- private:
-  const Scene* scene_;
 };
 }  // namespace sparks

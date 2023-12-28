@@ -230,7 +230,7 @@ void AcceleratedMesh::CreatePdf(){
     generator = DistributionPdf_1D(probList.begin(), probList.size());
 }
 
-glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, float time, std::mt19937 rd) const {
+glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, float time, std::mt19937 rd, float *pdf) const {
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     float samp = dist(rd);
     int pdfNo = generator.Generate_Discrete(samp);
@@ -242,8 +242,9 @@ glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, float time, std::mt1993
     float u2 = dist(rd);
     u2 *= u1;
     u1 = 1 - u1;
-    return glm::normalize(v0 * (1 - u1 - u2) + v1 * u1 + v2 * u2 +
-                          GetDisplacement(time) - origin);
+    if (pdf)
+        *pdf = 1.0f / area_;
+    return v0 * (1 - u1 - u2) + v1 * u1 + v2 * u2 + GetDisplacement(time);
 }
 float AcceleratedMesh::SamplePdfValue(const Ray &ray) const {
     HitRecord rec;

@@ -172,18 +172,15 @@ void Scene::UpdateEnvmapConfiguration() {
       envmap_prob_.begin(), envmap_texture.GetWidth(),
                                   envmap_texture.GetHeight(), envmap_offset_);
   light_id_.clear();
-  light_id_.push_back(-1);
-  std::vector<float> weight;
-  const float WorldRadius = 1e4;
-  weight.push_back(WorldRadius * WorldRadius * PI * envmap_sampler_->FuncInt());
+  if (envmap_sampler_->FuncInt() > 0.0f) {
+    light_id_.push_back(-1);
+  }
   for (int i = 0; i < entities_.size(); ++i) {
-    float power = entities_[i].GetPower();
-    if (power > 1e-4f) {
+    float power = entities_[i].GetMaterial().emission_strength;
+    if (power > 0.0f) {
       light_id_.push_back(i);
-      weight.push_back(power);
     }
   }
-  light_sampler_ = DistributionPdf_1D(weight.begin(), weight.size());
 }
 glm::vec3 Scene::GetEnvmapLightDirection() const {
   float sin_offset = std::sin(envmap_offset_);
@@ -225,12 +222,10 @@ float Scene::TraceRay(const Ray &ray,
     }
     Ray local_ray = Ray(inv_transform * glm::vec4{ray.origin(), 1.0f},
                   transformed_direction / transformed_direction_length, ray.time());
-    local_result = entity.GetModel()->TraceRay(local_ray, t_min, &local_hit_record);
+    local_result = entity.GetModel()->TraceRay(local_ray, t_min, hit_record ? &local_hit_record : nullptr);
     local_result /= transformed_direction_length;
     if (local_result > t_min && local_result < t_max &&
         (result < 0.0f || local_result < result)) {
-      if (entity.GetMaterial(local_hit_record.material_id).material_type !=
-          MATERIAL_TYPE_MEDIUM) {
         result = local_result;
         if (hit_record) {
           local_hit_record.position =
@@ -245,47 +240,6 @@ float Scene::TraceRay(const Ray &ray,
           *hit_record = local_hit_record;
           hit_record->hit_entity_id = entity_id;
         }
-      } else {
-        float t0 = 0, t1 = 0;
-        if (!local_hit_record.front_face) {
-          t1 = local_result;
-        } else {
-          t0 = local_result;
-          local_result = entity.GetModel()->TraceRay(
-              local_ray, local_result * transformed_direction_length + 1e-4,
-              nullptr);
-          local_result /= transformed_direction_length;
-          if (result >= 0.0f)
-            local_result = fmin(local_result, result);
-          t1 = fmin(t_max, local_result);
-        }
-        if (t0 < t1) {
-          float hit_dis =
-              -log(fmax(randomProb(rd), 1e-10)) /
-              entity.GetMaterial(local_hit_record.material_id).density;
-          if (hit_dis < t1 - t0) {
-            result = t0 + hit_dis;
-            if (hit_record) {
-              local_hit_record.position =
-                  transform *
-                  glm::vec4{local_ray.origin() +
-                                hit_dis * transformed_direction_length *
-                                    local_ray.direction(),
-                            1.0f};
-              local_hit_record.normal =
-                  glm::transpose(inv_transform) *
-                  glm::vec4{local_hit_record.normal, 0.0f};
-              local_hit_record.tangent =
-                  transform * glm::vec4{local_hit_record.tangent, 0.0f};
-              local_hit_record.geometry_normal =
-                  glm::transpose(inv_transform) *
-                  glm::vec4{local_hit_record.geometry_normal, 0.0f};
-              *hit_record = local_hit_record;
-              hit_record->hit_entity_id = entity_id;
-            }
-          }
-        } 
-      }
     }
   }
   if (hit_record) {
@@ -421,21 +375,100 @@ Scene::Scene(const std::string &filename) : Scene() {
 
 glm::vec3 Scene::SampleLight(glm::vec3 origin,
                              float time,
-                             std::mt19937 &rd) const {
-  std::uniform_real_distribution<float> prob(0.0f, 1.0f);
-  int idx = light_sampler_.Generate_Discrete(prob(rd));
-  if (!idx)
-    return envmap_sampler_->Generate(origin, time, rd);
-  else
-    return GetEntity(light_id_[idx]).GetModel()->SamplePoint(origin, time, rd);
+                             std::mt19937 &rd,
+                             float *pdf,
+                             glm::vec3 *emission) const {
+  if (!light_id_.size()) {
+    if (pdf)
+      *pdf = 0.f;
+    return glm::vec3(0);
   }
+  std::uniform_real_distribution<float> prob(0.0f, 1.0f);
+  int idx = prob(rd) * light_id_.size();
+  if (idx >= light_id_.size())
+    idx = light_id_.size() - 1;
+  if (light_id_[idx] == -1) {
+    glm::vec3 &direction = envmap_sampler_->Generate(origin, rd, pdf);
+    if (TraceRay(Ray(origin, direction, time), 1e-3f, 1e10f, nullptr) <= 0.0f) {
+      if (pdf)
+        *pdf *= 1.0f / light_id_.size();
+      if (emission)
+        *emission = glm::vec3{SampleEnvmap(direction)};
+    } else {
+      if (pdf)
+        *pdf = 0;
+    }
+    return direction;
+  } else {
+    glm::vec3 &ret = GetEntity(light_id_[idx])
+                         .GetModel()
+                         ->SamplePoint(origin, time, rd, nullptr);
+    HitRecord hit_rec;
+    glm::vec3 &direction = glm::normalize(ret - origin);
+    if (pdf)
+      *pdf = 0;
+    if (TraceRay(Ray(origin, direction, time), 1e-3f,
+                 glm::length(origin - ret) + 1e-3f, &hit_rec) > 0.0f) {
+      Material mat =
+          GetEntity(hit_rec.hit_entity_id).GetMaterial(hit_rec.material_id);
+      LoadTextureForMaterial(mat, hit_rec);
+      if (hit_rec.hit_entity_id == light_id_[idx] &&
+          glm::length(hit_rec.position - ret) < 1e-3f) {
+        float area = GetEntity(hit_rec.hit_entity_id).GetModel()->GetArea();
+        if (pdf)
+          *pdf = square(glm::length(hit_rec.position - origin)) /
+                 (fabs(glm::dot(direction, hit_rec.normal)) * area *
+                  light_id_.size());
+        if (emission)
+          *emission = mat.emission * mat.emission_strength;
+      }
+    }
+    return direction;
+  }
+}
 
 float Scene::LightValue(const Ray &ray) const {
-  float res = envmap_sampler_->Value(ray) * light_sampler_.Value(0);
-  for (int i = 1; i < light_id_.size(); ++i)
-    res += GetEntity(light_id_[i]).GetModel()->SamplePdfValue(ray) *
-           light_sampler_.Value(i);
-  return res;
+  if (!light_id_.size())
+    return 0.f;
+  HitRecord hit_rec;
+  if (TraceRay(ray, 1e-4, 1e10f, &hit_rec) > 0.0f) {
+    Material mat =
+        GetEntity(hit_rec.hit_entity_id).GetMaterial(hit_rec.material_id);
+    LoadTextureForMaterial(mat, hit_rec);
+    if (mat.material_type != MATERIAL_TYPE_EMISSION)
+      return 0.f;
+    float area = GetEntity(hit_rec.hit_entity_id).GetModel()->GetArea();
+    return square(glm::length(hit_rec.position - ray.origin())) /
+           (fabs(glm::dot(ray.direction(), hit_rec.normal)) * area *
+            light_id_.size());
+  } else {
+    return envmap_sampler_->Value(ray) / light_id_.size();
+  }
+}
+
+void Scene::LoadTextureForMaterial(Material &mat, HitRecord &rec) const {
+  if (mat.albedo_texture_id >= 0 && mat.material_type != MATERIAL_TYPE_MEDIUM) {
+    auto tex_sample = GetTextures()[mat.albedo_texture_id].Sample(
+        rec.tex_coord);
+    mat.albedo_color *= glm::vec3(tex_sample);
+    mat.alpha *= tex_sample.w;
+  }
+  if (mat.use_normal_texture && mat.material_type != MATERIAL_TYPE_MEDIUM) {
+    Onb onb(rec.normal, rec.tangent);
+    glm::vec3 normalFromTex =
+        glm::vec3{GetTextures()[mat.normal_texture_id].Sample(
+            rec.tex_coord)};
+    normalFromTex = normalFromTex * 2.0f - glm::vec3(1.0f);
+    normalFromTex[0] *= mat.bumpScale;
+    normalFromTex[1] *= mat.bumpScale;
+    normalFromTex[2] = 0;
+    normalFromTex[2] = sqrt(1.f - glm::dot(normalFromTex, normalFromTex));
+    rec.normal = glm::normalize(onb.local(normalFromTex));
+    rec.tangent = glm::normalize(rec.tangent - glm::dot(rec.tangent, rec.normal) * rec.normal);
+  }
+  if (rec.front_face) {
+    mat.IOR = 1.0f / mat.IOR;
+  }
 }
 
 bool Mesh::LoadObjFile(const std::string &obj_file_path,

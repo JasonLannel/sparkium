@@ -67,70 +67,19 @@ struct Material {
                                             float anisotropic,
                                             float &ax,
                                             float &ay) const;
-  void CalculateLobePdfs(float &pSpecular,
-                         float &pDiffuse,
-                         float &pClearcoat,
-                         float &pSpecTrans) const;
-  glm::vec3 EvaluateSheen(const glm::vec3 &wo,
-                          const glm::vec3 &wm,
-                          const glm::vec3 &wi,
-                          const glm::vec3 &baseColor) const;
-  float Material::GTR1(float absDotHL, float a) const;
-  float Material::SeparableSmithGGXG1(const glm::vec3 &w, float a) const;
-  float Material::EvaluateDisneyClearcoat(float clearcoat,
-                                          float alpha,
-                                          const glm::vec3 &wo,
-                                          const glm::vec3 &wm,
-                                          const glm::vec3 &wi,
-                                          float &fPdfW,
-                                          float &rPdfW) const;
-  float Material::GgxAnisotropicD(const glm::vec3 &wm,
-                                  float ax,
-                                  float ay) const;
-  float Material::SeparableSmithGGXG1(const glm::vec3 &w,
-                                      const glm::vec3 &wm,
-                                      float ax,
-                                      float ay) const;
-  void GgxVndfAnisotropicPdf(const glm::vec3 &wi,
-                             const glm::vec3 &wm,
-                             const glm::vec3 &wo,
-                             float ax,
-                             float ay,
-                             float &forwardPdfW,
-                             float &reversePdfW) const;
-  glm::vec3 Material::EvaluateDisneyBRDF(const glm::vec3 &wo,
-                                         const glm::vec3 &wm,
-                                         const glm::vec3 &wi,
-                                         float &fPdf,
-                                         float &rPdf,
-                                         const glm::vec3 &albedo,
-                                         float relativeIOR) const;
-  float Material::ThinTransmissionRoughness(float ior, float roughness) const;
-  glm::vec3 Material::EvaluateDisneySpecTransmission(const glm::vec3 &wo,
-                                                     const glm::vec3 &wm,
-                                                     const glm::vec3 &wi,
-                                                     float ax,
-                                                     float ay,
-      bool thin,
-      const glm::vec3 &albedo,
-      float relativeIOR) const;
-  float EvaluateDisneyRetroDiffuse(const glm::vec3 &wo,
-                                   const glm::vec3 &wm,
-                                   const glm::vec3 &wi) const;
-  float Material::EvaluateDisneyDiffuse(const glm::vec3 &wo,
-                                        const glm::vec3 &wm,
-                                        const glm::vec3 &wi,
-                                        bool thin) const;
-  glm::vec3 Material::DisneyFresnel(const glm::vec3 &wo,
-                                    const glm::vec3 &wm,
-                                    const glm::vec3 &wi,
-                                    const glm::vec3 &albedo,
-                                    float relativeIOR) const;
-  glm::vec3 Material::EvaluateDisney(const glm::vec3 v,
-                                     const glm::vec3 l,
-                                     const glm::vec3 n,
-                                     glm::vec3 albedo,
-                                     float refract_ratio) const;
-
+  float GTR1(float absDotHL, float a) const;
+  float SeparableSmithGGXG1(const glm::vec3 &wi, float a) const;
+  float SeparableSmithGGXG1(const glm::vec3 &wi,
+                            const glm::vec3 &wm,
+                            float ax,
+                            float ay) const;
+  float GgxAnisotropicD(const glm::vec3 &wm, float ax, float ay) const;
+  float Material::GgxVndfAnisotropicPdf(const glm::vec3 &wi,
+                                        const glm::vec3 &normal,
+                                        const glm::vec3 &wo,
+                                        float ax,
+                                        float ay) const;
+  float ThinTransmissionRoughness(float ior, float roughness) const;
 };
+
 }  // namespace sparks

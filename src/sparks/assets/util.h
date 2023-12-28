@@ -119,18 +119,6 @@ glm::vec3 uniformSampleSphere(const glm::vec2 &sample);
 
 float FrDielectric(float cosThetaI, float etaI, float etaT);
 
-inline void MakeOrthogonalCoordinateSystem(const glm::vec3 &v1,
-                                           glm::vec3 *v2,
-                                           glm::vec3 *v3) {
-  if (std::abs(v1.x) > std::abs(v1.y))
-    *v2 = glm::vec3(-v1.z, 0, v1.x) *
-          (1.0f / sqrt(v1.x * v1.x + v1.z * v1.z));
-  else
-    *v2 = glm::vec3(0, v1.z, -v1.y) *
-          (1.0f / sqrt(v1.y * v1.y + v1.z * v1.z));
-  *v3 = glm::cross(v1, *v2);
-}
-
 glm::vec3 SampleGgxVndfAnisotropic(const glm::vec3 &wo,
                                 float ax,
                                 float ay,

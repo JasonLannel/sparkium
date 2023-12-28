@@ -53,9 +53,9 @@ class DistributionPdf_2D {
 class Pdf {
  public:
   virtual ~Pdf() = default;
-  virtual glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const {
+  virtual glm::vec3 Generate(glm::vec3 origin, std::mt19937 &rd, float *pdf) const {
     return glm::vec3(1, 0, 0);
- }
+  }
   virtual float Value(const Ray &ray) const {
     return 1.0f;
   }
@@ -67,7 +67,9 @@ class UniformSpherePdf : public Pdf {
  public:
   UniformSpherePdf(glm::vec3 normal);
   UniformSpherePdf(glm::vec3 normal, glm::vec3 tangent);
-  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
+  glm::vec3 Generate(glm::vec3 origin,
+                     std::mt19937 &rd,
+                     float *pdf) const override;
   float Value(const Ray &ray) const override;
 
  private:
@@ -78,7 +80,9 @@ class UniformHemispherePdf : public Pdf {
  public:
   UniformHemispherePdf(glm::vec3 normal);
   UniformHemispherePdf(glm::vec3 normal, glm::vec3 tangent);
-  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
+  glm::vec3 Generate(glm::vec3 origin,
+                     std::mt19937 &rd,
+                     float *pdf) const override;
   float Value(const Ray &ray) const override;
 
  private:
@@ -89,69 +93,13 @@ class CosineHemispherePdf : public Pdf {
  public:
   CosineHemispherePdf(glm::vec3 normal);
   CosineHemispherePdf(glm::vec3 normal, glm::vec3 tangent);
-  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
+  glm::vec3 Generate(glm::vec3 origin,
+                     std::mt19937 &rd,
+                     float *pdf) const override;
   float Value(const Ray &ray) const override;
 
  private:
   Onb uvw;
-};
-
-class SampleDisneyBRDFPdf : public Pdf {
- public:
-  SampleDisneyBRDFPdf(glm::vec3 normal, Material material, float p);
-  glm::vec3 Generate(glm::vec3 v, float time, std::mt19937 &rd) const override;
-  float Value(const Ray &ray) const override;
-
-  private:
-  Material material_;
-   Onb uvw;
-  glm::mat3 world2tangent;
-   float p_;
-};
-
-class SampleDisneyClearCoatPdf : public Pdf {
- public:
-  SampleDisneyClearCoatPdf(glm::vec3 normal, Material material, float p);
-  glm::vec3 Generate(glm::vec3 v,
-                     float time,
-                     std::mt19937 &rd) const override;
-  float Value(const Ray &ray) const override;
-
- private:
-  Material material_;
-  Onb uvw;
-  glm::mat3 world2tangent;
-  float p_;
-};
-
-class SampleDisneyDiffusePdf : public Pdf {
- public:
-  SampleDisneyDiffusePdf(glm::vec3 normal, Material material, float p);
-  glm::vec3 Generate(glm::vec3 v,
-                     float time,
-                     std::mt19937 &rd) const override;
-  float Value(const Ray &ray) const override;
-
- private:
-  Material material_;
-  Onb uvw;
-  glm::mat3 world2tangent;
-  float p_;
-};
-
-class SampleDisneySpecTransPdf : public Pdf {
- public:
-  SampleDisneySpecTransPdf(glm::vec3 normal, Material material, float p);
-  glm::vec3 Generate(glm::vec3 v,
-                     float time,
-                     std::mt19937 &rd) const override;
-  float Value(const Ray &ray) const override;
-
- private:
-  Material material_;
-  Onb uvw;
-  glm::mat3 world2tangent;
-  float p_;
 };
 
 class EnvmapPdf : public Pdf {
@@ -164,8 +112,8 @@ class EnvmapPdf : public Pdf {
     offset_ = offset;
   }
   glm::vec3 Generate(glm::vec3 origin,
-                     float time,
-                     std::mt19937 &rd) const override;
+                     std::mt19937 &rd,
+                     float *pdf) const override;
   float Value(const Ray &ray) const override;
   float FuncInt() const;
 
@@ -179,7 +127,7 @@ class MixturePdf : public Pdf {
   MixturePdf(Pdf* p1, Pdf* p2, float prob1);
   MixturePdf(std::vector<Pdf*> list, std::vector<float> weight);
   MixturePdf(std::vector<Pdf*> list);
-  glm::vec3 Generate(glm::vec3 origin, float time, std::mt19937 &rd) const override;
+  glm::vec3 Generate(glm::vec3 origin, std::mt19937 &rd, float *pdf) const override;
   float Value(const Ray &ray) const override;
 
  private:

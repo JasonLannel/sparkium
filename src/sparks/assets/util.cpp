@@ -127,15 +127,6 @@ glm::mat4 XmlComposeTransformMatrix(tinyxml2::XMLElement *object_element) {
   return result;
 }
 
-glm::vec3 uniformSampleSphere(const glm::vec2 &sample) {
-  // Uniform sample sphere
-  float z = std::clamp(2 * sample.x - 1, float(-1 + EPSILON * 1e2),
-                       float(1 - EPSILON * 1e2));
-  float radius = std::sqrt(std::clamp(1 - z * z, 0.0f, 1.1f));
-  float phi = PI * 2 * sample.y;
-  return glm::vec3(radius * std::cos(phi), radius * std::sin(phi), z);
-}
-
 float FrDielectric(float cosThetaI, float etaI, float etaT) {
   cosThetaI = clamp(cosThetaI, -1, 1);
   // Potentially swap indices of refraction
@@ -159,32 +150,4 @@ float FrDielectric(float cosThetaI, float etaI, float etaT) {
                 ((etaI * cosThetaI) + (etaT * cosThetaT));
   return (Rparl * Rparl + Rperp * Rperp) / 2;
 }
-
-glm::vec3 SampleGgxVndfAnisotropic(const glm::vec3 &wo,
-                                float ax,
-                                float ay,
-                                float u1,
-                                float u2) {
-  // -- Stretch the view vector so we are sampling as though roughness==1
-  glm::vec3 v = glm::normalize(glm::vec3(wo.x * ax, wo.y, wo.z * ay));
-
-  // -- Build an orthonormal basis with v, t1, and t2
-  glm::vec3 t1 =
-      (v.y < 0.9999f) ? glm::normalize(glm::cross(v, glm::vec3(0.0f, 1.0f, 0.0f))) : glm::vec3(1.0f, 0.0f, 0.0f);
-  glm::vec3 t2 = glm::cross(t1, v);
-
-  float a = 1.0f / (1.0f + v.y);
-  float r = sqrt(u1);
-  float phi = (u2 < a) ? (u2 / a) * PI
-                       : PI + (u2 - a) / (1.0f - a) * PI;
-  float p1 = r * cos(phi);
-  float p2 = r * sin(phi) * ((u2 < a) ? 1.0f : v.y);
-
-  // -- Calculate the normal in this stretched tangent space
-  glm::vec3 n = p1 * t1 + p2 * t2 + sqrt(std::max(0.0f, 1.0f - p1 * p1 - p2 * p2)) * v;
-
-  // -- unstretch and normalize the normal
-  return glm::normalize(glm::vec3(ax * n.x, n.y, ay * n.z));
-}
-
 }  // namespace sparks

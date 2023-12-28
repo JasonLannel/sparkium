@@ -190,10 +190,12 @@ UniformSpherePdf::UniformSpherePdf(glm::vec3 normal){
 UniformSpherePdf::UniformSpherePdf(glm::vec3 normal, glm::vec3 tangent) {
   uvw = Onb(normal, tangent);
 }
-glm::vec3 UniformSpherePdf::Generate(glm::vec3 origin, float time, std::mt19937 &rd) const {
+glm::vec3 UniformSpherePdf::Generate(glm::vec3 origin, std::mt19937 &rd, float *pdf) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float theta = dist(rd) * 2.0f * PI;
   float phi = dist(rd) * PI;
+  if (pdf)
+    *pdf = 0.25f * INV_PI;
   return uvw.local(std::cos(theta) * std::sin(phi),
                    std::sin(theta) * std::sin(phi), std::cos(phi));
 }
@@ -208,14 +210,16 @@ UniformHemispherePdf::UniformHemispherePdf(glm::vec3 normal) {
 UniformHemispherePdf::UniformHemispherePdf(glm::vec3 normal, glm::vec3 tangent) {
   uvw = Onb(normal, tangent);
 }
-glm::vec3 UniformHemispherePdf::Generate(glm::vec3 origin, float time,
-                                         std::mt19937 &rd) const {
+glm::vec3 UniformHemispherePdf::Generate(glm::vec3 origin,
+                                         std::mt19937 &rd, float *pdf) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float u1 = dist(rd);
   float u2 = dist(rd);
    double z_r = u1;
    double z = sqrt(1.0 - u1 * u1);
    double phi = 2.0 * PI * u2;
+   if (pdf)
+    *pdf = 0.5f * INV_PI;
    return uvw.local(z_r * std::cos(phi), z_r * std::sin(phi), z);
 }
 
@@ -229,16 +233,17 @@ CosineHemispherePdf::CosineHemispherePdf(glm::vec3 normal) {
 CosineHemispherePdf::CosineHemispherePdf(glm::vec3 normal, glm::vec3 tangent) {
   uvw = Onb(normal, tangent);
 }
-glm::vec3 CosineHemispherePdf::Generate(glm::vec3 origin, float time,
-                                        std::mt19937 &rd) const {
+glm::vec3 CosineHemispherePdf::Generate(glm::vec3 origin,
+                                        std::mt19937 &rd, float *pdf) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float u1 = clamp(dist(rd), 0.f, 1.f);
   float u2 = clamp(dist(rd), 0.f, 1.f);
   float z_r = sqrt(u1);
   float z = sqrt(1.f - u1);
   float phi = 2.0 * PI * u2;
-  return uvw.local(z_r * std::cos(phi),
-                   z_r * std::sin(phi), z);
+  if (pdf)
+    *pdf = fmax(0.f, z) * INV_PI;
+  return uvw.local(z_r * std::cos(phi), z_r * std::sin(phi), z);
 }
 
 float CosineHemispherePdf::Value(const Ray &ray) const {
@@ -246,204 +251,8 @@ float CosineHemispherePdf::Value(const Ray &ray) const {
   return cos_theta < 0 ? 0 : cos_theta * INV_PI;
 }
 
-SampleDisneyBRDFPdf::SampleDisneyBRDFPdf(glm::vec3 normal, Material material, float p){
-  material_ = material;
-  p_ = p;
-  glm::vec3 n = glm::normalize(normal);
-  glm::vec3 t, b;
-  MakeOrthogonalCoordinateSystem(n, &t, &b);
-  glm::mat3x3 tangentToWorld = glm::mat3x3(t, n, b);
-  world2tangent = glm::transpose(tangentToWorld);
-}
-
-glm::vec3 SampleDisneyBRDFPdf::Generate(glm::vec3 v,
-                   float time,
-                   std::mt19937 &rd) const {
-  glm::vec3 wo = glm::normalize(world2tangent * v);
-
-  // -- Calculate Anisotropic params
-  float ax, ay;
-  material_.CalculateAnisotropicParams(material_.roughness, material_.anisotropic, ax, ay);
-
-  // -- Sample visible distribution of normals
-  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-  float r0 = dist(rd);
-  float r1 = dist(rd);
-  glm::vec3 wm = SampleGgxVndfAnisotropic(wo, ax, ay, r0, r1);
-
-  // -- Reflect over wm
-  glm::vec3 wi = glm::normalize(glm::reflect(-wo, wm));
-  if (CosTheta(wi) <= 0.0f) {
-    return glm::vec3(0.0f);
-  }
-  wi = glm::normalize(glm::transpose(world2tangent) * wi);
-  return wi;
-}
-
-float SampleDisneyBRDFPdf::Value(const Ray &ray) const {
-  return 1.0f;
-}
-
-SampleDisneyClearCoatPdf::SampleDisneyClearCoatPdf(glm::vec3 normal, Material material, float p) {
-  material_ = material;
-  p_ = p;
-  glm::vec3 n = glm::normalize(normal);
-  glm::vec3 t, b;
-  MakeOrthogonalCoordinateSystem(n, &t, &b);
-  glm::mat3x3 tangentToWorld = glm::mat3x3(t, n, b);
-  world2tangent = glm::transpose(tangentToWorld);
-}
-
-glm::vec3 SampleDisneyClearCoatPdf::Generate(glm::vec3 v,
-                                             float time,
-                                             std::mt19937 &rd) const {
-  glm::vec3 wo = glm::normalize(world2tangent * v);
-
-  const float a = 0.25f;
-  const float a2 = square(a);
-
-  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-  float r0 = dist(rd);
-  float r1 = dist(rd);
-  float cosTheta = sqrt(std::max(0.0f, (1.0f - pow(a2, 1.0f - r0)) / (1.0f - a2)));
-  float sinTheta = sqrt(std::max(0.0f, 1.0f - cosTheta * cosTheta));
-  float phi = 2 * PI * r1;
-
-  glm::vec3 wm = glm::vec3(sinTheta * cos(phi), cosTheta, sinTheta * sin(phi));
-  if (glm::dot(wm, wo) < 0.0f) {
-    wm = -wm;
-  }
-
-  glm::vec3 wi = glm::reflect(-wo, wm);
-  if (glm::dot(wi, wo) < 0.0f) {
-    return glm::vec3(0.0f);
-  }
-  wi = glm::normalize(glm::transpose(world2tangent) * wi);
-  return wi;
-}
-
-float SampleDisneyClearCoatPdf::Value(const Ray &ray) const {
-  return 1.0f;
-}
-
-SampleDisneyDiffusePdf::SampleDisneyDiffusePdf(glm::vec3 normal,
-                                                   Material material, float p) {
-  material_ = material;
-  p_ = p;
-  glm::vec3 n = glm::normalize(normal);
-  glm::vec3 t, b;
-  MakeOrthogonalCoordinateSystem(n, &t, &b);
-  glm::mat3x3 tangentToWorld = glm::mat3x3(t, n, b);
-  world2tangent = glm::transpose(tangentToWorld);
-}
-
-glm::vec3 SampleDisneyDiffusePdf::Generate(glm::vec3 v, float time, std::mt19937 &rd) const {
-  glm::vec3 wo = glm::normalize(world2tangent * v);
-
-  float sign = CosTheta(wo) > 0.0f ? 1.0f : -1.0f; 
-
-  // -- Sample cosine lobe
-  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-  float r0 = dist(rd);
-  float r1 = dist(rd);
-  float r = sqrt(r0);
-  float theta = 2 * PI * r1;
-  glm::vec3 wi = sign * glm::vec3(r * cos(theta), sqrt(std::max(0.0f, 1 - r0)), r * sin(theta));
-
-  float dotNL = CosTheta(wi);
-  if (dotNL == 0.0f) {
-    wi = glm::vec3(0.0f);
-  }
-
-  float dotNV = CosTheta(wo);
-  float p = dist(rd);
-  if (p <= material_.diffTrans) {
-    wi = -wi;
-  }
-  wi = glm::normalize(glm::transpose(world2tangent) * wi);
-  return wi;
-}
-
-float SampleDisneyDiffusePdf::Value(const Ray &ray) const {
-  return 1.0f;
-}
-
-SampleDisneySpecTransPdf::SampleDisneySpecTransPdf(glm::vec3 normal,
-                                                   Material material, float p) {
-  material_ = material;
-  p_ = p;
-  glm::vec3 n = glm::normalize(normal);
-  glm::vec3 t, b;
-  MakeOrthogonalCoordinateSystem(n, &t, &b);
-  glm::mat3x3 tangentToWorld = glm::mat3x3(t, n, b);
-  world2tangent = glm::transpose(tangentToWorld);
-}
-
-glm::vec3 SampleDisneySpecTransPdf::Generate(glm::vec3 v,
-                                           float time,
-                                           std::mt19937 &rd) const {
-  glm::vec3 wo = glm::normalize(world2tangent * v);
-  if (CosTheta(wo) == 0.0) {
-    return glm::vec3(0.0f);
-  }
-  float rscaled =
-      material_.thin ? material_.ThinTransmissionRoughness(material_.IOR, material_.roughness)
-           : material_.roughness;
-
-  float tax, tay;
-  material_.CalculateAnisotropicParams(rscaled, material_.anisotropic, tax, tay);
-
-  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-  float r0 = dist(rd);
-  float r1 = dist(rd);
-  glm::vec3 wm = SampleGgxVndfAnisotropic(wo, tax, tay, r0, r1);
-
-  float dotVH = glm::dot(wo, wm);
-  if (wm.y < 0.0f) {
-    dotVH = -dotVH;
-  }
-  float ni = wo.y > 0.0f ? 1.0f : material_.IOR;
-  float nt = wo.y > 0.0f ? material_.IOR : 1.0f;
-  float relativeIOR = ni / nt;
-
-  float F = FrDielectric(dotVH, 1.0f, material_.IOR);
-  float G1v = material_.SeparableSmithGGXG1(wo, wm, tax, tay);
-  float pdf;
-  //float reflectance;
-  glm::vec3 wi;
-  if (dist(rd) <= F) {
-    wi = glm::normalize(glm::reflect(-wo, wm));
-    //reflectance = G1v * albedo;
-    float jacobian = 4 * abs(glm::dot(wo, wm));
-    pdf = F / jacobian;
-  } else {
-    if (material_.thin) {
-      wi = glm::reflect(-wo, wm);
-      wi.y = -wi.y;
-      // reflectance = G1v * sqrt(albedo);
-    } else {
-      if (Transmit(wm, wo, relativeIOR, wi)) {
-      } else {
-        wi = glm::reflect(-wo, wm);
-      }
-    }
-    wi = glm::normalize(wi);
-  }
-
-  if (CosTheta(wi) <= 0.0f) {
-    return glm::vec3(0.0f);
-  }
-  wi = glm::normalize(glm::transpose(world2tangent) * wi);
-  return wi;
-}
-
-float SampleDisneySpecTransPdf::Value(const Ray &ray) const {
-  return 1.0f;
-}
-
 glm::vec3 EnvmapPdf::Generate(glm::vec3 origin,
-                              float time,
-                              std::mt19937 &rd) const {
+                              std::mt19937 &rd, float *pdf) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   glm::vec2 rprob(dist(rd), dist(rd));
   float mapPdf;
@@ -451,8 +260,16 @@ glm::vec3 EnvmapPdf::Generate(glm::vec3 origin,
   if (mapPdf == 0)
       return glm::vec3(0, 0, 1);
   float theta = uv.y * PI, phi = uv.x * 2 * PI + offset_;
+  if (phi > 2 * PI)
+    phi -= 2 * PI;
+  if (phi < 0)
+    phi += 2 * PI;
+  float sinTheta = sin(theta);
   float cosTheta = cos(theta);
-  return glm::vec3(cos(phi) * cosTheta, sin(phi) * cosTheta, sin(theta));
+  if (pdf)
+    *pdf = sampler_->Value(glm::vec2(phi * INV_PI * 0.5, theta * INV_PI)) *
+           0.5f * INV_PI * INV_PI / sinTheta;
+  return glm::vec3(cos(phi) * cosTheta, sin(phi) * cosTheta, sinTheta);
 }
 
 float EnvmapPdf::Value(const Ray &ray) const {
@@ -498,11 +315,14 @@ MixturePdf::MixturePdf(std::vector<Pdf *> list) : pdfList(list) {
   generator = DistributionPdf_1D(probList.begin(), list.size());
 }
 
-glm::vec3 MixturePdf::Generate(glm::vec3 origin, float time, std::mt19937 &rd) const {
+glm::vec3 MixturePdf::Generate(glm::vec3 origin, std::mt19937 &rd, float *pdf) const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   float samp = dist(rd); 
   int pdfNo = generator.Generate_Discrete(samp);
-  return pdfList[pdfNo]->Generate(origin, time, rd);
+  glm::vec3 direction = pdfList[pdfNo]->Generate(origin, rd, nullptr);
+  if (pdf)
+      *pdf = Value(Ray(origin, direction));
+  return direction;
 }
 
 float MixturePdf::Value(const Ray &ray) const {
