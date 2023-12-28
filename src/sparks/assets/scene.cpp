@@ -425,28 +425,37 @@ glm::vec3 Scene::SampleLight(glm::vec3 origin,
     }
     return direction;
   } else {
-    glm::vec3 &ret = GetEntity(light_id_[idx])
-                         .GetModel()
-                         ->SamplePoint(origin, time, rd, nullptr);
-    HitRecord hit_rec;
-    glm::vec3 &direction = glm::normalize(ret - origin);
-    if (pdf)
-      *pdf = 0;
-    if (TraceRay(Ray(origin, direction, time), 1e-3f,
-                 glm::length(origin - ret) + 1e-3f, &hit_rec) > 0.0f) {
-      Material mat =
-          GetEntity(hit_rec.hit_entity_id).GetMaterial(hit_rec.material_id);
-      LoadTextureForMaterial(mat, hit_rec);
-      if (hit_rec.hit_entity_id == light_id_[idx] &&
-          glm::length(hit_rec.position - ret) < 1e-3f) {
-        float area = GetEntity(hit_rec.hit_entity_id).GetModel()->GetArea();
+    auto &entity = GetEntity(light_id_[idx]);
+    auto &transform = entity.GetTransformMatrix();
+    auto inv_transform = glm::inverse(transform);
+    auto &trans_origin = inv_transform * glm::vec4{origin, 1.0f};
+    HitRecord &sample = entity.GetModel()->SamplePoint(trans_origin, time, rd);
+    sample.hit_entity_id = light_id_[idx];
+    sample.position =
+        transform * glm::vec4{sample.position, 1.0f};
+    sample.normal = glm::transpose(inv_transform) *
+                              glm::vec4{sample.normal, 0.0f};
+    sample.tangent =
+        transform * glm::vec4{sample.tangent, 0.0f};
+    sample.geometry_normal =
+        glm::transpose(inv_transform) * glm::vec4{sample.geometry_normal, 0.0f};
+    Material mat = entity.GetMaterial(sample.material_id);
+    glm::vec3 &direction = glm::normalize(sample.position - origin);
+    if (!CollisionTest(Ray(origin, direction, time), 1e-3f,
+                       glm::length(origin - sample.position) - 1e-3f)) {
+      LoadTextureForMaterial(mat, sample);
+      float area = entity.GetModel()->GetArea();
         if (pdf)
-          *pdf = square(glm::length(hit_rec.position - origin)) /
-                 (fabs(glm::dot(direction, hit_rec.normal)) * area *
+          *pdf = square(glm::length(sample.position - origin)) /
+                 (fabs(glm::dot(direction, sample.normal)) * area *
                   light_id_.size());
         if (emission)
           *emission = mat.emission * mat.emission_strength;
-      }
+    } else {
+        if (pdf)
+          *pdf = 0.f;
+        if (emission)
+          *emission = glm::vec3(0);
     }
     return direction;
   }

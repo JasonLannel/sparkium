@@ -230,34 +230,51 @@ void AcceleratedMesh::CreatePdf(){
     generator = DistributionPdf_1D(probList.begin(), probList.size());
 }
 
-glm::vec3 AcceleratedMesh::SamplePoint(glm::vec3 origin, float time, std::mt19937 rd, float *pdf) const {
+HitRecord AcceleratedMesh::SamplePoint(glm::vec3 origin, float time, std::mt19937 rd) const {
+    // Transfer matrix, where are you?
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     float samp = dist(rd);
     int pdfNo = generator.Generate_Discrete(samp);
     int idx = pdfNo * 3;
-    auto &v0 = vertices_[indices_[idx]].position;
-    auto &v1 = vertices_[indices_[idx + 1]].position;
-    auto &v2 = vertices_[indices_[idx + 2]].position;
-    float u1 = sqrt(dist(rd));
-    float u2 = dist(rd);
-    u2 *= u1;
-    u1 = 1 - u1;
-    if (pdf)
-        *pdf = 1.0f / area_;
-    return v0 * (1 - u1 - u2) + v1 * u1 + v2 * u2 + GetDisplacement(time);
+    const auto &v0 = vertices_[indices_[idx]];
+    const auto &v1 = vertices_[indices_[idx + 1]];
+    const auto &v2 = vertices_[indices_[idx + 2]];
+    float u = sqrt(dist(rd));
+    float v = dist(rd);
+    v *= u;
+    u = 1 - u;
+    float w = 1.0f - u - v;
+    auto position = v0.position * w + v1.position * u + v2.position * v + GetDisplacement(time);
+    auto direction = glm::normalize(position - origin);
+    auto geometry_normal = glm::normalize(
+        glm::cross(v2.position - v0.position, v1.position - v0.position));
+    HitRecord info;
+    if (glm::dot(geometry_normal, direction) < 0.0f) {
+        info.position = position;
+        info.geometry_normal = geometry_normal;
+        info.normal = v0.normal * w + v1.normal * u + v2.normal * v;
+        info.tangent =
+            v0.tangent * w + v1.tangent * u + v2.tangent * v;
+        info.material_id = material_ids_[pdfNo];
+        info.tex_coord =
+            v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
+        info.front_face = true;
+    } else {
+        info.position = position;
+        info.geometry_normal = -geometry_normal;
+        info.normal =
+            -(v0.normal * w + v1.normal * u + v2.normal * v);
+        info.tangent =
+            -(v0.tangent * w + v1.tangent * u + v2.tangent * v);
+        info.material_id = material_ids_[pdfNo];
+        info.tex_coord =
+            v0.tex_coord * w + v1.tex_coord * u + v2.tex_coord * v;
+        info.front_face = false;
+    }
+    return info;
 }
 float AcceleratedMesh::SamplePdfValue(const Ray &ray) const {
-    HitRecord rec;
-    float res = 0;
-    Ray t_ray = ray;
-    while (this->TraceRay(t_ray, 1e-3f, &rec) > 0.0f) {
-        float dis_squared = glm::length((rec.position - ray.origin())) *
-                            glm::length((rec.position - ray.origin()));
-        float cosine = std::fabs(dot(ray.direction(), rec.normal));
-        res += dis_squared / (cosine * area_);
-        t_ray = Ray(rec.position, ray.direction(), ray.time());
-    }
-    return res;
+    return 1.0f / area_;
 }
 
 float AcceleratedMesh::GetArea() const {

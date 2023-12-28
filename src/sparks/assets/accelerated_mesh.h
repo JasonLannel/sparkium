@@ -22,7 +22,7 @@ class AcceleratedMesh : public Mesh {
                  float t_min,
                  HitRecord *hit_record) const override;
   void BuildAccelerationStructure();
-  glm::vec3 SamplePoint(glm::vec3 origin, float time, std::mt19937 rd, float *pdf) const override;
+  HitRecord SamplePoint(glm::vec3 origin, float time, std::mt19937 rd) const override;
   float SamplePdfValue(const Ray &ray) const override;
   float GetArea() const override;
 

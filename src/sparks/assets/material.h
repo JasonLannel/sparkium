@@ -12,7 +12,6 @@ enum MaterialType : int {
   MATERIAL_TYPE_PRINCIPLED = 3,
   MATERIAL_TYPE_EMISSION = 4,
   MATERIAL_TYPE_MEDIUM = 5,
-  MATERIAL_TYPE_MMD = 6,
 };
 
 class Scene;
@@ -39,7 +38,6 @@ struct Material {
   float IOR{1.5f};
   bool thin{false};
   //Principle BRDF
-  // float subsurface{0.0f};
   float roughness{0.2f};
   float metallic{0.2f};
   float specTrans{0.2f};
@@ -47,15 +45,12 @@ struct Material {
   float anisotropic{0.2f};
   float sheen{0.2f};
   float sheenTint{0.2f};
-
-  // TODO: exist bug here. Nonzero clearcoat will make the material black
   float clearcoat{0.0f};
   float clearcoatGloss{0.0f};
-
   float diffTrans{0.2f};
-  // flatness is only useful when material is thin
-  float flatness{0.0f};
-  float density{0.01f};
+  float flatness{0.0f}; //only useful when material is thin
+  // Constant Medium
+  float sigma{0.01f};
 
   float FresnelSchlick(float f0, float cosTheta) const;
   glm::vec3 FresnelSchlick(glm::vec3 SpecularColor, float cosTheta) const;

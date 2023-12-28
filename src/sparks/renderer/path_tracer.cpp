@@ -34,7 +34,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
     float tmax = 1e10f;
     if (medium_pre.material_type == MATERIAL_TYPE_MEDIUM) {
       std::uniform_real_distribution<float> randomProb(0.0f, 1.0f);
-      float hit_dis = -log(fmax(randomProb(rd), 1e-10)) / medium_pre.density;
+      float hit_dis = -log(fmax(randomProb(rd), 1e-10)) / medium_pre.sigma;
       medium_hit = true;
       hit_record.hit_entity_id = -1;
       hit_record.position = ray.at(hit_dis);
@@ -51,7 +51,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
                   .GetMaterial(hit_record.material_id);
         scene_->LoadTextureForMaterial(mat, hit_record);
         medium_hit = false;
-      }  
+      }
       // Handle Medium Change
       if (!medium_hit && mat.material_type == MATERIAL_TYPE_MEDIUM) {
         if (hit_record.front_face) {
@@ -66,8 +66,6 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       radiance += throughput * mat.emission * mat.emission_strength;
       if (mat.material_type == MATERIAL_TYPE_EMISSION)
         break;
-      if (mat.material_type == MATERIAL_TYPE_MMD)
-          return glm::vec3(0.2f);
       if (hit_record.material_id > 0 && RandomProb(rd) > mat.alpha) {
         //Alpha Shadow
         ray = Ray(hit_record.position, ray.direction(), ray.time());
@@ -77,8 +75,9 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       origin = hit_record.position;
       normal = hit_record.normal;
       tangent = hit_record.tangent;
-      if (glm::dot(normal, ray.direction()) > 0) 
+      if (glm::dot(normal, ray.direction()) > 0) {
         normal = -normal;
+      }
       std::unique_ptr<bsdf> mat_bsdf;
       switch (mat.material_type) { 
         case MATERIAL_TYPE_LAMBERTIAN:
@@ -98,6 +97,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           mat_bsdf = std::make_unique<Principled>();
           if (hit_record.front_face) {
             mat.IOR = 1.0f / mat.IOR;
+            // So, not Relative IOR.
           } else {
             normal = -normal;
           }

@@ -103,8 +103,8 @@ void Material::CalculateAnisotropicParams(float roughness,
                                        float &ax,
                                        float &ay) const {
   float aspect = sqrt(1.0f - 0.9f * anisotropic);
-  ax = std::max(0.001f, square(roughness) / aspect);
-  ay = std::max(0.001f, square(roughness) * aspect);
+  ax = fmax(0.001f, square(roughness) / aspect);
+  ay = fmax(0.001f, square(roughness) * aspect);
 }
 
 float Material::GgxVndfAnisotropicPdf(const glm::vec3 &wi,

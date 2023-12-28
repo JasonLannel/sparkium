@@ -553,7 +553,7 @@ void App::UpdateImGui() {
           reset_accumulation_ |=
               ImGui::Checkbox("Thin (thickness can be omited)", &material.thin);
         } else if (material.material_type == MATERIAL_TYPE_MEDIUM) {
-          reset_accumulation_ |= ImGui::SliderFloat("Density", &material.density, 0.0f, 1.0f, "%.3f",
+          reset_accumulation_ |= ImGui::SliderFloat("Sigma", &material.sigma, 0.001f, 1.0f, "%.3f",
                                  ImGuiSliderFlags_Logarithmic);
         } else if (material.material_type == MATERIAL_TYPE_PRINCIPLED) {
           // reset_accumulation_ |= ImGui::SliderFloat(
