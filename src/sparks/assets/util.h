@@ -115,15 +115,30 @@ inline glm::vec3 SphereToXYZ(const float &phi, const float &theta) {
   return glm::vec3(cos(phi) * sin(theta), sin(phi) * sin(theta), cos(theta));
 }
 
-glm::vec3 uniformSampleSphere(const glm::vec2 &sample);
+inline float FrDielectric(float cosThetaI, float etaI, float etaT) {
+  cosThetaI = clamp(cosThetaI, -1, 1);
+  // Potentially swap indices of refraction
+  bool entering = cosThetaI > 0.f;
+  if (!entering) {
+    std::swap(etaI, etaT);
+    cosThetaI = std::abs(cosThetaI);
+  }
 
-float FrDielectric(float cosThetaI, float etaI, float etaT);
+  // Compute _cosThetaT_ using Snell's law
+  float sinThetaI = sqrt(std::max(0.0f, 1.0f - cosThetaI * cosThetaI));
+  float sinThetaT = etaI / etaT * sinThetaI;
 
-glm::vec3 SampleGgxVndfAnisotropic(const glm::vec3 &wo,
-                                float ax,
-                                float ay,
-                                float u1,
-                                float u2);
+  // Handle total internal reflection
+  if (sinThetaT >= 1)
+    return 1;
+  float cosThetaT = sqrt(std::max(0.0f, 1.0f - sinThetaT * sinThetaT));
+  float Rparl = ((etaT * cosThetaI) - (etaI * cosThetaT)) /
+                ((etaT * cosThetaI) + (etaI * cosThetaT));
+  float Rperp = ((etaI * cosThetaI) - (etaT * cosThetaT)) /
+                ((etaI * cosThetaI) + (etaT * cosThetaT));
+  return (Rparl * Rparl + Rperp * Rperp) / 2;
+}
+
 inline bool Transmit(glm::vec3 wm, glm::vec3 wi, float n, glm::vec3 &wo) {
   float c = glm::dot(wi, wm);
   if (c < 0.0f) {
