@@ -110,17 +110,17 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       if (mat.material_type != MATERIAL_TYPE_SPECULAR &&
           mat.material_type != MATERIAL_TYPE_TRANSMISSIVE) {
         direction =
-            scene_->SampleLight(origin, ray.time(), rd, &light_pdf, &emission);
+            scene_->SampleLight(origin, ray.time(), rd, light_pdf, emission);
         if (light_pdf > 0.0f) {
           reflectance = mat_bsdf->evaluate(-ray.direction(), direction, origin,
-                                            normal, tangent, mat, &bsdf_pdf);
+                                            normal, tangent, mat, bsdf_pdf);
           w = square(light_pdf) / (square(light_pdf) + square(bsdf_pdf));
           radiance += throughput * reflectance * emission * w / light_pdf;
         }
       }
       // BSDF sample
       direction = mat_bsdf->sample(-ray.direction(), origin, normal, tangent,
-                                   mat, rd, &bsdf_pdf, &reflectance);
+                                   mat, rd, bsdf_pdf, reflectance);
       if (bsdf_pdf == 0.0f)
         break;
       next_ray = Ray(origin, direction, ray.time());

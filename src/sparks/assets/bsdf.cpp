@@ -6,10 +6,9 @@ glm::vec3 Lambertian::evaluate(glm::vec3 V,
                                glm::vec3 normal,
                                glm::vec3 tangent,
                                Material &mat,
-                               float *pdf) const {
+                               float &pdf) const {
   CosineHemispherePdf Lambert(normal, tangent);
-  if (pdf)
-    *pdf = Lambert.Value(Ray(position, L));
+  pdf = Lambert.Value(Ray(position, L));
   return mat.albedo_color * fmax(0.f, glm::dot(normal, L)) * INV_PI;
 }
 
@@ -19,12 +18,11 @@ glm::vec3 Lambertian::sample(glm::vec3 V,
                              glm::vec3 tangent,
                              Material &mat,
                              std::mt19937 &rd,
-                             float *pdf,
-                             glm::vec3 *reflectance) const {
+                             float &pdf,
+                             glm::vec3 &reflectance) const {
   CosineHemispherePdf Lambert(normal, tangent);
-  glm::vec3 &dir = Lambert.Generate(position, rd, pdf);
-  if (reflectance)
-    *reflectance = mat.albedo_color * fmax(0.f, glm::dot(normal, dir)) * INV_PI;
+  glm::vec3 &dir = Lambert.Generate(position, rd, &pdf);
+  reflectance = mat.albedo_color * fmax(0.f, glm::dot(normal, dir)) * INV_PI;
   return dir;
 }
 
@@ -34,7 +32,7 @@ glm::vec3 Specular::evaluate(glm::vec3 V,
                              glm::vec3 normal,
                              glm::vec3 tangent,
                              Material &mat,
-                             float *pdf) const {
+                             float &pdf) const {
   return glm::vec3(0);
 }
 
@@ -44,12 +42,10 @@ glm::vec3 Specular::sample(glm::vec3 V,
                            glm::vec3 tangent,
                            Material &mat,
                            std::mt19937 &rd,
-                           float *pdf,
-                           glm::vec3 *reflectance) const {
-  if (pdf)
-    *pdf = 1.0f;  // Delta
-  if (reflectance)
-    *reflectance = mat.FresnelSchlick(mat.albedo_color, fmin(glm::dot(V, normal), 1.0f));
+                           float &pdf,
+                           glm::vec3 &reflectance) const {
+  pdf = 1e30f;  // Delta
+  reflectance = mat.FresnelSchlick(mat.albedo_color, fmin(glm::dot(V, normal), 1.0f));
   return glm::reflect(-V, normal);
 }
 
@@ -59,7 +55,7 @@ glm::vec3 Transmissive::evaluate(glm::vec3 V,
                                  glm::vec3 normal,
                                  glm::vec3 tangent,
                                  Material &mat,
-                                 float *pdf) const {
+                                 float &pdf) const {
   return glm::vec3(0);
 }
 
@@ -69,8 +65,8 @@ glm::vec3 Transmissive::sample(glm::vec3 V,
                                glm::vec3 tangent,
                                Material &mat,
                                std::mt19937 &rd,
-                               float *pdf,
-                               glm::vec3 *reflectance) const {
+                               float &pdf,
+                               glm::vec3 &reflectance) const {
   if (mat.thin) {
     float reflect_ratio = 1 - mat.IOR;
     reflect_ratio = (1 - reflect_ratio) * (1 - reflect_ratio) * reflect_ratio /
@@ -78,16 +74,12 @@ glm::vec3 Transmissive::sample(glm::vec3 V,
     float cos_theta = fmin(glm::dot(V, normal), 1.0f);
     std::uniform_real_distribution<float> RandomProb(0.0f, 1.0f);
     if (reflect_ratio >= RandomProb(rd)) {
-      if (pdf)
-        *pdf = reflect_ratio;
-      if (reflectance)
-        *reflectance = mat.FresnelSchlick(mat.albedo_color, cos_theta);
+      pdf = reflect_ratio;
+      reflectance = mat.FresnelSchlick(mat.albedo_color, cos_theta);
       return glm::reflect(-V, normal);
     } else {
-      if (pdf)
-        *pdf = 1 - reflect_ratio;
-      if (reflectance)
-        *reflectance = mat.albedo_color;
+      pdf = 1 - reflect_ratio;
+      reflectance = mat.albedo_color;
       return -V;
     }
   } else {
@@ -100,16 +92,12 @@ glm::vec3 Transmissive::sample(glm::vec3 V,
       reflect_ratio = 1.0f;
     std::uniform_real_distribution<float> RandomProb(0.0f, 1.0f);
     if (reflect_ratio >= RandomProb(rd)) {
-      if (pdf)
-        *pdf = reflect_ratio;
-      if (reflectance)
-        *reflectance = mat.FresnelSchlick(mat.albedo_color, cos_theta);
+      pdf = reflect_ratio;
+      reflectance = mat.FresnelSchlick(mat.albedo_color, cos_theta);
       return glm::reflect(-V, normal);
     } else {
-      if (pdf)
-        *pdf = 1.0f - reflect_ratio;
-      if (reflectance)
-        *reflectance = mat.albedo_color;
+      pdf = 1.0f - reflect_ratio;
+      reflectance = mat.albedo_color;
       return direction;
     }
   }
@@ -121,11 +109,9 @@ glm::vec3 Medium::evaluate(glm::vec3 V,
                            glm::vec3 normal,
                            glm::vec3 tangent,
                            Material &mat,
-                           float *pdf) const {
-  if (pdf) {
-    UniformSpherePdf Medium(normal);
-    *pdf = Medium.Value(Ray(position, L));
-  }
+                           float &pdf) const {
+  UniformSpherePdf Medium(normal);
+  pdf = Medium.Value(Ray(position, L));
   return mat.albedo_color;
 }
 
@@ -135,12 +121,11 @@ glm::vec3 Medium::sample(glm::vec3 V,
                          glm::vec3 tangent,
                          Material &mat,
                          std::mt19937 &rd,
-                         float *pdf,
-                         glm::vec3 *reflectance) const {
+                         float &pdf,
+                         glm::vec3 &reflectance) const {
   UniformSpherePdf Medium(normal);
-  if (reflectance)
-    *reflectance = mat.albedo_color;
-  return Medium.Generate(position, rd, pdf);
+  reflectance = mat.albedo_color;
+  return Medium.Generate(position, rd, &pdf);
 }
 
 glm::vec3 Principled::evaluate(glm::vec3 V,
@@ -149,24 +134,22 @@ glm::vec3 Principled::evaluate(glm::vec3 V,
                                glm::vec3 normal,
                                glm::vec3 tangent,
                                Material &mat,
-                               float *pdf) const {
+                               float &pdf) const {
   // construct tangent space matrix. We assume normal vector here is in world
   // space.
   Onb o(normal, tangent);
-  glm::vec3 n = o.w();
-  glm::vec3 t = o.u(), b = o.v();
-  glm::mat3x3 tangentToWorld = glm::mat3x3(t, n, b);
-  glm::mat3x3 worldToTangent = glm::transpose(tangentToWorld);
+  glm::vec3 &n = o.w(), &t = o.u(), &b = o.v();
+  glm::mat3x3 &tangentToWorld = glm::mat3x3(t, n, b);
+  glm::mat3x3 &worldToTangent = glm::transpose(tangentToWorld);
 
   V = glm::normalize(worldToTangent * V);
   L = glm::normalize(worldToTangent * L);
-  glm::vec3 H = glm::normalize(V + L);
+  glm::vec3 &H = glm::normalize(V + L);
 
   float dotNV = CosTheta(V);
   float dotNL = CosTheta(L);
 
   glm::vec3 reflectance = glm::vec3(0.0f);
-  float forwardPdf = 0.0f;
 
   float pBRDF, pDiffuse, pClearcoat, pSpecTrans;
   CalculateLobePdfs(pBRDF, pDiffuse, pClearcoat, pSpecTrans, mat);
@@ -185,7 +168,7 @@ glm::vec3 Principled::evaluate(glm::vec3 V,
 
     float clearcoat = EvaluateDisneyClearcoat(V, H, L, forwardClearcoatPdfW, mat);
     reflectance += glm::vec3(clearcoat);
-    forwardPdf += pClearcoat * forwardClearcoatPdfW;
+    pdf += pClearcoat * forwardClearcoatPdfW;
   }
 
   // -- Diffuse
@@ -197,7 +180,7 @@ glm::vec3 Principled::evaluate(glm::vec3 V,
 
     reflectance += diffuseWeight * (diffuse * mat.albedo_color + sheen);
 
-    forwardPdf += pDiffuse * forwardDiffusePdfW;
+    pdf += pDiffuse * forwardDiffusePdfW;
   }
 
   // -- transmission
@@ -217,7 +200,7 @@ glm::vec3 Principled::evaluate(glm::vec3 V,
     float dotLH = glm::dot(H, L);
     float dotVH = glm::dot(H, V);
     float relativeIOR = CosTheta(V) > 0.0f ? 1.0f / mat.IOR : mat.IOR;
-    forwardPdf += pSpecTrans * forwardTransmissivePdfW /
+    pdf += pSpecTrans * forwardTransmissivePdfW /
                   (square(dotLH + relativeIOR * dotVH));
   }
 
@@ -228,13 +211,11 @@ glm::vec3 Principled::evaluate(glm::vec3 V,
         EvaluateDisneyBRDF(V, H, L, forwardMetallicPdfW, mat);
 
     reflectance += specular;
-    forwardPdf +=
+    pdf +=
         pBRDF * forwardMetallicPdfW / (4 * std::abs(glm::dot(V, H)));
   }
 
   reflectance = reflectance * std::abs(dotNL);
-  if (pdf)
-    *pdf = forwardPdf;
 
   return reflectance;
 }
@@ -245,8 +226,8 @@ glm::vec3 Principled::sample(glm::vec3 V,
                              glm::vec3 tangent,
                              Material &mat,
                              std::mt19937 &rd,
-                             float *pdf,
-                             glm::vec3 *reflectance) const {
+                             float &pdf,
+                             glm::vec3 &reflectance) const {
     float pSpecular, pDiffuse, pClearcoat, pSpecTrans;
     CalculateLobePdfs(pSpecular, pDiffuse, pClearcoat, pSpecTrans, mat);
     float pLobe = 0.0f;
@@ -270,20 +251,16 @@ glm::vec3 Principled::sample(glm::vec3 V,
       L = SampleDisneySpecTrans(V, rd, mat, pdf, reflectance);
     } else {
       L = glm::vec3(0);
-      if (pdf)
-        *pdf = 0;
-      if (reflectance)
-        *reflectance = glm::vec3(0);
+      pdf = 0;
+      reflectance = glm::vec3(0);
     }
     if (L == glm::vec3(0)) {
       return L;
     }
     L = glm::normalize(tangentToWorld * L);
     if (pLobe > 0.0f) {
-      if (pdf)
-        *pdf *= pLobe;
-      if (reflectance)
-        *reflectance *= 1.0f / pLobe;
+      pdf *= pLobe;
+      reflectance *= 1.0f / pLobe;
     }
     return L;
 }
@@ -509,8 +486,8 @@ glm::vec3 Principled::SampleGgxVndfAnisotropic(const glm::vec3 &V,
 glm::vec3 Principled::SampleDisneyBRDF(glm::vec3 V,
                                        std::mt19937 &rd,
                                        Material &mat,
-                                       float *pdf,
-                                       glm::vec3 *reflectance) const {
+                                       float &pdf,
+                                       glm::vec3 &reflectance) const {
     // Sample L in tangent space.
     float ax, ay;
     mat.CalculateAnisotropicParams(mat.roughness, mat.anisotropic, ax, ay);
@@ -524,27 +501,23 @@ glm::vec3 Principled::SampleDisneyBRDF(glm::vec3 V,
     // -- Reflect over normal
     glm::vec3 L = glm::normalize(glm::reflect(-V, H));
     if (CosTheta(L) <= 0.0f) {
-      if (pdf)
-        *pdf = 0.0f;
-      if (reflectance)
-        *reflectance = glm::vec3(0.f);
+      pdf = 0.0f;
+      reflectance = glm::vec3(0.f);
       return glm::vec3(0.0f);
     }
     glm::vec3 F = DisneyFresnel(V, H, L, mat);
     float G1v = mat.SeparableSmithGGXG1(V, H, ax, ay);
     glm::vec3 specular = G1v * F;
-    if (reflectance)
-      *reflectance = specular;
-    if (pdf)
-        *pdf = mat.GgxVndfAnisotropicPdf(L, H, V, ax, ay) / (4 * fabs(glm::dot(V, H)));
+    reflectance = specular;
+    pdf = mat.GgxVndfAnisotropicPdf(L, H, V, ax, ay) / (4 * fabs(glm::dot(V, H)));
     return L;
 }
 
 glm::vec3 Principled::SampleDisneyClearCoat(glm::vec3 V,
                                             std::mt19937 &rd,
                                             Material &mat,
-                                            float *pdf,
-                                            glm::vec3 *reflectance) const {
+                                            float &pdf,
+                                            glm::vec3 &reflectance) const {
     // Sample L in tangent space.
 
     const float a = 0.25f;
@@ -566,10 +539,8 @@ glm::vec3 Principled::SampleDisneyClearCoat(glm::vec3 V,
 
     glm::vec3 L = glm::reflect(-V, H);
     if (glm::dot(V, L) < 0.0f) {
-      if (pdf)
-        *pdf = 0.0f;
-      if (reflectance)
-        *reflectance = glm::vec3(0.0f);
+      pdf = 0.0f;
+      reflectance = glm::vec3(0.0f);
       return glm::vec3(0.0f);
     }
     float dotNH = CosTheta(H);
@@ -580,23 +551,19 @@ glm::vec3 Principled::SampleDisneyClearCoat(glm::vec3 V,
     float g =
         mat.SeparableSmithGGXG1(L, 0.25f) * mat.SeparableSmithGGXG1(V, 0.25f);
     float fPdf = d / (4.0f * glm::dot(V, H));
-    if (pdf)
-      *pdf = fPdf;
-    if (reflectance)
-      *reflectance = glm::vec3(0.25f * mat.clearcoat * g * f * d) / fPdf;
+    pdf = fPdf;
+    reflectance = glm::vec3(0.25f * mat.clearcoat * g * f * d) / fPdf;
     return L;
 }
 
 glm::vec3 Principled::SampleDisneySpecTrans(glm::vec3 V,
                                             std::mt19937 &rd,
                                             Material &mat,
-                                            float *pdf,
-                                            glm::vec3 *reflectance) const {
+                                            float &pdf,
+                                            glm::vec3 &reflectance) const {
     if (CosTheta(V) == 0.0) {
-      if (pdf)
-        *pdf = 0.0f;
-      if (reflectance)
-        *reflectance = glm::vec3(0.0f);
+      pdf = 0.0f;
+      reflectance = glm::vec3(0.0f);
       return glm::vec3(0.0f);
     }
     float rscaled = mat.thin
@@ -625,15 +592,13 @@ glm::vec3 Principled::SampleDisneySpecTrans(glm::vec3 V,
     glm::vec3 L;
     if (dist(rd) <= F) {
       L = glm::normalize(glm::reflect(-V, H));
-      if (reflectance)
-        *reflectance = G1v * mat.albedo_color;
+      reflectance = G1v * mat.albedo_color;
       fPdf = F / (4.0f * fabs(glm::dot(V, H)));
     } else {
       if (mat.thin) {
         L = glm::reflect(-V, H);
         L.y = -L.y;
-        if (reflectance)
-          *reflectance = G1v * sqrt(mat.albedo_color);
+        reflectance = G1v * sqrt(mat.albedo_color);
       } else {
         if (Transmit(H, V, relativeIOR, L)) {
           /*
@@ -644,8 +609,7 @@ glm::vec3 Principled::SampleDisneySpecTrans(glm::vec3 V,
         } else {
           L = glm::reflect(-V, H);
         }
-        if (reflectance)
-          *reflectance = G1v * mat.albedo_color;
+        reflectance = G1v * mat.albedo_color;
       }
       L = glm::normalize(L);
       float dotLH = fabs(glm::dot(L, H));
@@ -654,10 +618,8 @@ glm::vec3 Principled::SampleDisneySpecTrans(glm::vec3 V,
     }
 
     if (CosTheta(V) == 0.0f) {
-      if (pdf)
-        *pdf = 0.f;
-      if (reflectance)
-        *reflectance = glm::vec3(0);
+      pdf = 0.f;
+      reflectance = glm::vec3(0);
       return glm::vec3(0.0f);
     }
     fPdf *= mat.GgxVndfAnisotropicPdf(L, H, V, tax, tay);
@@ -667,8 +629,8 @@ glm::vec3 Principled::SampleDisneySpecTrans(glm::vec3 V,
 glm::vec3 Principled::SampleDisneyDiffuse(glm::vec3 V,
                                           std::mt19937 &rd,
                                           Material &mat,
-                                          float *pdf,
-                                          glm::vec3 *reflectance) const {
+                                          float &pdf,
+                                          glm::vec3 &reflectance) const {
 
     float sign = CosTheta(V) > 0.0f ? 1.0f : -1.0f;
 
@@ -685,10 +647,8 @@ glm::vec3 Principled::SampleDisneyDiffuse(glm::vec3 V,
 
     float dotNL = CosTheta(L);
     if (dotNL == 0.0f) {
-      if (pdf)
-        *pdf = 0.0f;
-      if (reflectance)
-        *reflectance = glm::vec3(0);
+      pdf = 0.0f;
+      reflectance = glm::vec3(0);
       return glm::vec3(0.0f);
     }
     float dotNV = CosTheta(V);
@@ -714,10 +674,8 @@ glm::vec3 Principled::SampleDisneyDiffuse(glm::vec3 V,
     glm::vec3 sheen = EvaluateSheen(V, H, L, mat);
     float diffuse = EvaluateDisneyDiffuse(V, H, L, mat);
     assert(fPdf > 0.0f);
-    if (pdf)
-      *pdf = fabs(dotNL) * fPdf;
-    if (reflectance)
-      *reflectance = sheen + color * diffuse / fPdf;
+    pdf = fabs(dotNL) * fPdf;
+    reflectance = sheen + color * diffuse / fPdf;
     return L;
 }
 }  // namespace sparks
