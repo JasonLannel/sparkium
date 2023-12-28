@@ -110,6 +110,7 @@ glm::vec3 Transmissive::sample(glm::vec3 wi,
         *pdf = 1.0f - reflect_ratio;
       if (reflectance)
         *reflectance = mat.albedo_color;
+      printf("FICL");
       return direction;
     }
   }
