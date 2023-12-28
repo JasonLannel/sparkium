@@ -15,12 +15,13 @@ class bsdf {
                      Material &mat,
                      float *pdf) const = 0;
   virtual glm::vec3 sample(glm::vec3 wi,
-                   glm::vec3 position,
-                   glm::vec3 normal,
-                   glm::vec3 tangent,
-                   Material &mat,
-                   std::mt19937 &rd,
-                   float *pdf) const = 0;
+                           glm::vec3 position,
+                           glm::vec3 normal,
+                           glm::vec3 tangent,
+                           Material &mat,
+                           std::mt19937 &rd,
+                           float *pdf,
+                           glm::vec3 *reflectance) const = 0;
 };
 
 class Lambertian : public bsdf {
@@ -38,7 +39,8 @@ class Lambertian : public bsdf {
                    glm::vec3 tangent,
                    Material &mat,
                    std::mt19937 &rd,
-                   float *pdf) const override;
+                   float *pdf,
+                   glm::vec3 *reflectance) const override;
 
 };
 
@@ -57,7 +59,8 @@ class Specular : public bsdf {
                    glm::vec3 tangent,
                    Material &mat,
                    std::mt19937 &rd,
-                   float *pdf) const override;
+                   float *pdf,
+                   glm::vec3 *reflectance) const override;
 };
 
 class Transmissive : public bsdf {
@@ -75,7 +78,8 @@ class Transmissive : public bsdf {
                    glm::vec3 tangent,
                    Material &mat,
                    std::mt19937 &rd,
-                   float *pdf) const override;
+                   float *pdf,
+                   glm::vec3 *reflectance) const override;
 };
 
 class Medium : public bsdf {
@@ -93,7 +97,8 @@ class Medium : public bsdf {
                    glm::vec3 tangent,
                    Material &mat,
                    std::mt19937 &rd,
-                   float *pdf) const override;
+                   float *pdf,
+                   glm::vec3 *reflectance) const override;
 };
 
 class Principled : public bsdf {
@@ -111,7 +116,8 @@ class Principled : public bsdf {
                    glm::vec3 tangent,
                    Material &mat,
                    std::mt19937 &rd,
-                   float *pdf) const override;
+                   float *pdf,
+                   glm::vec3 *reflectance) const override;
 
  private:
   void CalculateLobePdfs(float &pSpecular,

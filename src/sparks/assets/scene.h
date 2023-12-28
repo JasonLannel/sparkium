@@ -64,6 +64,7 @@ class Scene {
                  float t_min,
                  float t_max,
                  HitRecord *hit_record) const;
+  bool CollisionTest(const Ray &ray, float t_min, float t_max) const;
 
   bool TextureCombo(const char *label, int *current_item) const;
   bool EntityCombo(const char *label, int *current_item) const;

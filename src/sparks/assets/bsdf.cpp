@@ -19,9 +19,13 @@ glm::vec3 Lambertian::sample(glm::vec3 wi,
                              glm::vec3 tangent,
                              Material &mat,
                              std::mt19937 &rd,
-                             float *pdf) const {
+                             float *pdf,
+                             glm::vec3 *reflectance) const {
   CosineHemispherePdf Lambert(normal, tangent);
-  return Lambert.Generate(position, rd, pdf);
+  glm::vec3 &dir = Lambert.Generate(position, rd, pdf);
+  if (reflectance)
+    *reflectance = mat.albedo_color * fmax(0.f, glm::dot(normal, dir)) * INV_PI;
+  return dir;
 }
 
 glm::vec3 Specular::evaluate(glm::vec3 wi,
@@ -31,12 +35,7 @@ glm::vec3 Specular::evaluate(glm::vec3 wi,
                              glm::vec3 tangent,
                              Material &mat,
                              float *pdf) const {
-  if (pdf)
-    *pdf = (wo == glm::reflect(-wi, normal)) ? 1e36f : 0;
-  float cos_theta = fmin(glm::dot(wi, normal), 1.0f);
-  if (cos_theta < 0.0f)
-    return glm::vec3(0);
-  return mat.FresnelSchlick(mat.albedo_color, cos_theta);
+  return glm::vec3(0);
 }
 
 glm::vec3 Specular::sample(glm::vec3 wi,
@@ -45,9 +44,12 @@ glm::vec3 Specular::sample(glm::vec3 wi,
                            glm::vec3 tangent,
                            Material &mat,
                            std::mt19937 &rd,
-                           float *pdf) const {
+                           float *pdf,
+                           glm::vec3 *reflectance) const {
   if (pdf)
-    *pdf = 1e36f;  // Delta
+    *pdf = 1.0f;  // Delta
+  if (reflectance)
+    *reflectance = mat.FresnelSchlick(mat.albedo_color, fmin(glm::dot(wi, normal), 1.0f));
   return glm::reflect(-wi, normal);
 }
 
@@ -58,32 +60,7 @@ glm::vec3 Transmissive::evaluate(glm::vec3 wi,
                                  glm::vec3 tangent,
                                  Material &mat,
                                  float *pdf) const {
-  float refract_ratio = mat.IOR;
-  if (mat.thin) {
-    float cos_theta = fmin(glm::dot(wi, normal), 1.0f);
-    if (glm::dot(normal, wo) > 0.0f) {
-      if (pdf)
-        *pdf = (wo == glm::reflect(-wi, normal)) ? 1e36f : 0;
-      return mat.FresnelSchlick(mat.albedo_color, cos_theta);
-    } else {
-      if (pdf)
-        *pdf = (wo == -wi) ? 1e36f : 0;
-      return mat.albedo_color;
-    }
-  } else {
-    float cos_theta = fmin(glm::dot(wi, normal), 1.0f);
-    float f0 = (1 - refract_ratio) / (1 + refract_ratio);
-    f0 *= f0;
-    if (glm::dot(normal, wo) > 0.0f) {
-      if (pdf)
-        *pdf = (wo == glm::reflect(-wi, normal)) ? 1e36f : 0;
-      return mat.FresnelSchlick(mat.albedo_color, cos_theta);
-    } else {
-      if (pdf)
-        *pdf = (wo == glm::refract(-wi, normal, refract_ratio)) ? 1e36f : 0;
-      return mat.albedo_color;
-    }
-  }
+  return glm::vec3(0);
 }
 
 glm::vec3 Transmissive::sample(glm::vec3 wi,
@@ -92,37 +69,48 @@ glm::vec3 Transmissive::sample(glm::vec3 wi,
                                glm::vec3 tangent,
                                Material &mat,
                                std::mt19937 &rd,
-                               float *pdf) const {
-  float refract_ratio = mat.IOR;
+                               float *pdf,
+                               glm::vec3 *reflectance) const {
   if (mat.thin) {
-    float reflect_ratio = 1 - refract_ratio;
+    float reflect_ratio = 1 - mat.IOR;
     reflect_ratio = (1 - reflect_ratio) * (1 - reflect_ratio) * reflect_ratio /
                     (1 - reflect_ratio * reflect_ratio);
     float cos_theta = fmin(glm::dot(wi, normal), 1.0f);
     std::uniform_real_distribution<float> RandomProb(0.0f, 1.0f);
-    if (reflect_ratio > RandomProb(rd)) {
-      if (*pdf)
-        *pdf = 1e36f;
+    if (reflect_ratio >= RandomProb(rd)) {
+      if (pdf)
+        *pdf = reflect_ratio;
+      if (reflectance)
+        *reflectance = mat.FresnelSchlick(mat.albedo_color, cos_theta);
       return glm::reflect(-wi, normal);
     } else {
-      if (*pdf)
-        *pdf = 1e36f;
+      if (pdf)
+        *pdf = 1 - reflect_ratio;
+      if (reflectance)
+        *reflectance = mat.albedo_color;
       return -wi;
     }
   } else {
     float cos_theta = fmin(glm::dot(wi, normal), 1.0f);
-    float f0 = (1 - refract_ratio) / (1 + refract_ratio);
+    float f0 = (1 - mat.IOR) / (1 + mat.IOR);
     f0 *= f0;
-    glm::vec3 &direction = glm::refract(-wi, normal, refract_ratio);
+    glm::vec3 &direction = glm::refract(-wi, normal, mat.IOR);
     float reflect_ratio = mat.FresnelSchlick(f0, cos_theta);
+    if (glm::length(direction) == 0.f)
+      reflect_ratio = 1.0f;
     std::uniform_real_distribution<float> RandomProb(0.0f, 1.0f);
-    if (glm::length(direction) > 0.f && reflect_ratio >= RandomProb(rd)) {
-      if (*pdf)
-        *pdf = 1e36f;
+    if (reflect_ratio >= RandomProb(rd)) {
+      if (pdf)
+        *pdf = reflect_ratio;
+      if (reflectance)
+        *reflectance = mat.FresnelSchlick(mat.albedo_color, cos_theta);
       return glm::reflect(-wi, normal);
     } else {
-      if (*pdf)
-        *pdf = 1e36f;
+      if (pdf)
+        *pdf = 1.0f - reflect_ratio;
+      if (reflectance)
+        *reflectance = mat.albedo_color;
+      printf("FICL");
       return direction;
     }
   }
@@ -148,8 +136,11 @@ glm::vec3 Medium::sample(glm::vec3 wi,
                          glm::vec3 tangent,
                          Material &mat,
                          std::mt19937 &rd,
-                         float *pdf) const {
+                         float *pdf,
+                         glm::vec3 *reflectance) const {
   UniformSpherePdf Medium(normal);
+  if (reflectance)
+    *reflectance = mat.albedo_color;
   return Medium.Generate(position, rd, pdf);
 }
 
@@ -254,7 +245,8 @@ glm::vec3 Principled::sample(glm::vec3 wi,
                        glm::vec3 tangent,
                        Material &mat,
                        std::mt19937 &rd,
-                       float *pdf) const {
+                             float *pdf,
+                             glm::vec3 *reflectance) const {
     float pSpecular, pDiffuse, pClearcoat, pSpecTrans;
     CalculateLobePdfs(pSpecular, pDiffuse, pClearcoat, pSpecTrans, mat);
     float pLobe = 0.0f;
@@ -289,6 +281,8 @@ glm::vec3 Principled::sample(glm::vec3 wi,
     */
     UniformSpherePdf Pdf(normal, tangent);
     wo = Pdf.Generate(position, rd, pdf);
+    if (reflectance)
+      *reflectance = evaluate(wi, wo, position, normal, tangent, mat, nullptr);
     /*
     if (pdf)
       evaluate(wi, wo, position, normal, tangent, mat, pdf);
@@ -305,7 +299,7 @@ glm::vec3 Principled::EvaluateSheen(const glm::vec3 &wi,
     }
     float dotHL = glm::dot(wm, wo);
     glm::vec3 tint =
-        mat.CalculateTint(mat.albedo_color);  // original: baseColor, are they the same?
+        mat.CalculateTint(mat.albedo_color);
     return mat.sheen * interpolate(glm::vec3(1.0f), tint, mat.sheenTint) *
            mat.SchlickWeight(dotHL);
 }

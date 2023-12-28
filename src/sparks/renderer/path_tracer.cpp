@@ -77,7 +77,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       origin = hit_record.position;
       normal = hit_record.normal;
       tangent = hit_record.tangent;
-      if (glm::dot(normal, ray.direction()) > 0)
+      if (glm::dot(normal, ray.direction()) > 0) 
         normal = -normal;
       std::unique_ptr<bsdf> mat_bsdf;
       switch (mat.material_type) { 
@@ -106,6 +106,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       float light_pdf(0), bsdf_pdf(0), w(0);
       glm::vec3 reflectance(0); 
       glm::vec3 emission(0);
+      // Light source sample
       if (mat.material_type != MATERIAL_TYPE_SPECULAR &&
           mat.material_type != MATERIAL_TYPE_TRANSMISSIVE) {
         direction =
@@ -117,8 +118,9 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           radiance += throughput * reflectance * emission * w / light_pdf;
         }
       }
+      // BSDF sample
       direction = mat_bsdf->sample(-ray.direction(), origin, normal, tangent,
-                                   mat, rd, &bsdf_pdf);
+                                   mat, rd, &bsdf_pdf, &reflectance);
       if (bsdf_pdf == 0.0f)
         break;
       next_ray = Ray(origin, direction, ray.time());
@@ -126,12 +128,9 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
           mat.material_type != MATERIAL_TYPE_TRANSMISSIVE) {
         light_pdf = scene_->LightValue(next_ray);
         w = square(bsdf_pdf) / (square(light_pdf) + square(bsdf_pdf));
-        throughput *= mat_bsdf->evaluate(-ray.direction(), direction, origin,
-                                         normal, tangent, mat, nullptr) *
-                      w / bsdf_pdf;
+        throughput *= reflectance * w / bsdf_pdf;
       } else {
-        throughput *= mat_bsdf->evaluate(-ray.direction(), direction, origin,
-                                         normal, tangent, mat, nullptr);
+        throughput *= reflectance;
       }
       ray = next_ray;
       if (bounce > 7) {

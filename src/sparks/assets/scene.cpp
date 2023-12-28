@@ -170,7 +170,7 @@ void Scene::UpdateEnvmapConfiguration() {
   }
   envmap_sampler_ = std::make_unique<EnvmapPdf>(
       envmap_prob_.begin(), envmap_texture.GetWidth(),
-                                  envmap_texture.GetHeight(), envmap_offset_);
+      envmap_texture.GetHeight(), envmap_offset_);
   light_id_.clear();
   if (envmap_sampler_->FuncInt() > 0.0f) {
     light_id_.push_back(-1);
@@ -211,7 +211,7 @@ float Scene::TraceRay(const Ray &ray,
   for (int entity_id = 0; entity_id < entities_.size(); entity_id++) {
     auto &entity = entities_[entity_id];
     if (randomProb(rd) > entity.GetMaterial(0).alpha)
-        continue;
+      continue;
     auto &transform = entity.GetTransformMatrix();
     auto inv_transform = glm::inverse(transform);
     auto transformed_direction =
@@ -220,26 +220,28 @@ float Scene::TraceRay(const Ray &ray,
     if (transformed_direction_length < 1e-6) {
       continue;
     }
-    Ray local_ray = Ray(inv_transform * glm::vec4{ray.origin(), 1.0f},
-                  transformed_direction / transformed_direction_length, ray.time());
-    local_result = entity.GetModel()->TraceRay(local_ray, t_min, hit_record ? &local_hit_record : nullptr);
+    Ray local_ray =
+        Ray(inv_transform * glm::vec4{ray.origin(), 1.0f},
+            transformed_direction / transformed_direction_length, ray.time());
+    local_result = entity.GetModel()->TraceRay(
+        local_ray, t_min, hit_record ? &local_hit_record : nullptr);
     local_result /= transformed_direction_length;
     if (local_result > t_min && local_result < t_max &&
         (result < 0.0f || local_result < result)) {
-        result = local_result;
-        if (hit_record) {
-          local_hit_record.position =
-              transform * glm::vec4{local_hit_record.position, 1.0f};
-          local_hit_record.normal = glm::transpose(inv_transform) *
-                                    glm::vec4{local_hit_record.normal, 0.0f};
-          local_hit_record.tangent =
-              transform * glm::vec4{local_hit_record.tangent, 0.0f};
-          local_hit_record.geometry_normal =
-              glm::transpose(inv_transform) *
-              glm::vec4{local_hit_record.geometry_normal, 0.0f};
-          *hit_record = local_hit_record;
-          hit_record->hit_entity_id = entity_id;
-        }
+      result = local_result;
+      if (hit_record) {
+        local_hit_record.position =
+            transform * glm::vec4{local_hit_record.position, 1.0f};
+        local_hit_record.normal = glm::transpose(inv_transform) *
+                                  glm::vec4{local_hit_record.normal, 0.0f};
+        local_hit_record.tangent =
+            transform * glm::vec4{local_hit_record.tangent, 0.0f};
+        local_hit_record.geometry_normal =
+            glm::transpose(inv_transform) *
+            glm::vec4{local_hit_record.geometry_normal, 0.0f};
+        *hit_record = local_hit_record;
+        hit_record->hit_entity_id = entity_id;
+      }
     }
   }
   if (hit_record) {
@@ -248,6 +250,29 @@ float Scene::TraceRay(const Ray &ray,
     hit_record->tangent = glm::normalize(hit_record->tangent);
   }
   return result;
+}
+
+bool Scene::CollisionTest(const Ray &ray, float t_min, float t_max) const {
+  for (int entity_id = 0; entity_id < entities_.size(); entity_id++) {
+    auto &entity = entities_[entity_id];
+    auto &transform = entity.GetTransformMatrix();
+    auto inv_transform = glm::inverse(transform);
+    auto transformed_direction =
+        glm::vec3{inv_transform * glm::vec4{ray.direction(), 0.0f}};
+    auto transformed_direction_length = glm::length(transformed_direction);
+    if (transformed_direction_length < 1e-6) {
+      continue;
+    }
+    Ray local_ray =
+        Ray(inv_transform * glm::vec4{ray.origin(), 1.0f},
+            transformed_direction / transformed_direction_length, ray.time());
+    float local_result = entity.GetModel()->TraceRay(local_ray, t_min, nullptr);
+    local_result /= transformed_direction_length;
+    if (local_result > t_min && local_result < t_max) {
+      return true;
+    }
+  }
+  return false;
 }
 
 glm::vec4 Scene::SampleEnvmap(const glm::vec3 &direction) const {
@@ -389,7 +414,7 @@ glm::vec3 Scene::SampleLight(glm::vec3 origin,
     idx = light_id_.size() - 1;
   if (light_id_[idx] == -1) {
     glm::vec3 &direction = envmap_sampler_->Generate(origin, rd, pdf);
-    if (TraceRay(Ray(origin, direction, time), 1e-3f, 1e10f, nullptr) <= 0.0f) {
+    if (!CollisionTest(Ray(origin, direction, time), 1e-3f, 1e10f)) {
       if (pdf)
         *pdf *= 1.0f / light_id_.size();
       if (emission)
@@ -466,7 +491,7 @@ void Scene::LoadTextureForMaterial(Material &mat, HitRecord &rec) const {
     rec.normal = glm::normalize(onb.local(normalFromTex));
     rec.tangent = glm::normalize(rec.tangent - glm::dot(rec.tangent, rec.normal) * rec.normal);
   }
-  if (rec.front_face) {
+  if (rec.front_face || mat.thin) {
     mat.IOR = 1.0f / mat.IOR;
   }
 }
