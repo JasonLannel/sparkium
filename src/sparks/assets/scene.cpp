@@ -361,6 +361,12 @@ Scene::Scene(const std::string &filename) : Scene() {
         Texture envmap(1, 1, glm::vec4{color, 1.0f});
         envmap_id_ = AddTexture(envmap, "Environment Map");
       }
+      auto grandchild_element = child_element->FirstChildElement("offset");
+      if (grandchild_element) {
+        envmap_offset_ =
+            std::stof(grandchild_element->FindAttribute("value")->Value()) *
+            PI / 180.0f;
+      }
     } else if (element_type == "camera") {
       camera_to_world =
           XmlTransformMatrix(child_element->FirstChildElement("transform"));

@@ -55,6 +55,18 @@ glm::vec4 StringToVec4(const std::string &s) {
   return {v[0], v[1], v[2], v[3]};
 }
 
+glm::mat4 StringToMat4(const std::string &s) {
+  std::istringstream ss(s);
+  std::vector<float> v;
+  std::string word;
+  while (ss >> word)
+    v.push_back(std::stof(word));
+  return {v[0], v[1], v[2],  v[3],  
+          v[4], v[5], v[6],  v[7],
+          v[8], v[9], v[10], v[11], 
+          v[12], v[13], v[14], v[15]};
+}
+
 glm::mat4 XmlTransformMatrix(tinyxml2::XMLElement *transform_element) {
   if (!transform_element)
     return glm::mat4{1.0f};
@@ -91,6 +103,7 @@ glm::mat4 XmlTransformMatrix(tinyxml2::XMLElement *transform_element) {
     glm::vec3 scale{1.0f};
     glm::vec3 rotation{0.0f};
     glm::vec3 translation(0.0f);
+    glm::mat4 matrix(1.0f);
     auto child_element = transform_element->FirstChildElement("scale");
     if (child_element) {
       scale = StringToVec3(child_element->FindAttribute("value")->Value());
@@ -104,8 +117,12 @@ glm::mat4 XmlTransformMatrix(tinyxml2::XMLElement *transform_element) {
       translation =
           StringToVec3(child_element->FindAttribute("value")->Value());
     }
+    child_element = transform_element->FirstChildElement("matrix");
+    if (child_element) {
+      matrix = StringToMat4(child_element->FindAttribute("value")->Value());
+      return matrix;
+    }
 
-    glm::mat4 matrix;
     ImGuizmo::RecomposeMatrixFromComponents(
         reinterpret_cast<float *>(&translation),
         reinterpret_cast<float *>(&rotation), reinterpret_cast<float *>(&scale),

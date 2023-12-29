@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scene>
+	<!-- camera -->
+	<camera>
+		<transform type="lookat">
+			<eye value="-0.5873172879219055 2.7623000144958496 9.714289665222168"/>
+            <center value="-0.39176398515701294 1.805899977684021 -5.2296600341796875"/>
+            <up value="0.0 1.0 0.0"/>
+		</transform>
+		<fov value="60"/>
+	</camera>
+
+	<!-- envmap -->
+	<envmap type="file" value="../../custom_scene_dining_room/texures/spaichingen_hill_2k.hdr">
+        <offset value="115"/>
+    </envmap>
+
+	<!-- BSDF materials (have to be implemented) -->
+	<!-- entities -->
+	<model type="obj" name="FrostedGlass_0001">
+        <filename value="../../custom_scene_dining_room/models/Mesh013.obj"/>
+
+        <material type="principled">
+            <albedo value="0.79311 0.79311 0.79311"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model> 
+	<model type="obj" name="WhitePlastic_0001">
+        <filename value="../../custom_scene_dining_room/models/Mesh016.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model> 
+	<model type="obj" name="WhitePlastic_0002">
+        <filename value="../../custom_scene_dining_room/models/Mesh015.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model> 
+	<model type="obj" name="FrostedGlass_0002">
+        <filename value="../../custom_scene_dining_room/models/Mesh023.obj"/>
+
+        <material type="principled">
+            <albedo value="0.79311 0.79311 0.79311"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="WhitePlastic_0003">
+        <filename value="../../custom_scene_dining_room/models/Mesh020.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model> 
+	<model type="obj" name="WhitePlastic_0004">
+        <filename value="../../custom_scene_dining_room/models/Mesh017.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model> 
+	<model type="obj" name="none">
+        <filename value="../../custom_scene_dining_room/models/Mesh024.obj"/>
+
+        <material type="lambertian">
+            <albedo value="0 0 0"/>
+        </material>
+    </model> 
+	<model type="obj" name="BlackPaint_0001">
+        <filename value="../../custom_scene_dining_room/models/Mesh041.obj"/>
+
+        <material type="principled">
+            <albedo value="0.01 0.01 0.01"/>
+            <roughness value="0.2"/>
+            <IOR value="1.5"/>
+        </material>
+    </model> 
+	<model type="obj" name="BlackPaint_0002">
+        <filename value="../../custom_scene_dining_room/models/Mesh011.obj"/>
+
+        <material type="principled">
+            <albedo value="0.01 0.01 0.01"/>
+            <roughness value="0.2"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Ceramic_0001">
+        <filename value="../../custom_scene_dining_room/models/Mesh026.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Gold_0001">
+        <filename value="../../custom_scene_dining_room/models/Mesh018.obj"/>
+    </model>
+	<model type="obj" name="RoughMetal_0001">
+        <filename value="../../custom_scene_dining_room/models/Mesh007.obj"/>
+    </model>
+	<model type="obj" name="PaintedCeramic_0001">
+        <filename value="../../custom_scene_dining_room/models/Mesh005.obj"/>
+    </model>
+	<model type="obj" name="Gold_0002">
+        <filename value="../../custom_scene_dining_room/models/Mesh019.obj"/>
+    </model>
+	<model type="obj" name="Ceramic_0002">
+        <filename value="../../custom_scene_dining_room/models/Mesh021.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Ceramic_0003">
+        <filename value="../../custom_scene_dining_room/models/Mesh037.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Gold_0003">
+        <filename value="../../custom_scene_dining_room/models/Mesh004.obj"/>
+    </model>
+	<model type="obj" name="PaintedCeramic_0002">
+        <filename value="../../custom_scene_dining_room/models/Mesh014.obj"/>
+    </model>
+	<model type="obj" name="Gold_0004">
+        <filename value="../../custom_scene_dining_room/models/Mesh012.obj"/>
+    </model>
+	<model type="obj" name="Ceramic_0004">
+        <filename value="../../custom_scene_dining_room/models/Mesh028.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="RoughMetal_0002">
+        <filename value="../../custom_scene_dining_room/models/Mesh025.obj"/>
+    </model>
+	<model type="obj" name="Ceramic_0005">
+        <filename value="../../custom_scene_dining_room/models/Mesh008.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="WhitePlastic_0005">
+        <filename value="../../custom_scene_dining_room/models/Mesh032.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Chrome_0001">
+        <filename value="../../custom_scene_dining_room/models/Mesh035.obj"/>
+    </model>
+	<model type="obj" name="BlackRubber_0001">
+        <filename value="../../custom_scene_dining_room/models/Mesh042.obj"/>
+    </model>
+	<model type="obj" name="WhitePlastic_0006">
+        <filename value="../../custom_scene_dining_room/models/Mesh010.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Chrome_0002">
+        <filename value="../../custom_scene_dining_room/models/Mesh036.obj"/>
+    </model>
+	<model type="obj" name="BlackRubber_0002">
+        <filename value="../../custom_scene_dining_room/models/Mesh027.obj"/>
+    </model>
+	<model type="obj" name="WhitePlastic_0007">
+        <filename value="../../custom_scene_dining_room/models/Mesh043.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Chrome_0003">
+        <filename value="../../custom_scene_dining_room/models/Mesh044.obj"/>
+    </model>
+	<model type="obj" name="BlackRubber_0003">
+        <filename value="../../custom_scene_dining_room/models/Mesh031.obj"/>
+    </model>
+	<model type="obj" name="WhitePlastic_0008">
+        <filename value="../../custom_scene_dining_room/models/Mesh022.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Chrome_0004">
+        <filename value="../../custom_scene_dining_room/models/Mesh038.obj"/>
+    </model>
+	<model type="obj" name="BlackRubber_0004">
+        <filename value="../../custom_scene_dining_room/models/Mesh030.obj"/>
+    </model>
+	<model type="obj" name="WhitePlastic_0009">
+        <filename value="../../custom_scene_dining_room/models/Mesh046.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Chrome_0005">
+        <filename value="../../custom_scene_dining_room/models/Mesh047.obj"/>
+    </model>
+	<model type="obj" name="BlackRubber_0005">
+        <filename value="../../custom_scene_dining_room/models/Mesh034.obj"/>
+    </model>
+	<model type="obj" name="WhiteMarble">
+		<filename value="../../custom_scene_dining_room/models/Mesh033.obj" />
+	</model>
+	<model type="obj" name="FloorTiles">
+		<filename value="../../custom_scene_dining_room/models/Mesh006.obj" />
+		<transform type="world">
+			<translation value="0 0 -0.45210200548171997"/>
+            <scale value="1.0 1.0 1.0510599613189697"/>
+		</transform>
+	</model>
+	<model type="obj" name="Walls_0001">
+		<filename value="../../custom_scene_dining_room/models/Mesh048.obj" />
+	</model>
+	<model type="obj" name="WhitePlastic_0010">
+        <filename value="../../custom_scene_dining_room/models/Mesh049.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Chrome_0006">
+        <filename value="../../custom_scene_dining_room/models/Mesh051.obj"/>
+    </model>
+	<model type="obj" name="BlackRubber_0006">
+        <filename value="../../custom_scene_dining_room/models/Mesh040.obj"/>
+    </model>
+	<model type="obj" name="Ceramic_0006">
+        <filename value="../../custom_scene_dining_room/models/Mesh003.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Ceramic_0007">
+        <filename value="../../custom_scene_dining_room/models/Mesh002.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Gold_0005">
+        <filename value="../../custom_scene_dining_room/models/Mesh009.obj"/>
+    </model>
+	<model type="obj" name="RoughMetal_0003">
+        <filename value="../../custom_scene_dining_room/models/Mesh045.obj"/>
+    </model>
+	<model type="obj" name="PaintedCeramic_0003">
+        <filename value="../../custom_scene_dining_room/models/Mesh029.obj"/>
+    </model>
+	<model type="obj" name="Gold_0006">
+        <filename value="../../custom_scene_dining_room/models/Mesh039.obj"/>
+    </model>
+	<model type="obj" name="Ceramic_0008">
+        <filename value="../../custom_scene_dining_room/models/Mesh050.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Artwork">
+        <filename value="../../custom_scene_dining_room/models/Mesh001.obj"/>
+        <transform type="world">
+			<translation value="-0.6213913559913635 4.023089408874512 -4.474820613861084"/>
+            <ratation value="0 180 0"/>
+        </transform>
+    </model>
+	<model type="obj" name="SkirtWood">
+        <filename value="../../custom_scene_dining_room/models/Mesh000.obj"/>
+    </model>
+	<model name="Walls_0002">
+        <vertex position="-6.29999 8.03075 10.044 "/>
+        <vertex position="-6.29999 -1.51685 10.044"/>
+        <vertex position="-6.29999 -1.51685 -4.644"/>
+        <vertex position="-6.29999 8.03075 -4.644"/>
+        <index value="0"/>
+        <index value="1"/>
+        <index value="2"/>
+        <index value="0"/>
+        <index value="2"/>
+        <index value="3"/>
+    </model>
+</scene>
