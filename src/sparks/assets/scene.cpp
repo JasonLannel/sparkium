@@ -401,6 +401,7 @@ Scene::Scene(const std::string &filename) : Scene() {
 glm::vec3 Scene::SampleLight(glm::vec3 origin,
                              float time,
                              std::mt19937 &rd,
+                             Material &medium_pre,
                              float &pdf,
                              glm::vec3 &emission) const {
   if (!light_id_.size()) {
@@ -412,6 +413,11 @@ glm::vec3 Scene::SampleLight(glm::vec3 origin,
   if (idx >= light_id_.size())
     idx = light_id_.size() - 1;
   if (light_id_[idx] == -1) {
+    if (medium_pre.material_type == MATERIAL_TYPE_MEDIUM) {
+      pdf = 0;
+      emission = glm::vec3(0);
+      return;
+    }
     glm::vec3 &direction = envmap_sampler_->Generate(origin, rd, &pdf);
     if (!CollisionTest(Ray(origin, direction, time), 1e-3f, 1e10f)) {
       pdf *= 1.0f / light_id_.size();
@@ -441,10 +447,13 @@ glm::vec3 Scene::SampleLight(glm::vec3 origin,
     if (!CollisionTest(Ray(origin, direction, time), 1e-3f,
                        glm::length(origin - sample.position) - 1e-3f)) {
       LoadTextureForMaterial(mat, sample);
-      pdf = square(glm::length(sample.position - origin)) /
-                 (fabs(glm::dot(direction, sample.normal)) * entity.GetModel()->GetArea() *
-                  light_id_.size());
+      float dis = glm::length(sample.position - origin);
+      pdf = square(dis) / (fabs(glm::dot(direction, sample.normal)) *
+                           entity.GetModel()->GetArea() * light_id_.size());
       emission = mat.emission * mat.emission_strength;
+      if (medium_pre.material_type == MATERIAL_TYPE_MEDIUM) {
+        emission *= exp(-mat.sigma * dis);
+      }
     } else {
       pdf = 0.f;
       emission = glm::vec3(0);

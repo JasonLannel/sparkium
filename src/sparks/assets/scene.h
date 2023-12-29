@@ -74,6 +74,7 @@ class Scene {
   glm::vec3 SampleLight(glm::vec3 origin,
                         float time,
                         std::mt19937 &rd,
+                        Material &medium_pre,
                         float &pdf,
                         glm::vec3 &emission) const;
   float LightValue(const Ray &ray) const;

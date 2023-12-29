@@ -7,6 +7,9 @@
 
 #include <time.h>
 
+constexpr auto USE_MIS = true;
+constexpr auto USE_POWER_HEURISTIC = true;
+
 namespace sparks {
 PathTracer::PathTracer(const RendererSettings *render_settings,
                        const Scene *scene) {
@@ -89,11 +92,19 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       if (mat.material_type != MATERIAL_TYPE_SPECULAR &&
           mat.material_type != MATERIAL_TYPE_TRANSMISSIVE) {
         direction =
-            scene_->SampleLight(origin, ray.time(), rd, light_pdf, emission);
+            scene_->SampleLight(origin, ray.time(), rd, medium_pre, light_pdf, emission);
         if (light_pdf > 0.0f) {
-          reflectance = bsdf::evaluate(-ray.direction(), direction, origin,
-                                            normal, tangent, mat, bsdf_pdf);
-          w = square(light_pdf) / (square(light_pdf) + square(bsdf_pdf));
+          if constexpr (USE_MIS && USE_POWER_HEURISTIC) {
+            reflectance = bsdf::evaluate(-ray.direction(), direction, origin,
+                                         normal, tangent, mat, bsdf_pdf);
+            w = square(light_pdf) / (square(light_pdf) + square(bsdf_pdf));
+          } else if constexpr (USE_MIS) {
+            reflectance = bsdf::evaluate(-ray.direction(), direction, origin,
+                                         normal, tangent, mat, bsdf_pdf);
+            w = square(light_pdf) / (square(light_pdf) + square(bsdf_pdf));
+          } else {
+            w = 0.5f;
+          }
           radiance += throughput * reflectance * emission * w / light_pdf;
         }
       }
@@ -105,8 +116,15 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       next_ray = Ray(origin, direction, ray.time());
       if (mat.material_type != MATERIAL_TYPE_SPECULAR &&
           mat.material_type != MATERIAL_TYPE_TRANSMISSIVE) {
-        light_pdf = scene_->LightValue(next_ray);
-        w = square(bsdf_pdf) / (square(light_pdf) + square(bsdf_pdf));
+        if constexpr (USE_MIS && USE_POWER_HEURISTIC) {
+          light_pdf = scene_->LightValue(next_ray);
+          w = square(bsdf_pdf) / (square(light_pdf) + square(bsdf_pdf));
+        } else if constexpr (USE_MIS) {
+          light_pdf = scene_->LightValue(next_ray);
+          w = bsdf_pdf / (light_pdf + bsdf_pdf);
+        } else {
+          w = 0.5f;
+        }
         throughput *= reflectance * w / bsdf_pdf;
       } else {
         throughput *= reflectance;
