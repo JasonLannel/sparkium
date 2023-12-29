@@ -407,11 +407,11 @@ Scene::Scene(const std::string &filename) : Scene() {
 glm::vec3 Scene::SampleLight(glm::vec3 origin,
                              float time,
                              std::mt19937 &rd,
-                             float *pdf,
-                             glm::vec3 *emission) const {
+                             Material &medium_pre,
+                             float &pdf,
+                             glm::vec3 &emission) const {
   if (!light_id_.size()) {
-    if (pdf)
-      *pdf = 0.f;
+    pdf = 0.f;
     return glm::vec3(0);
   }
   std::uniform_real_distribution<float> prob(0.0f, 1.0f);
@@ -419,21 +419,24 @@ glm::vec3 Scene::SampleLight(glm::vec3 origin,
   if (idx >= light_id_.size())
     idx = light_id_.size() - 1;
   if (light_id_[idx] == -1) {
-    glm::vec3 &direction = envmap_sampler_->Generate(origin, rd, pdf);
+    if (medium_pre.material_type == MATERIAL_TYPE_MEDIUM) {
+      pdf = 0;
+      emission = glm::vec3(0);
+      return;
+    }
+    glm::vec3 &direction = envmap_sampler_->Generate(origin, rd, &pdf);
     if (!CollisionTest(Ray(origin, direction, time), 1e-3f, 1e10f)) {
-      if (pdf)
-        *pdf *= 1.0f / light_id_.size();
-      if (emission)
-        *emission = glm::vec3{SampleEnvmap(direction)};
+      pdf *= 1.0f / light_id_.size();
+      emission = glm::vec3{SampleEnvmap(direction)};
     } else {
-      if (pdf)
-        *pdf = 0;
+      pdf = 0;
+      emission = glm::vec3(0);
     }
     return direction;
   } else {
     auto &entity = GetEntity(light_id_[idx]);
     auto &transform = entity.GetTransformMatrix();
-    auto inv_transform = glm::inverse(transform);
+    auto &inv_transform = glm::inverse(transform);
     auto &trans_origin = inv_transform * glm::vec4{origin, 1.0f};
     HitRecord &sample = entity.GetModel()->SamplePoint(trans_origin, time, rd);
     sample.hit_entity_id = light_id_[idx];
@@ -450,18 +453,16 @@ glm::vec3 Scene::SampleLight(glm::vec3 origin,
     if (!CollisionTest(Ray(origin, direction, time), 1e-3f,
                        glm::length(origin - sample.position) - 1e-3f)) {
       LoadTextureForMaterial(mat, sample);
-      float area = entity.GetModel()->GetArea();
-        if (pdf)
-          *pdf = square(glm::length(sample.position - origin)) /
-                 (fabs(glm::dot(direction, sample.normal)) * area *
-                  light_id_.size());
-        if (emission)
-          *emission = mat.emission * mat.emission_strength;
+      float dis = glm::length(sample.position - origin);
+      pdf = square(dis) / (fabs(glm::dot(direction, sample.normal)) *
+                           entity.GetModel()->GetArea() * light_id_.size());
+      emission = mat.emission * mat.emission_strength;
+      if (medium_pre.material_type == MATERIAL_TYPE_MEDIUM) {
+        emission *= exp(-mat.sigma * dis);
+      }
     } else {
-        if (pdf)
-          *pdf = 0.f;
-        if (emission)
-          *emission = glm::vec3(0);
+      pdf = 0.f;
+      emission = glm::vec3(0);
     }
     return direction;
   }
