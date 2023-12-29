@@ -232,6 +232,11 @@ void App::OnUpdate(uint32_t ms) {
   if (output_render_result_) {
     UploadAccumulationResult();
   }
+  if (reset_light_) {
+    core_->GetDevice()->WaitIdle();
+    renderer_->ResetLight();
+    reset_light_ = false;
+  }
   if (reset_accumulation_) {
     core_->GetDevice()->WaitIdle();
     if (!app_settings_.hardware_renderer) {
@@ -392,7 +397,7 @@ void App::UpdateImGui() {
                                     file_types.data(), "Mesh Files (*.obj)", 1);
         }
         if (result) {
-          reset_accumulation_ |= true;
+          reset_light_ = true;
           std::vector<std::string> file_paths = absl::StrSplit(result, "|");
           for (auto &file_path : file_paths) {
             OpenFile(file_path);
@@ -503,7 +508,7 @@ void App::UpdateImGui() {
     envmap_require_configure_ |=
         scene.TextureCombo("Envmap Texture", &scene.GetEnvmapId());
     reset_accumulation_ |= envmap_require_configure_;
-    reset_accumulation_ |= ImGui::SliderAngle(
+    reset_light_ |= ImGui::SliderAngle(
         "Offset", &scene.GetEnvmapOffset(), 0.0f, 360.0f, "%.0f deg");
 
     if (selected_entity_id_ != -1) {
@@ -522,7 +527,7 @@ void App::UpdateImGui() {
         std::vector<const char *> material_types = {
             "Lambertian", "Specular", "Transmissive",
             "Principled", "Emission", "Constant Medium"};
-        reset_accumulation_ |= ImGui::Combo(
+        reset_light_ |= ImGui::Combo(
             "Type", reinterpret_cast<int *>(&material.material_type),
             material_types.data(), material_types.size());
         reset_accumulation_ |= ImGui::ColorEdit3(
@@ -534,10 +539,10 @@ void App::UpdateImGui() {
             ImGui::Checkbox("Use Normal Texture", &material.use_normal_texture);
         reset_accumulation_ |=
             scene.TextureCombo("Normal Texture", &material.normal_texture_id);
-        reset_accumulation_ |= ImGui::ColorEdit3(
+        reset_light_ |= ImGui::ColorEdit3(
             "Emission", &material.emission[0],
             ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_Float);
-        reset_accumulation_ |= ImGui::SliderFloat(
+        reset_light_ |= ImGui::SliderFloat(
             "Emission Strength", &material.emission_strength, 0.0f, 1e5f,
             "%.3f", ImGuiSliderFlags_Logarithmic);
         reset_accumulation_ |=
@@ -686,6 +691,8 @@ void App::UpdateImGui() {
       reset_accumulation_ = true;
     }
   }
+
+  reset_accumulation_ |= reset_light_;
 
   ImGui::Render();
 }

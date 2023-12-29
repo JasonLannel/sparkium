@@ -171,16 +171,7 @@ void Scene::UpdateEnvmapConfiguration() {
   envmap_sampler_ = std::make_unique<EnvmapPdf>(
       envmap_prob_.begin(), envmap_texture.GetWidth(),
       envmap_texture.GetHeight(), envmap_offset_);
-  light_id_.clear();
-  if (envmap_sampler_->FuncInt() > 0.0f) {
-    light_id_.push_back(-1);
-  }
-  for (int i = 0; i < entities_.size(); ++i) {
-    float power = entities_[i].GetMaterial().emission_strength;
-    if (power > 0.0f) {
-      light_id_.push_back(i);
-    }
-  }
+  UpdateLight();
 }
 glm::vec3 Scene::GetEnvmapLightDirection() const {
   float sin_offset = std::sin(envmap_offset_);
@@ -402,6 +393,20 @@ Scene::Scene(const std::string &filename) : Scene() {
 
   SetCameraToWorld(camera_to_world);
   UpdateEnvmapConfiguration();
+}
+
+void Scene::UpdateLight(){
+  envmap_sampler_->resetOffset(envmap_offset_);
+  light_id_.clear();
+  if (envmap_sampler_->FuncInt() > 0.0f) {
+    light_id_.push_back(-1);
+  }
+  for (int i = 0; i < entities_.size(); ++i) {
+    float power = entities_[i].GetMaterial().emission_strength;
+    if (power > 0.0f) {
+      light_id_.push_back(i);
+    }
+  }
 }
 
 glm::vec3 Scene::SampleLight(glm::vec3 origin,

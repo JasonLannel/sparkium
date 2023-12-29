@@ -174,13 +174,18 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
   });
 }
 
+void Renderer::ResetLight() {
+  SafeOperation<void>([&]() {
+    scene_.UpdateLight();
+  });
+}
+
 void Renderer::ResetAccumulation() {
   SafeOperation<void>([&]() {
     std::memset(accumulation_number_.data(), 0,
                 sizeof(float) * accumulation_number_.size());
     std::memset(accumulation_color_.data(), 0,
                 sizeof(glm::vec4) * accumulation_color_.size());
-    scene_.UpdateEnvmapConfiguration();
     if (task_queue_.back().sample) {
       for (int i = 0; i < task_queue_.size(); i++) {
         auto task = task_queue_.front();

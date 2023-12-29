@@ -113,6 +113,7 @@ class App {
   bool useFXAA_{false};
   bool output_render_result_{false};
   bool reset_accumulation_{true};
+  bool reset_light_{false};
   bool rebuild_ray_tracing_pipeline_{false};
   uint32_t accumulated_sample_{0};
   bool gui_pause_{false};
