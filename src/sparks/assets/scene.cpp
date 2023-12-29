@@ -422,7 +422,7 @@ glm::vec3 Scene::SampleLight(glm::vec3 origin,
     if (medium_pre.material_type == MATERIAL_TYPE_MEDIUM) {
       pdf = 0;
       emission = glm::vec3(0);
-      return;
+      return glm::vec3(0);
     }
     glm::vec3 &direction = envmap_sampler_->Generate(origin, rd, &pdf);
     if (!CollisionTest(Ray(origin, direction, time), 1e-3f, 1e10f)) {
@@ -507,8 +507,11 @@ void Scene::LoadTextureForMaterial(Material &mat, HitRecord &rec) const {
     rec.normal = glm::normalize(onb.local(normalFromTex));
     rec.tangent = glm::normalize(rec.tangent - glm::dot(rec.tangent, rec.normal) * rec.normal);
   }
-  if (rec.front_face || mat.thin) {
-    mat.IOR = 1.0f / mat.IOR;
+  if (mat.material_type == MATERIAL_TYPE_TRANSMISSIVE && (rec.front_face || mat.thin)) {
+    mat.IOR = 1.0f / mat.IOR;   // Relative IOR
+  } else if (mat.material_type == MATERIAL_TYPE_PRINCIPLED) {
+    if (!rec.front_face)
+      rec.normal = -rec.normal;
   }
 }
 

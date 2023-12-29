@@ -180,6 +180,7 @@ void Renderer::ResetAccumulation() {
                 sizeof(float) * accumulation_number_.size());
     std::memset(accumulation_color_.data(), 0,
                 sizeof(glm::vec4) * accumulation_color_.size());
+    scene_.UpdateEnvmapConfiguration();
     if (task_queue_.back().sample) {
       for (int i = 0; i < task_queue_.size(); i++) {
         auto task = task_queue_.front();
