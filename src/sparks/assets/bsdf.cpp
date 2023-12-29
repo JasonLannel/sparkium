@@ -9,6 +9,8 @@ inline static glm::vec3 evaluateLambertian(glm::vec3 V,
                                            glm::vec3 tangent,
                                            Material &mat,
                                            float &pdf) {
+  if (glm::dot(V, normal) < 0.f)
+    normal = -normal;
   CosineHemispherePdf Lambert(normal, tangent);
   pdf = Lambert.Value(Ray(position, L));
   return mat.albedo_color * fmax(0.f, glm::dot(normal, L)) * INV_PI;
@@ -22,9 +24,16 @@ inline static glm::vec3 sampleLambertian(glm::vec3 V,
                                          std::mt19937 &rd,
                                          float &pdf,
                                          glm::vec3 &reflectance) {
+  if (glm::dot(V, normal) < 0.f)
+    normal = -normal;
   CosineHemispherePdf Lambert(normal, tangent);
   glm::vec3 &dir = Lambert.Generate(position, rd, &pdf);
-  reflectance = mat.albedo_color * fmax(0.f, glm::dot(normal, dir)) * INV_PI / pdf;
+  if (pdf == 0.f) {
+    reflectance = glm::vec3(0);
+  } else {
+    reflectance =
+        mat.albedo_color * fmax(0.f, glm::dot(normal, dir)) * INV_PI / pdf;
+  }
   return dir;
 }
 
@@ -46,6 +55,8 @@ inline static glm::vec3 sampleSpecular(glm::vec3 V,
                                        std::mt19937 &rd,
                                        float &pdf,
                                        glm::vec3 &reflectance) {
+  if (glm::dot(V, normal) < 0.f)
+    normal = -normal;
   pdf = 1e30f;  // Delta
   reflectance =
       mat.FresnelSchlick(mat.albedo_color, fmin(glm::dot(V, normal), 1.0f));
@@ -70,6 +81,8 @@ inline static glm::vec3 sampleTransmissive(glm::vec3 V,
                                            std::mt19937 &rd,
                                            float &pdf,
                                            glm::vec3 &reflectance) {
+  if (glm::dot(V, normal) < 0.f)
+    normal = -normal;
   if (mat.thin) {
     float reflect_ratio = 1 - mat.IOR;
     reflect_ratio = (1 - reflect_ratio) * (1 - reflect_ratio) * reflect_ratio /
