@@ -1,4 +1,5 @@
 #include "sparks/assets/bsdf.h"
+#include "iostream"
 namespace sparks {
 namespace bsdf {
 inline static glm::vec3 evaluateLambertian(glm::vec3 V,
@@ -8,6 +9,8 @@ inline static glm::vec3 evaluateLambertian(glm::vec3 V,
                                            glm::vec3 tangent,
                                            Material &mat,
                                            float &pdf) {
+  if (glm::dot(V, normal) < 0.f)
+    normal = -normal;
   CosineHemispherePdf Lambert(normal, tangent);
   pdf = Lambert.Value(Ray(position, L));
   return mat.albedo_color * fmax(0.f, glm::dot(normal, L)) * INV_PI;
@@ -21,9 +24,16 @@ inline static glm::vec3 sampleLambertian(glm::vec3 V,
                                          std::mt19937 &rd,
                                          float &pdf,
                                          glm::vec3 &reflectance) {
+  if (glm::dot(V, normal) < 0.f)
+    normal = -normal;
   CosineHemispherePdf Lambert(normal, tangent);
   glm::vec3 &dir = Lambert.Generate(position, rd, &pdf);
-  reflectance = mat.albedo_color * fmax(0.f, glm::dot(normal, dir)) * INV_PI;
+  if (pdf == 0.f) {
+    reflectance = glm::vec3(0);
+  } else {
+    reflectance =
+        mat.albedo_color * fmax(0.f, glm::dot(normal, dir)) * INV_PI / pdf;
+  }
   return dir;
 }
 
@@ -45,6 +55,8 @@ inline static glm::vec3 sampleSpecular(glm::vec3 V,
                                        std::mt19937 &rd,
                                        float &pdf,
                                        glm::vec3 &reflectance) {
+  if (glm::dot(V, normal) < 0.f)
+    normal = -normal;
   pdf = 1e30f;  // Delta
   reflectance =
       mat.FresnelSchlick(mat.albedo_color, fmin(glm::dot(V, normal), 1.0f));
@@ -69,6 +81,8 @@ inline static glm::vec3 sampleTransmissive(glm::vec3 V,
                                            std::mt19937 &rd,
                                            float &pdf,
                                            glm::vec3 &reflectance) {
+  if (glm::dot(V, normal) < 0.f)
+    normal = -normal;
   if (mat.thin) {
     float reflect_ratio = 1 - mat.IOR;
     reflect_ratio = (1 - reflect_ratio) * (1 - reflect_ratio) * reflect_ratio /
@@ -126,8 +140,9 @@ inline static glm::vec3 sampleMedium(glm::vec3 V,
                                      float &pdf,
                                      glm::vec3 &reflectance) {
   UniformSpherePdf Medium(normal);
-  reflectance = mat.albedo_color;
-  return Medium.Generate(position, rd, &pdf);
+  glm::vec3 dir = Medium.Generate(position, rd, &pdf);
+  reflectance = mat.albedo_color / pdf;
+  return dir;
 }
 
 inline static void CalculateLobePdfs(float &pSpecular,
@@ -150,7 +165,8 @@ inline static void CalculateLobePdfs(float &pSpecular,
   pSpecular = specularWeight * norm;
   pSpecTrans = transmissionWeight * norm;
   pDiffuse = diffuseWeight * norm;
-  pClearcoat = clearcoatWeight * norm;
+  //pClearcoat = clearcoatWeight * norm;
+  pClearcoat = 1.0f - pSpecular - pSpecTrans - pDiffuse;
 }
 
 inline static glm::vec3 EvaluateSheen(const glm::vec3 &V,
@@ -444,9 +460,6 @@ inline static glm::vec3 SampleDisneySpecTrans(glm::vec3 V,
   if (CosTheta(H) < 0.0f) {
     dotVH = -dotVH;
   }
-  float ni = CosTheta(V) > 0.0f ? 1.0f : mat.IOR;
-  float nt = CosTheta(V) > 0.0f ? mat.IOR : 1.0f;
-  float relativeIOR = ni / nt;
 
   float F = FrDielectric(dotVH, 1.0f, mat.IOR);
   float G1v = mat.SeparableSmithGGXG1(V, H, tax, tay);
@@ -462,23 +475,15 @@ inline static glm::vec3 SampleDisneySpecTrans(glm::vec3 V,
       L.y = -L.y;
       reflectance = G1v * sqrt(mat.albedo_color);
     } else {
-      if (Transmit(H, V, relativeIOR, L)) {
-        /*
-         * sample.flags = SurfaceEventFlags::eTransmissionEvent;
-         * sample.medium.phaseFunction = dotVH > 0.0f ?
-         * MediumPhaseFunction::eIsotropic : MediumPhaseFunction::eVacuum;
-         * sample.medium.extinction =
-         * CalculateExtinction(surface.transmittanceColor,
-         * surface.scatterDistance);
-         */
-      } else {
+      float relativeIOR = CosTheta(V) > 0.0f ? 1.0f / mat.IOR : mat.IOR;
+      if (!Transmit(H, V, relativeIOR, L)){
         L = glm::reflect(-V, H);
       }
       reflectance = G1v * mat.albedo_color;
     }
     L = glm::normalize(L);
     float dotLH = fabs(glm::dot(L, H));
-    float jacobian = dotLH / (square(dotLH + mat.IOR * dotVH));
+    float jacobian = dotLH / (square(dotLH + mat.IOR * fabs(dotVH)));
     fPdf = (1.0f - F) / jacobian;
   }
 
@@ -524,15 +529,6 @@ inline static glm::vec3 SampleDisneyDiffuse(glm::vec3 V,
     fPdf = mat.diffTrans;
     if (mat.thin)
       color = sqrt(color);
-    else {
-      /*
-       * eventType = SurfaceEventFlags::eTransmissionEvent;
-       * sample.medium.phaseFunction = MediumPhaseFunction::eIsotropic;
-       * sample.medium.extinction =
-       * CalculateExtinction(surface.transmittanceColor,
-       * surface.scatterDistance);
-       */
-    }
   } else {
     fPdf = 1.0f - mat.diffTrans;
   }
@@ -657,17 +653,12 @@ inline static glm::vec3 samplePrincipled(glm::vec3 V,
   V = glm::normalize(worldToTangent * V);
   if (p <= pSpecular) {
     L = SampleDisneyBRDF(V, rd, mat, pdf, reflectance);
-  } else if (p > pSpecular && p <= (pSpecular + pClearcoat)) {
+  } else if (p <= (pSpecular + pClearcoat)) {
     L = SampleDisneyClearCoat(V, rd, mat, pdf, reflectance);
-  } else if (p > pSpecular + pClearcoat &&
-             p <= (pSpecular + pClearcoat + pDiffuse)) {
+  } else if (p <= (pSpecular + pClearcoat + pDiffuse)) {
     L = SampleDisneyDiffuse(V, rd, mat, pdf, reflectance);
-  } else if (pSpecTrans >= 0.0f) {
-    L = SampleDisneySpecTrans(V, rd, mat, pdf, reflectance);
   } else {
-    L = glm::vec3(0);
-    pdf = 0;
-    reflectance = glm::vec3(0);
+    L = SampleDisneySpecTrans(V, rd, mat, pdf, reflectance);
   }
   if (L == glm::vec3(0)) {
     return L;
@@ -679,58 +670,61 @@ inline static glm::vec3 samplePrincipled(glm::vec3 V,
   }
   return L;
 }
+}  // namespace bsdf
 
 
-inline glm::vec3 bsdf::evaluate(glm::vec3 V,
-                         glm::vec3 L,
-                         glm::vec3 position,
-                         glm::vec3 normal,
-                         glm::vec3 tangent,
-                         Material &mat,
-                         float &pdf) {
+glm::vec3 bsdf_handler::evaluate(glm::vec3 V,
+                   glm::vec3 L,
+                   glm::vec3 position,
+                   glm::vec3 normal,
+                   glm::vec3 tangent,
+                   Material &mat,
+                   float &pdf) {
   switch (mat.material_type) {
     case MATERIAL_TYPE_LAMBERTIAN:
-      return evaluateLambertian(V, L, position, normal, tangent, mat, pdf);
+      return bsdf::evaluateLambertian(V, L, position, normal, tangent, mat, pdf);
     case MATERIAL_TYPE_SPECULAR:
-      return evaluateSpecular(V, L, position, normal, tangent, mat, pdf);
+      return bsdf::evaluateSpecular(V, L, position, normal, tangent, mat, pdf);
     case MATERIAL_TYPE_TRANSMISSIVE:
-      return evaluateTransmissive(V, L, position, normal, tangent, mat, pdf);
+      return bsdf::evaluateTransmissive(V, L, position, normal, tangent, mat,
+                                        pdf);
     case MATERIAL_TYPE_MEDIUM:
-      return evaluateMedium(V, L, position, normal, tangent, mat, pdf);
+      return bsdf::evaluateMedium(V, L, position, normal, tangent, mat, pdf);
     case MATERIAL_TYPE_PRINCIPLED:
-      return evaluatePrincipled(V, L, position, normal, tangent, mat, pdf);
+      return bsdf::evaluatePrincipled(V, L, position, normal, tangent, mat,
+                                      pdf);
     default:
       return glm::vec3(0.f);
   }
 }
 
-inline glm::vec3 bsdf::sample(glm::vec3 V,
-                       glm::vec3 position,
-                       glm::vec3 normal,
-                       glm::vec3 tangent,
-                       Material &mat,
-                       std::mt19937 &rd,
-                       float &pdf,
-                       glm::vec3 &reflectance) {
+glm::vec3 bsdf_handler::sample(glm::vec3 V,
+                 glm::vec3 position,
+                 glm::vec3 normal,
+                 glm::vec3 tangent,
+                 Material &mat,
+                 std::mt19937 &rd,
+                 float &pdf,
+                 glm::vec3 &reflectance) {
   switch (mat.material_type) {
     case MATERIAL_TYPE_LAMBERTIAN:
-      return sampleLambertian(V, position, normal, tangent, mat, rd, pdf,
+      return bsdf::sampleLambertian(V, position, normal, tangent, mat, rd, pdf,
                               reflectance);
     case MATERIAL_TYPE_SPECULAR:
-      return sampleSpecular(V, position, normal, tangent, mat, rd, pdf,
+      return bsdf::sampleSpecular(V, position, normal, tangent, mat, rd, pdf,
                             reflectance);
     case MATERIAL_TYPE_TRANSMISSIVE:
-      return sampleTransmissive(V, position, normal, tangent, mat, rd, pdf,
+      return bsdf::sampleTransmissive(V, position, normal, tangent, mat, rd,
+                                      pdf,
                                 reflectance);
     case MATERIAL_TYPE_MEDIUM:
-      return sampleMedium(V, position, normal, tangent, mat, rd, pdf,
+      return bsdf::sampleMedium(V, position, normal, tangent, mat, rd, pdf,
                           reflectance);
     case MATERIAL_TYPE_PRINCIPLED:
-      return samplePrincipled(V, position, normal, tangent, mat, rd, pdf,
+      return bsdf::samplePrincipled(V, position, normal, tangent, mat, rd, pdf,
                               reflectance);
     default:
       return glm::vec3(0.f);
   }
 }
-}  // namespace bsdf
 }  // namespace sparks

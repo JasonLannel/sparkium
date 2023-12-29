@@ -174,6 +174,12 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
   });
 }
 
+void Renderer::ResetLight() {
+  SafeOperation<void>([&]() {
+    scene_.UpdateLight();
+  });
+}
+
 void Renderer::ResetAccumulation() {
   SafeOperation<void>([&]() {
     std::memset(accumulation_number_.data(), 0,

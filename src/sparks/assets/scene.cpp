@@ -171,16 +171,7 @@ void Scene::UpdateEnvmapConfiguration() {
   envmap_sampler_ = std::make_unique<EnvmapPdf>(
       envmap_prob_.begin(), envmap_texture.GetWidth(),
       envmap_texture.GetHeight(), envmap_offset_);
-  light_id_.clear();
-  if (envmap_sampler_->FuncInt() > 0.0f) {
-    light_id_.push_back(-1);
-  }
-  for (int i = 0; i < entities_.size(); ++i) {
-    float power = entities_[i].GetMaterial().emission_strength;
-    if (power > 0.0f) {
-      light_id_.push_back(i);
-    }
-  }
+  UpdateLight();
 }
 glm::vec3 Scene::GetEnvmapLightDirection() const {
   float sin_offset = std::sin(envmap_offset_);
@@ -404,6 +395,20 @@ Scene::Scene(const std::string &filename) : Scene() {
   UpdateEnvmapConfiguration();
 }
 
+void Scene::UpdateLight(){
+  envmap_sampler_->resetOffset(envmap_offset_);
+  light_id_.clear();
+  if (envmap_sampler_->FuncInt() > 0.0f) {
+    light_id_.push_back(-1);
+  }
+  for (int i = 0; i < entities_.size(); ++i) {
+    float power = entities_[i].GetMaterial().emission_strength;
+    if (power > 0.0f) {
+      light_id_.push_back(i);
+    }
+  }
+}
+
 glm::vec3 Scene::SampleLight(glm::vec3 origin,
                              float time,
                              std::mt19937 &rd,
@@ -422,7 +427,7 @@ glm::vec3 Scene::SampleLight(glm::vec3 origin,
     if (medium_pre.material_type == MATERIAL_TYPE_MEDIUM) {
       pdf = 0;
       emission = glm::vec3(0);
-      return;
+      return glm::vec3(0);
     }
     glm::vec3 &direction = envmap_sampler_->Generate(origin, rd, &pdf);
     if (!CollisionTest(Ray(origin, direction, time), 1e-3f, 1e10f)) {
@@ -507,8 +512,11 @@ void Scene::LoadTextureForMaterial(Material &mat, HitRecord &rec) const {
     rec.normal = glm::normalize(onb.local(normalFromTex));
     rec.tangent = glm::normalize(rec.tangent - glm::dot(rec.tangent, rec.normal) * rec.normal);
   }
-  if (rec.front_face || mat.thin) {
-    mat.IOR = 1.0f / mat.IOR;
+  if (mat.material_type == MATERIAL_TYPE_TRANSMISSIVE && (rec.front_face || mat.thin)) {
+    mat.IOR = 1.0f / mat.IOR;   // Relative IOR
+  } else if (mat.material_type == MATERIAL_TYPE_PRINCIPLED) {
+    if (!rec.front_face)
+      rec.normal = -rec.normal;
   }
 }
 

@@ -71,6 +71,7 @@ class Scene {
   int LoadTexture(const std::string &file_path);
   int LoadObjEntity(const std::string &file_path);
 
+  void UpdateLight();
   glm::vec3 SampleLight(glm::vec3 origin,
                         float time,
                         std::mt19937 &rd,

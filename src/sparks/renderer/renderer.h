@@ -26,6 +26,7 @@ class Renderer {
 
   [[nodiscard]] RenderStateSignal GetRenderStateSignal() const;
   void Resize(uint32_t width, uint32_t height);
+  void ResetLight();
   void ResetAccumulation();
 
   void RayGeneration(int x,

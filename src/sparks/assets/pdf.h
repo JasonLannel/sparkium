@@ -111,6 +111,9 @@ class EnvmapPdf : public Pdf {
     sampler_ = std::make_unique<DistributionPdf_2D>(data, nu, nv);
     offset_ = offset;
   }
+  void resetOffset(float offset) {
+    offset_ = offset;
+  }
   glm::vec3 Generate(glm::vec3 origin,
                      std::mt19937 &rd,
                      float *pdf) const override;

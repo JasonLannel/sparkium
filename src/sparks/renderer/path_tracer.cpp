@@ -35,6 +35,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
   Ray next_ray(ray);
   //Current Medium
   Material medium_pre = Material();
+  bsdf_handler bsdf_op;
   for (int bounce = 0, max_depth = render_settings_->num_bounces; bounce < max_depth;
        ++bounce) {
     bool medium_hit = false;
@@ -82,9 +83,6 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       origin = hit_record.position;
       normal = hit_record.normal;
       tangent = hit_record.tangent;
-      if (glm::dot(normal, ray.direction()) > 0) {
-        normal = -normal;
-      }
       float light_pdf(0), bsdf_pdf(0), w(0);
       glm::vec3 reflectance(0); 
       glm::vec3 emission(0);
@@ -95,11 +93,11 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
             scene_->SampleLight(origin, ray.time(), rd, medium_pre, light_pdf, emission);
         if (light_pdf > 0.0f) {
           if constexpr (USE_MIS && USE_POWER_HEURISTIC) {
-            reflectance = bsdf::evaluate(-ray.direction(), direction, origin,
+            reflectance = bsdf_op.evaluate(-ray.direction(), direction, origin,
                                          normal, tangent, mat, bsdf_pdf);
             w = square(light_pdf) / (square(light_pdf) + square(bsdf_pdf));
           } else if constexpr (USE_MIS) {
-            reflectance = bsdf::evaluate(-ray.direction(), direction, origin,
+            reflectance = bsdf_op.evaluate(-ray.direction(), direction, origin,
                                          normal, tangent, mat, bsdf_pdf);
             w = square(light_pdf) / (square(light_pdf) + square(bsdf_pdf));
           } else {
@@ -109,7 +107,7 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         }
       }
       // BSDF sample
-      direction = bsdf::sample(-ray.direction(), origin, normal, tangent,
+      direction = bsdf_op.sample(-ray.direction(), origin, normal, tangent,
                                    mat, rd, bsdf_pdf, reflectance);
       if (bsdf_pdf == 0.0f)
         break;
@@ -125,10 +123,10 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
         } else {
           w = 0.5f;
         }
-        throughput *= reflectance * w / bsdf_pdf;
       } else {
-        throughput *= reflectance;
+        w = 1.0f;
       }
+      throughput *= reflectance * w;
       ray = next_ray;
       if (bounce > 7) {
         if (RandomProb(rd) > RR) {
