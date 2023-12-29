@@ -107,15 +107,45 @@
     </model>
 	<model type="obj" name="Gold_0001">
         <filename value="../../custom_scene_dining_room/models/Mesh018.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <specTrans value="0.9"/>
+            <specularTint value="0.9"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="RoughMetal_0001">
         <filename value="../../custom_scene_dining_room/models/Mesh007.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <specTrans value="0.7"/>
+            <specularTint value="0.7"/>
+            <metallic value="1.0"/>
+            <roughness value="0.1"/>
+        </material>
     </model>
 	<model type="obj" name="PaintedCeramic_0001">
         <filename value="../../custom_scene_dining_room/models/Mesh005.obj"/>
+
+        <material type="principled">
+            <albedo_texture value="../../custom_scene_dining_room/textures/Teacup.png"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="Gold_0002">
         <filename value="../../custom_scene_dining_room/models/Mesh019.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <specTrans value="0.9"/>
+            <specularTint value="0.9"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="Ceramic_0002">
         <filename value="../../custom_scene_dining_room/models/Mesh021.obj"/>
@@ -137,12 +167,34 @@
     </model>
 	<model type="obj" name="Gold_0003">
         <filename value="../../custom_scene_dining_room/models/Mesh004.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <specTrans value="0.9"/>
+            <specularTint value="0.9"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="PaintedCeramic_0002">
         <filename value="../../custom_scene_dining_room/models/Mesh014.obj"/>
+
+        <material type="principled">
+            <albedo_texture value="../../custom_scene_dining_room/textures/Teacup.png"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="Gold_0004">
         <filename value="../../custom_scene_dining_room/models/Mesh012.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <specTrans value="0.9"/>
+            <specularTint value="0.9"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="Ceramic_0004">
         <filename value="../../custom_scene_dining_room/models/Mesh028.obj"/>
@@ -155,6 +207,14 @@
     </model>
 	<model type="obj" name="RoughMetal_0002">
         <filename value="../../custom_scene_dining_room/models/Mesh025.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <specTrans value="0.7"/>
+            <specularTint value="0.7"/>
+            <metallic value="1.0"/>
+            <roughness value="0.1"/>
+        </material>
     </model>
 	<model type="obj" name="Ceramic_0005">
         <filename value="../../custom_scene_dining_room/models/Mesh008.obj"/>
@@ -176,9 +236,23 @@
     </model>
 	<model type="obj" name="Chrome_0001">
         <filename value="../../custom_scene_dining_room/models/Mesh035.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.05"/>
+            <specTrans value="0.8"/>
+            <specularTint value="0.8"/>
+            <metallic value="0.7"/>
+        </material>
     </model>
 	<model type="obj" name="BlackRubber_0001">
         <filename value="../../custom_scene_dining_room/models/Mesh042.obj"/>
+
+        <material type="principled">
+            <albedo value="0.05 0.05 0.05"/>
+            <roughness value="0.5"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="WhitePlastic_0006">
         <filename value="../../custom_scene_dining_room/models/Mesh010.obj"/>
@@ -191,9 +265,23 @@
     </model>
 	<model type="obj" name="Chrome_0002">
         <filename value="../../custom_scene_dining_room/models/Mesh036.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.05"/>
+            <specTrans value="0.8"/>
+            <specularTint value="0.8"/>
+            <metallic value="0.7"/>
+        </material>
     </model>
 	<model type="obj" name="BlackRubber_0002">
         <filename value="../../custom_scene_dining_room/models/Mesh027.obj"/>
+
+        <material type="principled">
+            <albedo value="0.05 0.05 0.05"/>
+            <roughness value="0.5"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="WhitePlastic_0007">
         <filename value="../../custom_scene_dining_room/models/Mesh043.obj"/>
@@ -206,9 +294,23 @@
     </model>
 	<model type="obj" name="Chrome_0003">
         <filename value="../../custom_scene_dining_room/models/Mesh044.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.05"/>
+            <specTrans value="0.8"/>
+            <specularTint value="0.8"/>
+            <metallic value="0.7"/>
+        </material>
     </model>
 	<model type="obj" name="BlackRubber_0003">
         <filename value="../../custom_scene_dining_room/models/Mesh031.obj"/>
+
+        <material type="principled">
+            <albedo value="0.05 0.05 0.05"/>
+            <roughness value="0.5"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="WhitePlastic_0008">
         <filename value="../../custom_scene_dining_room/models/Mesh022.obj"/>
@@ -221,9 +323,23 @@
     </model>
 	<model type="obj" name="Chrome_0004">
         <filename value="../../custom_scene_dining_room/models/Mesh038.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.05"/>
+            <specTrans value="0.8"/>
+            <specularTint value="0.8"/>
+            <metallic value="0.7"/>
+        </material>
     </model>
 	<model type="obj" name="BlackRubber_0004">
         <filename value="../../custom_scene_dining_room/models/Mesh030.obj"/>
+
+        <material type="principled">
+            <albedo value="0.05 0.05 0.05"/>
+            <roughness value="0.5"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="WhitePlastic_0009">
         <filename value="../../custom_scene_dining_room/models/Mesh046.obj"/>
@@ -236,12 +352,30 @@
     </model>
 	<model type="obj" name="Chrome_0005">
         <filename value="../../custom_scene_dining_room/models/Mesh047.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.05"/>
+            <specTrans value="0.8"/>
+            <specularTint value="0.8"/>
+            <metallic value="0.7"/>
+        </material>
     </model>
 	<model type="obj" name="BlackRubber_0005">
         <filename value="../../custom_scene_dining_room/models/Mesh034.obj"/>
+
+        <material type="principled">
+            <albedo value="0.05 0.05 0.05"/>
+            <roughness value="0.5"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="WhiteMarble">
 		<filename value="../../custom_scene_dining_room/models/Mesh033.obj" />
+
+        <material type="lambertian">
+            <albedo value="0.325037 0.325037 0.325037"/>
+        </material>
 	</model>
 	<model type="obj" name="FloorTiles">
 		<filename value="../../custom_scene_dining_room/models/Mesh006.obj" />
@@ -249,9 +383,17 @@
 			<translation value="0 0 -0.45210200548171997"/>
             <scale value="1.0 1.0 1.0510599613189697"/>
 		</transform>
+
+        <material type="lambertian">
+            <albedo_texture value="../../custom_scene_dining_room/textures/Tiles.jpg"/>
+        </material>
 	</model>
 	<model type="obj" name="Walls_0001">
 		<filename value="../../custom_scene_dining_room/models/Mesh048.obj" />
+
+        <material type="lambertian">
+            <albedo value="0.2 0.2 0.2"/>
+        </material>
 	</model>
 	<model type="obj" name="WhitePlastic_0010">
         <filename value="../../custom_scene_dining_room/models/Mesh049.obj"/>
@@ -264,9 +406,23 @@
     </model>
 	<model type="obj" name="Chrome_0006">
         <filename value="../../custom_scene_dining_room/models/Mesh051.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.05"/>
+            <specTrans value="0.8"/>
+            <specularTint value="0.8"/>
+            <metallic value="0.7"/>
+        </material>
     </model>
 	<model type="obj" name="BlackRubber_0006">
         <filename value="../../custom_scene_dining_room/models/Mesh040.obj"/>
+
+        <material type="principled">
+            <albedo value="0.05 0.05 0.05"/>
+            <roughness value="0.5"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="Ceramic_0006">
         <filename value="../../custom_scene_dining_room/models/Mesh003.obj"/>
@@ -288,15 +444,45 @@
     </model>
 	<model type="obj" name="Gold_0005">
         <filename value="../../custom_scene_dining_room/models/Mesh009.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <specTrans value="0.9"/>
+            <specularTint value="0.9"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="RoughMetal_0003">
         <filename value="../../custom_scene_dining_room/models/Mesh045.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <specTrans value="0.7"/>
+            <specularTint value="0.7"/>
+            <metallic value="1.0"/>
+            <roughness value="0.1"/>
+        </material>
     </model>
 	<model type="obj" name="PaintedCeramic_0003">
         <filename value="../../custom_scene_dining_room/models/Mesh029.obj"/>
+
+        <material type="principled">
+            <albedo_texture value="../../custom_scene_dining_room/textures/Teacup.png"/>
+            <roughness value="0.01"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="Gold_0006">
         <filename value="../../custom_scene_dining_room/models/Mesh039.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <specTrans value="0.9"/>
+            <specularTint value="0.9"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model type="obj" name="Ceramic_0008">
         <filename value="../../custom_scene_dining_room/models/Mesh050.obj"/>
@@ -313,9 +499,19 @@
 			<translation value="-0.6213913559913635 4.023089408874512 -4.474820613861084"/>
             <ratation value="0 180 0"/>
         </transform>
+
+        <material type="lambertian">
+            <albedo_texture value="../../custom_scene_dining_room/textures/picture3.jpg"/>
+        </material>
     </model>
 	<model type="obj" name="SkirtWood">
         <filename value="../../custom_scene_dining_room/models/Mesh000.obj"/>
+
+        <material type="principled">
+            <albedo value="0.684615 0.684615 0.684615"/>
+            <roughness value="0.1"/>
+            <IOR value="1.5"/>
+        </material>
     </model>
 	<model name="Walls_0002">
         <vertex position="-6.29999 8.03075 10.044 "/>
@@ -328,5 +524,9 @@
         <index value="0"/>
         <index value="2"/>
         <index value="3"/>
+
+        <material type="lambertian">
+            <albedo value="0.2 0.2 0.2"/>
+        </material>
     </model>
 </scene>
