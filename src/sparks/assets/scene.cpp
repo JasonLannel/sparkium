@@ -608,6 +608,30 @@ bool Mesh::LoadObjFile(const std::string &obj_file_path,
         } else if (glm::dot(geometry_normal, v2.normal) < 0.0f) {
           v2.normal = -v2.normal;
         }
+
+        for (int j = 0; j < 3; ++j) {
+            auto v0p = v0.position;
+            auto v1p = v1.position;
+            auto v2p = v2.position;
+            v0p -= v0.normal * glm::dot(v0.normal, v0p);
+            v1p -= v1.normal * glm::dot(v1.normal, v1p);
+            v2p -= v2.normal * glm::dot(v2.normal, v2p);
+            glm::mat2x3 mp{v1p - v0p, v2p - v0p};
+            glm::mat2x2 muv{v1.tex_coord - v0.tex_coord,
+                        v2.tex_coord - v0.tex_coord};
+            muv = glm::inverse(muv);
+            mp = mp * muv;
+            glm::vec3 tangent = mp[0];
+            if (glm::length(tangent) < 1e-9) {
+                tangent = glm::vec3(1, 0, 0);
+            } else {
+                tangent = glm::normalize(tangent);
+            }
+            v0.tangent = tangent;
+            std::swap(v0, v1);
+            std::swap(v1, v2);
+        }
+
         indices.push_back(vertices.size());
         indices.push_back(vertices.size() + 1);
         indices.push_back(vertices.size() + 2);
