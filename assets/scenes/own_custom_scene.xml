@@ -12,8 +12,8 @@
 
     <!-- light -->
     <model name="Light_0001">
-        <vertex position="0.5 8 -0.5"/>
-        <vertex position="0.5 8 0.5"/>
+        <vertex position="1 8 -0.5"/>
+        <vertex position="1 8 0.5"/>
         <vertex position="-0.5 8 0.5"/>
         <vertex position="-0.5 8 -0.5"/>
         <index value="0"/>
@@ -24,15 +24,15 @@
         <index value="2"/>
 
         <material type="emission">
-            <emission value="1.0 1.0 1.0"/>
-            <emission_strength value="30"/>
+            <emission value="0.9725 0.5529 0.2"/>
+            <emission_strength value="90"/>
         </material>
     </model>
     <model name="Light_0002">
-        <vertex position="2.51222 5.17227 -3.73363"/>
-        <vertex position="2.492 5.05027 -3.7902"/>
-        <vertex position="2.62614 5.03607 -3.80751"/>
-        <vertex position="2.64636 5.15807 -3.75094"/>
+        <vertex position="1.51222 5.17227 -3.33363"/>
+        <vertex position="1.492 5.05027 -3.3902"/>
+        <vertex position="1.62614 5.03607 -3.40751"/>
+        <vertex position="1.64636 5.15807 -3.35094"/>
         <index value="0"/>
         <index value="1"/>
         <index value="2"/>
@@ -41,7 +41,7 @@
         <index value="3"/>
 
         <material type="emission">
-            <emission value="0.9725 0.5529 0.11765"/>
+            <emission value="1.0 1.0 1.0"/>
             <emission_strength value="1000"/>
         </material>
     </model>
@@ -51,20 +51,20 @@
 	<model type="obj" name="Diffuse_0001">
         <filename value="../../custom_scene_veach/models/Mesh004.obj"/>
         <transform type="world">
-			<translation value="5.26 0 0"/>
+			<translation value="4.26 0 0"/>
         </transform>
 
-        <material type="lambertian">
+        <material type="specular">
             <albedo value="0.5 0.5 0.5"/>
         </material>
     </model>
     <model type="obj" name="Diffuse_0004">
         <filename value="../../custom_scene_veach/models/Mesh008.obj"/>
         <transform type="world">
-			<translation value="5.26 0 0"/>
+			<translation value="4.26 0 0"/>
         </transform>
 
-        <material type="lambertian">
+        <material type="specular">
             <albedo value="0.5 0.5 0.5"/>
         </material>
     </model>
@@ -73,7 +73,7 @@
     <model type="obj" name="Glass">
         <filename value="../../custom_scene_veach/models/Mesh002.obj"/>
         <transform type="world">
-			<translation value="5.26 0 0"/>
+			<translation value="3.26 0 0"/>
         </transform>
 
         <material type="transmissive">
@@ -86,7 +86,7 @@
     <model type="obj" name="Diffuse_0005">
         <filename value="../../custom_scene_veach/models/Mesh011.obj"/>
         <transform type="world">
-			<translation value="5.26 0 0"/>
+			<translation value="3.26 0 0"/>
         </transform>
 
         <material type="lambertian">
@@ -96,7 +96,7 @@
     <model type="obj" name="Diffuse_0006">
         <filename value="../../custom_scene_veach/models/Mesh003.obj"/>
         <transform type="world">
-			<translation value="5.26 0 0"/>
+			<translation value="3.26 0 0"/>
         </transform>
 
         <material type="lambertian">
@@ -106,7 +106,7 @@
     <model type="obj" name="Diffuse_0007">
         <filename value="../../custom_scene_veach/models/Mesh009.obj"/>
         <transform type="world">
-			<translation value="5.26 0 0"/>
+			<translation value="3.26 0 0"/>
         </transform>
 
         <material type="lambertian">
@@ -116,7 +116,7 @@
     <model type="obj" name="Diffuse_0008">
         <filename value="../../custom_scene_veach/models/Mesh006.obj"/>
         <transform type="world">
-			<translation value="5.26 0 0"/>
+			<translation value="3.26 0 0"/>
         </transform>
 
         <material type="lambertian">
@@ -126,7 +126,7 @@
     <model type="obj" name="Wood">
         <filename value="../../custom_scene_veach/models/Mesh000.obj"/>
         <transform type="world">
-			<translation value="5.26 0 0"/>
+			<translation value="3.26 0 0"/>
         </transform>
 
         <material type="lambertian">
@@ -139,7 +139,7 @@
         <filename value="../../custom_scene_veach/models/Mesh010.obj"/>
         
         <material type="lambertian">
-            <albedo value="0.5 0.5 0.5"/>
+            <albedo value="0.9 0.75294 0.796"/>
         </material>
     </model>
 
@@ -147,22 +147,70 @@
     <model type="obj" name="Artwork">
         <filename value="../../custom_scene_dining_room/models/Mesh001.obj"/>
         <transform type="world">
-			<translation value="-3.6434 5.5416 0.97456"/>
-            <ratation value="0 270 0"/>
+			<translation value="-4 4.4 -1.6"/>
+            <rotation value="0 270 0"/>
         </transform>
 
         <material type="lambertian">
             <albedo_texture value="../../custom_scene_dining_room/textures/picture3.jpg"/>
         </material>
     </model>
+    <model type="obj" name="furina">
+        <filename value="../../custom_meshes/Furina.obj"/>
+        <transform type="world">
+            <scale value="-0.3 0.3 0.3"/>
+            <translation value="-2.0 0 2.1"/>
+            <rotation value="0 -70 0"/>
+        </transform>
+    </model> 
     <model type="obj" name="yigika">
         <filename value="../../custom_meshes/yigika.obj"/>
         <transform type="world">
-            <scale value="2.28 2.28 2.28"/>
-            <translation value="-2.0 0 2.1"/>
-            <rotation value="0 120 0"/>
+            <scale value="0.7 0.7 0.7"/>
+            <translation value="0.6382 1.8855 0.65"/>
+            <rotation value="0 270 0"/>
         </transform>
-    </model> 
+    </model>
+    <model type="obj" name="Shinto">
+        <filename value="../../meshes/Shinto.obj"/>
+        <transform type="world">
+			<translation value="-4 3.3 -1.6"/>
+            <rotation value="-90 270 0"/>
+            <scale value="0.786 0.786 0.786"/>
+        </transform>
+
+        <material type="principled">
+            <albedo value="0.666 0.219 0.1176"/>
+            <roughness value="0.7"/>
+            <sheen value="0.7"/>
+            <sheenTint value="0.7"/>
+        </material>
+    </model>
+    <!-- <model type="obj" name="pot">
+        <filename value="../../meshes/pot.obj"/>
+        <transform type="world">
+            <scale value="5.7 5.7 5.7"/>
+            <translation value="0.6382 1.8855 -2"/>
+        </transform>
+    </model>  -->
+
+    <!-- models that might be used -->
+    <!-- <model name="mirror">
+        <vertex position="-4 7.1 -4"/>
+        <vertex position="-4 7.1 -1.9"/>
+        <vertex position="-4 4 -1.9"/>
+        <vertex position="-4 4 -4"/>
+        <index value="0"/>
+        <index value="1"/>
+        <index value="3"/>
+        <index value="1"/>
+        <index value="3"/>
+        <index value="2"/>
+
+        <material type="specular">
+            <albedo value="0.8 0.8 0.8"/>
+        </material>
+    </model> -->
     <!-- <model type="obj" name="nahida">
         <filename value="../../custom_meshes/Nahida.obj"/>
         <transform type="world">
