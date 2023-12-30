@@ -685,18 +685,22 @@ bool Entity::LoadObjFile(Scene *scene, const std::string &file_path) {
   path_base = path_base + "\\";
   for (int i = 1; i <= materials.size(); ++i) {
     tinyobj::material_t material = materials[i - 1];
-    materials_[i].material_type = MATERIAL_TYPE_PRINCIPLED;
+    if (material.unknown_parameter.count("type")) {
+      materials_[i].ReadType(material.unknown_parameter["type"]);
+    } else {
+      materials_[i].material_type = MATERIAL_TYPE_PRINCIPLED;
+    }
     materials_[i].name = material.name;
-    //materials_[i].IOR = material.ior;
     materials_[i].albedo_color = glm::vec3(
         material.diffuse[0], material.diffuse[1], material.diffuse[2]);
-    materials_[i].emission = glm::vec3(
-        material.emission[0], material.emission[1], material.emission[2]);
-    // material.emissive_texname 发光纹理
-    // material.specular;   镜面反射颜色
     if (!material.diffuse_texname.empty()) {
       materials_[i].albedo_texture_id =
           scene->LoadTexture(path_base + material.diffuse_texname);
+    }
+    materials_[i].emission = glm::vec3(
+        material.emission[0], material.emission[1], material.emission[2]);
+    if (material.unknown_parameter.count("emissionStrength")) {
+      materials_[i].sigma = std::stof(material.unknown_parameter["emissionStrength"]);
     }
     if (!material.normal_texname.empty()) {
       materials_[i].normal_texture_id =
@@ -704,16 +708,41 @@ bool Entity::LoadObjFile(Scene *scene, const std::string &file_path) {
       materials_[i].use_normal_texture = true;
     }
     materials_[i].alpha = material.dissolve;
-    // material.alpha_texname alpha 纹理
-    materials_[i].metallic = material.metallic;
-    // material.metallic_texname metallic纹理
-    materials_[i].anisotropic = material.anisotropy;
-    // materials.clearcoat_roughness/thickness 清漆
-    // material.transmittance 透光系数
-    // material.anisotropy_rotation 各向异性旋转角
-    // material.diffuse_texname  漫反射纹理
+    materials_[i].IOR = material.ior;
+    if (material.unknown_parameter.count("thin")) {
+      materials_[i].thin =
+          std::stoi(material.unknown_parameter["thin"]);
+    }
     materials_[i].roughness = material.roughness;
+    materials_[i].metallic = material.metallic;
+    materials_[i].anisotropic = material.anisotropy;
+    materials_[i].clearcoat = material.clearcoat_thickness;
+    materials_[i].clearcoatGloss = material.clearcoat_roughness;
     materials_[i].sheen = material.sheen;
+    if (material.unknown_parameter.count("specTrans")) {
+      materials_[i].specTrans =
+          std::stof(material.unknown_parameter["specTrans"]);
+    }
+    if (material.unknown_parameter.count("specularTint")) {
+      materials_[i].specularTint =
+          std::stof(material.unknown_parameter["specularTint"]);
+    }
+    if (material.unknown_parameter.count("sheenTint")) {
+      materials_[i].sheenTint =
+          std::stof(material.unknown_parameter["sheenTint"]);
+    }
+    if (material.unknown_parameter.count("diffTrans")) {
+      materials_[i].diffTrans =
+          std::stof(material.unknown_parameter["diffTrans"]);
+    }
+    if (material.unknown_parameter.count("flatness")) {
+      materials_[i].flatness =
+          std::stof(material.unknown_parameter["flatness"]);
+    }
+    if (material.unknown_parameter.count("sigma")) {
+      materials_[i].sigma =
+          std::stof(material.unknown_parameter["sigma"]);
+    }
   }
   transform_ = glm::mat4{1.0};
   name_ = PathToFilename(file_path);
