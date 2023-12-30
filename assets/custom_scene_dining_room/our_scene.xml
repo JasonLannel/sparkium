@@ -12,10 +12,29 @@
 
 	<!-- envmap -->
 	<envmap type="file" value="../../custom_scene_dining_room/texures/spaichingen_hill_2k.hdr">
-        <offset value="115"/>
+        <offset value="270"/>
     </envmap>
 
-	<!-- BSDF materials (have to be implemented) -->
+    <!-- light -->
+    <model name="Light">
+        <vertex position="5.5 7.903084 9.888323"/>
+        <vertex position="5.5 7.903084 -4.542055"/>
+        <vertex position="5.5 -1.419958 -4.542055"/>
+        <vertex position="5.5 -1.419958 9.888323"/>
+        <index value="0"/>
+        <index value="1"/>
+        <index value="3"/>
+        <index value="1"/>
+        <index value="3"/>
+        <index value="2"/>
+
+        <material type="emission">
+            <emission value="1.0 1.0 1.0"/>
+            <emission_strength value="1000.0"/>
+        </material>
+    </model>
+
+	<!-- BSDF materials -->
 	<!-- entities -->
 	<model type="obj" name="FrostedGlass_0001">
         <filename value="../../custom_scene_dining_room/models/Mesh013.obj"/>

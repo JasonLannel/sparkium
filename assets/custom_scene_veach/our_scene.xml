@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scene>
+	<!-- camera -->
+	<camera>
+		<transform type="lookat">
+			<eye value="16.2155 4.05167 0.0114864"/>
+            <center value="-0.843684 3.972 -0.0742318"/>
+            <up value="0.0 1.0 0.0"/>
+		</transform>
+		<fov value="35"/>
+	</camera>
+
+    <!-- light -->
+    <model name="Light_0001">
+        <vertex position="-2.75736 6 2.31365"/>
+        <vertex position="-2.75736 6 2.86515"/>
+        <vertex position="-2.20586 6 2.86515"/>
+        <vertex position="-2.20586 6 2.31365"/>
+        <index value="0"/>
+        <index value="1"/>
+        <index value="2"/>
+        <index value="0"/>
+        <index value="2"/>
+        <index value="3"/>
+
+        <material type="emission">
+            <emission value="1.0 1.0 1.0"/>
+            <emission_strength value="523.2578"/>
+        </material>
+    </model>
+    <model name="Light_0002">
+        <vertex position="-2.74778 5.17227 -3.73363"/>
+        <vertex position="-2.768 5.05027 -3.7902"/>
+        <vertex position="-2.63386 5.03607 -3.80751"/>
+        <vertex position="-2.61364 5.15807 -3.75094"/>
+        <index value="0"/>
+        <index value="1"/>
+        <index value="2"/>
+        <index value="0"/>
+        <index value="2"/>
+        <index value="3"/>
+
+        <material type="emission">
+            <emission value="0.7 0.5 0.36"/>
+            <emission_strength value="1000"/>
+        </material>
+    </model>
+
+    <!-- models -->
+	<model type="obj" name="Lamp_0001">
+        <filename value="../../custom_scene_veach/models/Mesh007.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.25"/>
+            <metallic value="0.9"/>
+            <specTrans value="0.6"/>
+            <specularTint value="0.6"/>
+        </material>
+    </model>
+	<model type="obj" name="Diffuse_0001">
+        <filename value="../../custom_scene_veach/models/Mesh004.obj"/>
+
+        <material type="lambertian">
+            <albedo value="0.5 0.5 0.5"/>
+        </material>
+    </model>
+	<model type="obj" name="Lamp_0002">
+        <filename value="../../custom_scene_veach/models/Mesh001.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.25"/>
+            <metallic value="0.9"/>
+            <specTrans value="0.6"/>
+            <specularTint value="0.6"/>
+        </material>
+    </model>
+    <model type="obj" name="Lamp_0003">
+        <filename value="../../custom_scene_veach/models/Mesh005.obj"/>
+
+        <material type="principled">
+            <albedo value="1 1 1"/>
+            <roughness value="0.25"/>
+            <metallic value="0.9"/>
+            <specTrans value="0.6"/>
+            <specularTint value="0.6"/>
+        </material>
+    </model>
+    <model type="obj" name="Diffuse_0004">
+        <filename value="../../custom_scene_veach/models/Mesh008.obj"/>
+
+        <material type="lambertian">
+            <albedo value="0.5 0.5 0.5"/>
+        </material>
+    </model>
+    <model type="obj" name="Glass">
+        <filename value="../../custom_scene_veach/models/Mesh002.obj"/>
+
+        <material type="transmissive">
+            <albedo value="0.9 0.9 0.9"/>
+            <IOR value="1.5"/>
+        </material>
+    </model>
+    <model type="obj" name="Diffuse_0005">
+        <filename value="../../custom_scene_veach/models/Mesh011.obj"/>
+
+        <material type="lambertian">
+            <albedo value="0.5 0.5 0.5"/>
+        </material>
+    </model>
+    <model type="obj" name="Diffuse_0006">
+        <filename value="../../custom_scene_veach/models/Mesh003.obj"/>
+
+        <material type="lambertian">
+            <albedo value="0.5 0.5 0.5"/>
+        </material>
+    </model>
+    <model type="obj" name="Diffuse_0007">
+        <filename value="../../custom_scene_veach/models/Mesh009.obj"/>
+
+        <material type="lambertian">
+            <albedo value="0.5 0.5 0.5"/>
+        </material>
+    </model>
+    <model type="obj" name="Diffuse_0008">
+        <filename value="../../custom_scene_veach/models/Mesh006.obj"/>
+
+        <material type="lambertian">
+            <albedo value="0.5 0.5 0.5"/>
+        </material>
+    </model>
+    <model type="obj" name="Wood">
+        <filename value="../../custom_scene_veach/models/Mesh000.obj"/>
+
+        <material type="lambertian">
+            <albedo value="0.32963 0.257976 0.150292"/>
+        </material>
+    </model>
+    <model type="obj" name="Diffuse_0009">
+        <filename value="../../custom_scene_veach/models/Mesh010.obj"/>
+
+        <material type="lambertian">
+            <albedo value="0.5 0.5 0.5"/>
+        </material>
+    </model>
+</scene>
