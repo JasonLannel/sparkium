@@ -68,6 +68,71 @@ Material::Material(Scene *scene, const tinyxml2::XMLElement *material_element)
     alpha = std::stof(child_element->FindAttribute("value")->Value());
   }
 
+  child_element = material_element->FirstChildElement("metallic");
+  if (child_element) {
+    metallic = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("specTrans");
+  if (child_element) {
+    specTrans = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("specTint");
+  if (child_element) {
+    specularTint = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("aniso");
+  if (child_element) {
+    anisotropic = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("sheen");
+  if (child_element) {
+    sheen = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("sheenTint");
+  if (child_element) {
+    sheenTint = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("clearcoat");
+  if (child_element) {
+    clearcoat = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("clearcoatGloss");
+  if (child_element) {
+    clearcoatGloss = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("IOR");
+  if (child_element) {
+    IOR = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("diffTrans");
+  if (child_element) {
+    diffTrans = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("flatness");
+  if (child_element) {
+    flatness = std::stof(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("thin");
+  if (child_element) {
+    thin = std::stoi(child_element->FindAttribute("value")->Value());
+  }
+
+  child_element = material_element->FirstChildElement("sigma");
+  if (child_element) {
+    sigma = std::stoi(child_element->FindAttribute("value")->Value());
+  }
+
   material_type =
       material_name_map[material_element->FindAttribute("type")->Value()];
 }
