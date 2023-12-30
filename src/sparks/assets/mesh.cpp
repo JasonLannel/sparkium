@@ -98,8 +98,7 @@ Mesh Mesh::Cube(const glm::vec3 &center, const glm::vec3 &size) {
         glm::vec2 tex_coord = TexCenter + dx * TexDispX + dy * TexDispY;
         tex_coord[1] = 1 - tex_coord[1];
         vertices.push_back(Vertex(MeshCenter + dx * MeshDispX + dy * MeshDispY,
-                                  Normal,
-                                  {tex_coord}));
+                                  Normal, MeshDispX, tex_coord));
       }
     int index_base = i << 2;
     indices.push_back(index_base);
@@ -124,7 +123,7 @@ Mesh Mesh::Cube(const glm::vec3 &center, const glm::vec3 &size) {
         glm::vec2 tex_coord = TexCenter + dx * TexDispX + dy * TexDispY;
         tex_coord[1] = 1 - tex_coord[1];
         vertices.push_back(Vertex(MeshCenter + dx * MeshDispX + dy * MeshDispY,
-                                  Normal, {tex_coord}));
+                                  Normal, MeshDispX, tex_coord));
       }
     int index_base = (i << 2) + 16;
     indices.push_back(index_base);
@@ -156,6 +155,7 @@ Mesh Mesh::Sphere(const glm::vec3 &center, float radius) {
     for (int j = 0; j <= 2 * precision; j++) {
       auto normal = glm::vec3{circle[j].x * sin_theta, cos_theta,
                               circle[j].y * sin_theta};
+      auto tangent = glm::vec3{circle[j].y, 0, -circle[j].x};
       vertices.push_back(
           Vertex(normal * radius + center, normal,
                  {float(j) * inv_precision * 0.5f, float(i) * inv_precision}));
@@ -399,6 +399,30 @@ Mesh::Mesh(const tinyxml2::XMLElement *element, bool keep_material) {
       if (glm::length(v2.normal) < 0.5f) {
         v2.normal = geom_normal;
       }
+
+      for (int j = 0; j < 3; ++j) {
+        auto v0p = v0.position;
+        auto v1p = v1.position;
+        auto v2p = v2.position;
+        v0p -= v0.normal * glm::dot(v0.normal, v0p);
+        v1p -= v1.normal * glm::dot(v1.normal, v1p);
+        v2p -= v2.normal * glm::dot(v2.normal, v2p);
+        glm::mat2x3 mp{v1p - v0p, v2p - v0p};
+        glm::mat2x2 muv{v1.tex_coord - v0.tex_coord,
+                        v2.tex_coord - v0.tex_coord};
+        muv = glm::inverse(muv);
+        mp = mp * muv;
+        glm::vec3 tangent = mp[0];
+        if (glm::length(tangent) < 1e-9) {
+          tangent = glm::vec3(1, 0, 0);
+        } else {
+          tangent = glm::normalize(tangent);
+        }
+        v0.tangent = tangent;
+        std::swap(v0, v1);
+        std::swap(v1, v2);
+      }
+
       vertices_.push_back(v0);
       vertices_.push_back(v1);
       vertices_.push_back(v2);

@@ -52,6 +52,7 @@ struct Material {
   // Constant Medium
   float sigma{0.01f};
 
+  void ReadType(std::string type);
   float FresnelSchlick(float f0, float cosTheta) const;
   glm::vec3 FresnelSchlick(glm::vec3 SpecularColor, float cosTheta) const;
   float SchlickWeight(float cosTheta) const;
@@ -69,11 +70,11 @@ struct Material {
                             float ax,
                             float ay) const;
   float GgxAnisotropicD(const glm::vec3 &wm, float ax, float ay) const;
-  float Material::GgxVndfAnisotropicPdf(const glm::vec3 &wi,
-                                        const glm::vec3 &normal,
-                                        const glm::vec3 &wo,
-                                        float ax,
-                                        float ay) const;
+  float GgxVndfAnisotropicPdf(const glm::vec3 &wi,
+                              const glm::vec3 &normal,
+                              const glm::vec3 &wo,
+                              float ax,
+                              float ay) const;
   float ThinTransmissionRoughness(float ior, float roughness) const;
 };
 

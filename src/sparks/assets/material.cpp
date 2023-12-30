@@ -14,6 +14,7 @@ std::unordered_map<std::string, MaterialType> material_name_map{
     {"transmissive", MATERIAL_TYPE_TRANSMISSIVE},
     {"principled", MATERIAL_TYPE_PRINCIPLED},
     {"emission", MATERIAL_TYPE_EMISSION},
+    {"medium", MATERIAL_TYPE_MEDIUM},
 };
 }
 
@@ -73,6 +74,10 @@ Material::Material(Scene *scene, const tinyxml2::XMLElement *material_element)
 
 Material::Material(const glm::vec3 &albedo) : Material() {
   albedo_color = albedo;
+}
+
+void Material::ReadType(std::string type) {
+  material_type = material_name_map[type];
 }
     
 float Material::SchlickWeight(float cosTheta) const {

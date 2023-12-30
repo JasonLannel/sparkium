@@ -39,15 +39,17 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
   for (int bounce = 0, max_depth = render_settings_->num_bounces; bounce < max_depth;
        ++bounce) {
     bool medium_hit = false;
-    float tmax = 1e10f;
+    float tmax = 1e5f;
     if (medium_pre.material_type == MATERIAL_TYPE_MEDIUM) {
       std::uniform_real_distribution<float> randomProb(0.0f, 1.0f);
       float hit_dis = -log(fmax(randomProb(rd), 1e-10)) / medium_pre.sigma;
-      medium_hit = true;
-      hit_record.hit_entity_id = -1;
-      hit_record.position = ray.at(hit_dis);
-      hit_record.normal = -ray.direction();
-      tmax = fmin(tmax, hit_dis);
+      if (hit_dis < tmax) {
+          medium_hit = true;
+          hit_record.hit_entity_id = -1;
+          hit_record.position = ray.at(hit_dis);
+          hit_record.normal = -ray.direction();
+          tmax = hit_dis;
+      }
     }
     if (scene_->TraceRay(ray, 1e-3f, tmax,
                          &hit_record) > 0.0f || medium_hit) {
