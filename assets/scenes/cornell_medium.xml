@@ -250,6 +250,7 @@
         <size value="300 300 300"/>
         <material type="medium">
             <albedo value="1 1 1"/>
+            <sigma value="0.4"/>
         </material>
     </model>
         
