@@ -34,7 +34,7 @@
     <model type="sphere">
 		<center value="0.0 0.0 -2.0"/>
 		<radius value="0.3"/>
-    <isMoving movingDirection="0.5 0 0" time0="0.0" time1="1.0"/>
+    		<isMoving movingDirection="0.5 0 0" time0="0.0" time1="1.0"/>
 
 		<transform type="translate" value="0.0 0.5 0.0"/>
 
@@ -42,14 +42,4 @@
 			<albedo value="1 1 1"/>
 		</material>
 	</model>
-  
-  <model type="cube">
-    <center value="0.0 0.0 0"/>
-    <size value="0.5 1 1.5"/>
-
-    <material type="lambertian">
-      <albedo value="1 1 1"/>
-    </material>
-  </model>
-
 </scene>
