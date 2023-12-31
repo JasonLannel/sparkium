@@ -141,6 +141,6 @@ glm::vec3 PathTracer::SampleRay(Ray ray,
       break;
     }
   }
-  return glm::min(radiance, glm::vec3(1));
+  return radiance;
 }
 }  // namespace sparks
