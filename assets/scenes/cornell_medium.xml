@@ -247,10 +247,10 @@
     </model>
     <model type="cube" name="medium">
       <center value="278 274.4 279.6"/>
-        <size value="300 300 300"/>
+        <size value="550 550 570"/>
         <material type="medium">
             <albedo value="1 1 1"/>
-            <sigma value="0.4"/>
+            <sigma value="0.002"/>
         </material>
     </model>
         
