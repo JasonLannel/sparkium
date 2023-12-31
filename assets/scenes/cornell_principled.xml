@@ -48,7 +48,7 @@
 
   <!--ceiling-->
   <model name="Ceiling">
-    <vertex position="556.0 548.8 0.0  "/>
+    <vertex position="552.8 548.8 0.0  "/>
     <vertex position="500 548.8 559.2"/>
     <vertex position="0.0 548.8 559.2"/>
     <vertex position="0.0 548.8   0.0"/>
@@ -105,7 +105,7 @@
     <vertex position="552.8 0.0 0.0"/>
     <vertex position="500 0 559.2"/>
     <vertex position="500 548.8 559.2"/>
-    <vertex position="556.0 548.8   0.0"/>
+    <vertex position="552.8 548.8   0.0"/>
     <index value="0"/>
     <index value="1"/>
     <index value="3"/>
@@ -124,7 +124,7 @@
     <vertex position="549.6 0.0 0.0"/>
     <vertex position="0.0 0.0 0.0"/>
     <vertex position="0.0 548.8 0.0"/>
-    <vertex position="556.0 548.8 0.0"/>
+    <vertex position="552.8 548.8 0.0"/>
     <index value="0"/>
     <index value="1"/>
     <index value="3"/>
@@ -208,7 +208,6 @@
       <clearcoatGloss value="1"/>
       <diffTrans value="0.0"/>
       <flatness value="0"/>
-      <normal_texture value="../../textures/metal_normal.jpg"/>
     </material>
   </model>
 
