@@ -12,10 +12,10 @@
 
     <!-- light -->
     <model name="Light_0001">
-        <vertex position="1 8 -0.5"/>
-        <vertex position="1 8 0.5"/>
-        <vertex position="-0.5 8 0.5"/>
-        <vertex position="-0.5 8 -0.5"/>
+        <vertex position="1 7.9 -0.5"/>
+        <vertex position="1 7.9 0.5"/>
+        <vertex position="-0.5 7.9 0.5"/>
+        <vertex position="-0.5 7.9 -0.5"/>
         <index value="0"/>
         <index value="1"/>
         <index value="3"/>
@@ -54,8 +54,10 @@
 			<translation value="4.26 0 0"/>
         </transform>
 
-        <material type="specular">
+        <material type="principled">
             <albedo value="0.5 0.5 0.5"/>
+			<roughness value="0.7"/>
+			<metallic value="0.7"/>
         </material>
     </model>
     <model type="obj" name="Diffuse_0004">
@@ -64,8 +66,10 @@
 			<translation value="4.26 0 0"/>
         </transform>
 
-        <material type="specular">
+        <material type="principled">
             <albedo value="0.5 0.5 0.5"/>
+			<roughness value="0.7"/>
+			<metallic value="0.7"/>
         </material>
     </model>
 
@@ -156,11 +160,11 @@
         </material>
     </model>
     <model type="obj" name="furina">
-        <filename value="../../custom_meshes/Furina.obj"/>
+        <filename value="../../custom_meshes/posed_furina.obj"/>
         <transform type="world">
-            <scale value="-0.3 0.3 0.3"/>
-            <translation value="-2.0 0 2.1"/>
-            <rotation value="0 -70 0"/>
+            <scale value="0.32 0.32 0.32"/>
+            <translation value="-2.5 0 2.1"/>
+            <rotation value="0 100 0"/>
         </transform>
     </model> 
     <model type="obj" name="yigika">
@@ -186,13 +190,13 @@
             <sheenTint value="0.7"/>
         </material>
     </model>
-    <!-- <model type="obj" name="pot">
+    <model type="obj" name="pot">
         <filename value="../../meshes/pot.obj"/>
         <transform type="world">
             <scale value="5.7 5.7 5.7"/>
             <translation value="0.6382 1.8855 -2"/>
         </transform>
-    </model>  -->
+    </model> 
 
     <!-- models that might be used -->
     <!-- <model name="mirror">
