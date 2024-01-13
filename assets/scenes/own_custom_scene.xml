@@ -57,7 +57,7 @@
         <material type="principled">
             <albedo value="0.5 0.5 0.5"/>
 			<roughness value="0.7"/>
-			<metallic value="0.7"/>
+			<metallic value="0.4"/>
         </material>
     </model>
     <model type="obj" name="Diffuse_0004">
@@ -69,7 +69,7 @@
         <material type="principled">
             <albedo value="0.5 0.5 0.5"/>
 			<roughness value="0.7"/>
-			<metallic value="0.7"/>
+			<metallic value="0.4"/>
         </material>
     </model>
 
@@ -190,13 +190,13 @@
             <sheenTint value="0.7"/>
         </material>
     </model>
-    <model type="obj" name="pot">
+    <!-- <model type="obj" name="pot">
         <filename value="../../meshes/pot.obj"/>
         <transform type="world">
             <scale value="5.7 5.7 5.7"/>
             <translation value="0.6382 1.8855 -2"/>
         </transform>
-    </model> 
+    </model>  -->
 
     <!-- models that might be used -->
     <!-- <model name="mirror">
