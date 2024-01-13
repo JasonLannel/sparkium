@@ -130,7 +130,7 @@ Material::Material(Scene *scene, const tinyxml2::XMLElement *material_element)
 
   child_element = material_element->FirstChildElement("sigma");
   if (child_element) {
-    sigma = std::stoi(child_element->FindAttribute("value")->Value());
+    sigma = std::stof(child_element->FindAttribute("value")->Value());
   }
 
   material_type =
