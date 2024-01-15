@@ -494,8 +494,7 @@ float Scene::LightValue(const Ray &ray) const {
 
 void Scene::LoadTextureForMaterial(Material &mat, HitRecord &rec) const {
   if (mat.albedo_texture_id >= 0 && mat.material_type != MATERIAL_TYPE_MEDIUM) {
-    auto tex_sample = GetTextures()[mat.albedo_texture_id].Sample(
-        rec.tex_coord);
+    auto tex_sample = GetTextures()[mat.albedo_texture_id].Sample(rec.tex_coord);
     mat.albedo_color *= glm::vec3(tex_sample);
     mat.alpha *= tex_sample.w;
   }
