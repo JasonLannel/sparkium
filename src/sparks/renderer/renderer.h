@@ -70,7 +70,7 @@ class Renderer {
   void WorkerThread();
 
   RendererSettings renderer_settings_;
-  Scene scene_{"../../scenes/base.xml"};
+  Scene scene_{"../../scenes/trial.xml"};
 
   /* CPU Renderer Assets */
   std::vector<glm::vec4> accumulation_color_;
