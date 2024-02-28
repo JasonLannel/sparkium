@@ -3,41 +3,23 @@
 ## Advanced Computer Graphics: Final Project
 
 ### Description
-
-The final project is about image creation. You must put
-together a coherent scene using geometry, material, and texture that
-you made and/or found online. Code your own path tracing algorithm
-with acceleration structure to render out a beautiful image.
-
-### TA grading period
-
-Dec 26 — Jan 8
-
-### Grading
-
-Total score: 55 points
-- Base: a path tracing algorithm that could handle diffusive material and specular material correctly
-with a proper acceleration structure (in total 30 pts)
-  - We will provide several standard test cases (~3) to verify the correctness of your algorithm
-- Additional features (choose your own but the maximum score won’t exceed 55 pts):
-  - Build your own scene: with aesthetics consideration, with geometry you make from scratch and/or
-find online with the source highlighted (up to 8 pts)
-  - Material: create a (non-trivial) customized material (up to 5 pts)
-  - Texture: create your own (non-trivial) texture with the proper texture mapping (up to 5 pts)
-  -  Anti-aliasing: implement an anti-aliasing algorithm (up to 2 pts)
-  - Importance sampling: using better sampling algorithms for path tracing (up to 5 pts)
-  - Simulation based content creation (up to 5 pts)
-  - Special material rendering: participating media, hair, translucent material, etc. (up to 5 pts for each)
-  - Special visual effect: motion blur, depth of field, etc. (up to 3 pts for each)
-
+This project is a neat path tracer, supporting
+• basic features, including diffusive and specular materials;
+• Bounding Volume Hierarchy with Surface Area Heuristic for
+acceleration;
+• Multiple importance sampling with power heuristic;
+• Customed materials, including transmissive and Disney BSDF
+materials;
+• Customed textures, including color texture and normal map;
+• Special visual effects, including motion blur, depth of field,
+and alpha shadow;
+• Anti-aliasing, with multi-sampling and FXAA;
+• Simple implementation on homogeneous participant media;
+• Classic scenes like Cornell Box and some customed scenes
+for demo.
+• A short animation based on tracer and AI denoiser.
 
 ## Build The Project
-
-You need to **fork** this repo, and do changes on your forked repo!
-
-You need to **fork** this repo, and do changes on your forked repo!
-
-You need to **fork** this repo, and do changes on your forked repo!
 
 Clone the repo (With submodules recursively):
 
