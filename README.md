@@ -4,20 +4,19 @@
 
 ### Description
 This project is a neat path tracer, supporting
-• basic features, including diffusive and specular materials;
-• Bounding Volume Hierarchy with Surface Area Heuristic for
+- basic features, including diffusive and specular materials;
+- Bounding Volume Hierarchy with Surface Area Heuristic for
 acceleration;
-• Multiple importance sampling with power heuristic;
-• Customed materials, including transmissive and Disney BSDF
+- Multiple importance sampling with power heuristic;
+- Customed materials, including transmissive and Disney BSDF
 materials;
-• Customed textures, including color texture and normal map;
-• Special visual effects, including motion blur, depth of field,
+- Customed textures, including color texture and normal map;
+- Special visual effects, including motion blur, depth of field,
 and alpha shadow;
-• Anti-aliasing, with multi-sampling and FXAA;
-• Simple implementation on homogeneous participant media;
-• Classic scenes like Cornell Box and some customed scenes
+- Anti-aliasing, with multi-sampling and FXAA;
+- Simple implementation on homogeneous participant media;
+- Classic scenes like Cornell Box and some customed scenes
 for demo.
-• A short animation based on tracer and AI denoiser.
 
 ## Build The Project
 
