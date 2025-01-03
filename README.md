@@ -18,6 +18,9 @@ and alpha shadow;
 - Classic scenes like Cornell Box and some customed scenes
 for demo.
 
+This tracer is a hard tracer i.e. rendering with CPU only, and uses only one thread, 
+so for complex scenes, it takes massive amount of time to converge.
+
 ## Build The Project
 
 Clone the repo (With submodules recursively):
